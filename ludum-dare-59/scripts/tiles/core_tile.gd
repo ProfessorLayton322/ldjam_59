@@ -8,3 +8,6 @@ func OnTrigger(source: Node = null) -> void:
 
 func OnEnter(source: Node = null) -> void:
 	super.OnEnter(source)
+
+	if source != null:
+		source.queue_free()

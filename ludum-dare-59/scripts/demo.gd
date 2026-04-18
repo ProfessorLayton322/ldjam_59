@@ -13,13 +13,12 @@ const _TRACKS := "res://assets/textures/tracks/"
 const _STARTS := "res://assets/textures/start/"
 
 var _graph: Graph
+var _tiles_by_node_id: Dictionary = {}
 
 
 func _ready() -> void:
 	_graph = Graph.new()
 	_graph.build_from_grid(GRID_SIZE, TILE_SIZE, ORIGIN)
-
-	_place_visuals()
 
 	var cpu_vertices: Array[CpuVertex] = []
 	for cpu_id: int in CPU_NODE_IDS:
@@ -27,22 +26,18 @@ func _ready() -> void:
 		cv.node_id = cpu_id
 		cpu_vertices.append(cv)
 
-	for spawner_node_id: int in SPAWNER_NODE_IDS:
-		var spawner := EnemySpawner.new()
-		spawner.graph = _graph
-		spawner.cpu_vertices = cpu_vertices
-		spawner.node_id = spawner_node_id
-		spawner.enemy_scene = ENEMY_SCENE
-		spawner.spawn_interval = 2.0
-		add_child(spawner)
+	_place_visuals(cpu_vertices)
 
 
-func _place_visuals() -> void:
+func _place_visuals(cpu_vertices: Array[CpuVertex]) -> void:
+	_tiles_by_node_id.clear()
+
 	for vertex: GraphVertex in _graph.nodes:
 		var key := _connection_key(vertex)
 
-		var tile := Node2D.new()
+		var tile := _create_tile(vertex, cpu_vertices)
 		tile.position = vertex.position
+		_tiles_by_node_id[vertex.id] = tile
 
 		var bg := Sprite2D.new()
 		bg.texture = load(_TRACKS + "pcb_empty.svg")
@@ -70,6 +65,23 @@ func _place_visuals() -> void:
 	cpu_sprite.position = (tl.position + br.position) * 0.5
 	cpu_sprite.scale = Vector2(1.0, 1.0)
 	add_child(cpu_sprite)
+
+
+func _create_tile(vertex: GraphVertex, cpu_vertices: Array[CpuVertex]) -> BaseTile:
+	if vertex.id in SPAWNER_NODE_IDS:
+		var spawner := SpawnerTile.new()
+		spawner.graph = _graph
+		spawner.cpu_vertices = cpu_vertices
+		spawner.node_id = vertex.id
+		spawner.enemy_scene = ENEMY_SCENE
+		spawner.spawn_interval = 2.0
+		spawner.tiles_by_node_id = _tiles_by_node_id
+		return spawner
+
+	if vertex.id in CPU_NODE_IDS:
+		return CoreTile.new()
+
+	return BaseTile.new()
 
 
 func _connection_key(vertex: GraphVertex) -> int:
