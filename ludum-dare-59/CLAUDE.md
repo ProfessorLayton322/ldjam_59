@@ -46,7 +46,7 @@ menu.tscn  →  demo.tscn   (Start button or Escape to quit)
 1. A `Graph` is built from a 5×3 grid of 64×64 px tiles at origin (100, 100).
 2. Tile objects (`BaseTile` subclasses) are instantiated per vertex; SVG sprites are layered on top.
 3. Node IDs 8, 9, 13, 14 become `CoreTile` (2×2 CPU block); IDs 0 and 10 become `SpawnerTile`.
-4. `SpawnerTile` creates a timer that fires every `spawn_interval` seconds, instantiating enemies.
+4. `SpawnEnemyManager` registers all `SpawnerTile` nodes and spawns from a random one every configured tick.
 5. `Enemy` runs BFS over the `Graph` to find the shortest path to any `CpuVertex`, then tweens tile-by-tile; on arrival it calls `OnEnter` on the destination `CoreTile`, which calls `queue_free()` on the enemy.
 
 ### Graph / Data Model
@@ -65,7 +65,7 @@ menu.tscn  →  demo.tscn   (Start button or Escape to quit)
 ```
 BaseTile (Node2D)       signals: triggered(source), entered(source)
 ├── CoreTile            OnEnter → queue_free(source)
-├── SpawnerTile         Timer → OnTrigger → spawn Enemy
+├── SpawnEnemyManager   Timer → random SpawnerTile → spawn Enemy
 └── TowerTile           (stub, not yet implemented)
 ```
 

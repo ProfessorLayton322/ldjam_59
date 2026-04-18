@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="SpawnerCfg" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/spawner_cfg.gd" id="1_spawner_cfg"]
+
+[resource]
+script = ExtResource("1_spawner_cfg")
+tick = 1.0
