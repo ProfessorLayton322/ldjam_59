@@ -175,7 +175,7 @@ func _has_valid_node_index(node_index: int) -> bool:
 
 func apply_damage(amount: int) -> void:
 	hp -= amount
-	if hp <= 0:
+	if hp == 0:
 		queue_free()
 
 

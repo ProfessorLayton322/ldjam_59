@@ -728,7 +728,7 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
-	region["hp"] = max(region["hp"] - damage, 0)
+	region["hp"] = clampi(int(region["hp"]) - damage, 0, CPU_HP)
 	var bar: Node2D = region["bar"] as Node2D
 	if bar != null:
 		bar.set_hp(region["hp"], CPU_HP)
@@ -739,8 +739,12 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 
 func _spawn_damage_label(damage: int, world_pos: Vector2) -> void:
 	var label := Label.new()
-	label.text = "-%d" % damage
-	label.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
+	if damage < 0:
+		label.text = "+%d" % abs(damage)
+		label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.3, 1.0))
+	else:
+		label.text = "-%d" % damage
+		label.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
 	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)

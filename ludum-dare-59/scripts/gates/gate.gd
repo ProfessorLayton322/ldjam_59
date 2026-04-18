@@ -80,7 +80,7 @@ func on_enter(enemy: Enemy) -> void:
 	if is_stunned():
 		return
 
-	if definition.blocks_movement:
+	if definition.blocks_movement and enemy.hp >= 0:
 		_stall_enemy(enemy)
 		if not definition.indestructible and _stalled_enemy_power > _current_hp:
 			_destroy_gate()
