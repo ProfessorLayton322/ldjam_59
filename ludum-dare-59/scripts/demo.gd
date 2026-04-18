@@ -12,6 +12,7 @@ const DEFAULT_GATE_TEMPERATURE_COST := 1
 
 @export var tilemap_path: NodePath = ^"TileMap"
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
+@export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
 @export var tilemap_layer := 0
 @export var require_mutual_connections := true
 
@@ -20,6 +21,7 @@ const CPU_HP := 10
 var _graph: Graph
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
+var _spawn_enemy_manager: SpawnEnemyManager
 var _placing_default_gate := false
 var _temperature := 0
 var _default_gate_button: Button
@@ -188,7 +190,13 @@ func _assign_tile_node_id_from_graph(tile: BaseTile) -> void:
 
 
 func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
-	for tile in _tiles_by_node_id.values():
+	_spawn_enemy_manager = get_node_or_null(spawn_enemy_manager_path) as SpawnEnemyManager
+	if _spawn_enemy_manager == null:
+		push_error("Demo scene: SpawnEnemyManager not found at %s" % spawn_enemy_manager_path)
+		return
+
+	_spawn_enemy_manager.clear_spawners()
+	for tile: BaseTile in _tiles:
 		if not (tile is SpawnerTile):
 			continue
 
@@ -196,7 +204,10 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		spawner.graph = _graph
 		spawner.cpu_vertices = cpu_vertices
 		spawner.spawn_parent = self
+		_spawn_enemy_manager.register_spawner(spawner)
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
+
+	_spawn_enemy_manager.start()
 
 
 func _configure_core_gates() -> void:
@@ -248,6 +259,8 @@ func _start_trigger_timer() -> void:
 func _trigger_tiles() -> void:
 	for tile: BaseTile in _tiles:
 		if not is_instance_valid(tile):
+			continue
+		if tile is SpawnerTile:
 			continue
 
 		tile.OnTrigger(self)

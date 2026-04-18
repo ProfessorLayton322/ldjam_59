@@ -43,6 +43,11 @@ menu.tscn  →  demo.tscn      (Start button)
 
 `demo.tscn` is a bare Node2D backed by `scripts/demo.gd` (`DemoScene`). Everything is wired at runtime:
 
+1. A `Graph` is built from a 5×3 grid of 64×64 px tiles at origin (100, 100).
+2. Tile objects (`BaseTile` subclasses) are instantiated per vertex; SVG sprites are layered on top.
+3. Node IDs 8, 9, 13, 14 become `CoreTile` (2×2 CPU block); IDs 0 and 10 become `SpawnerTile`.
+4. `SpawnEnemyManager` registers all `SpawnerTile` nodes and spawns from a random one every configured tick.
+5. `Enemy` runs BFS over the `Graph` to find the shortest path to any `CpuVertex`, then tweens tile-by-tile; on arrival it calls `OnEnter` on the destination `CoreTile`, which calls `queue_free()` on the enemy.
 1. A `Graph` is parsed from the TileMap (layer 0 = track tiles, layer 1 = gameplay tiles).
 2. `BaseTile` subclass nodes placed in the TileMap are collected and matched to graph vertices by world position.
 3. Each `SpawnerTile` gets `graph`, `cpu_vertices`, and `spawn_parent` assigned; it then spawns `Enemy` instances on a timer.
@@ -68,6 +73,9 @@ Enemies do **not** call tile methods directly. The flow is:
 
 ```
 BaseTile (Node2D)       signals: triggered(source), entered(source)
+├── CoreTile            OnEnter → queue_free(source)
+├── SpawnEnemyManager   Timer → random SpawnerTile → spawn Enemy
+└── TowerTile           (stub, not yet implemented)
 ├── CoreTile            OnEnter → queue_free(source)  [enemy removal handled by CoreGate]
 ├── SpawnerTile         SpawnTimer → OnTrigger → instantiate Enemy
 └── TowerTile           (stub)

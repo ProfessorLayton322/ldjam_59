@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/tiles/spawner_tile.gd" id="1_spawner"]
 [ext_resource type="Texture2D" path="res://assets/textures/start/start_SE.svg" id="2_start"]
@@ -7,13 +7,7 @@
 [node name="SpawnerTop" type="Node2D"]
 script = ExtResource("1_spawner")
 node_id = 0
-spawn_interval = 2.0
 enemy_scene = ExtResource("3_enemy")
-auto_trigger = false
 
 [node name="StartSprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_start")
-
-[node name="SpawnTimer" type="Timer" parent="."]
-wait_time = 2.0
-autostart = true
