@@ -15,6 +15,8 @@ const DEFAULT_GATE_TEMPERATURE_COST := 1
 @export var tilemap_layer := 0
 @export var require_mutual_connections := true
 
+const CPU_HP := 10
+
 var _graph: Graph
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
@@ -23,6 +25,11 @@ var _temperature := 0
 var _default_gate_button: Button
 var _temperature_fill: ColorRect
 var _temperature_label: Label
+var _cpu_hp: int = CPU_HP
+const HudScene := preload("res://scripts/hud.gd")
+const CpuHpBarScene := preload("res://scripts/cpu_hp_bar.gd")
+var _hud: Node
+var _cpu_hp_bar: Node2D
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -46,6 +53,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _ready() -> void:
+	_hud = HudScene.new()
+	add_child(_hud)
+
 	_graph = Graph.new()
 	_build_graph_from_tilemap()
 
@@ -53,6 +63,7 @@ func _ready() -> void:
 	_collect_tiles()
 	var cpu_vertices := _build_cpu_vertices()
 	_configure_spawners(cpu_vertices)
+	_configure_core_gates()
 	_start_trigger_timer()
 	_create_gate_button()
 
@@ -186,6 +197,38 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		spawner.cpu_vertices = cpu_vertices
 		spawner.spawn_parent = self
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
+
+
+func _configure_core_gates() -> void:
+	var cpu_positions: Array[Vector2] = []
+
+	for tile in _tiles_by_node_id.values():
+		if not (tile is CoreTile):
+			continue
+
+		var gate := CoreGate.new()
+		add_child(gate)
+		gate.graph = _graph
+		gate.vertex_id = tile.node_id
+		gate.enemy_reached.connect(_on_enemy_reached_cpu)
+		cpu_positions.append(to_local(tile.global_position))
+		print("Demo scene: CoreGate registered at node %d" % tile.node_id)
+
+	if cpu_positions.is_empty():
+		return
+
+	var top_y := cpu_positions[0].y
+	var center_x := 0.0
+	for p in cpu_positions:
+		if p.y < top_y:
+			top_y = p.y
+		center_x += p.x
+	center_x /= cpu_positions.size()
+
+	_cpu_hp_bar = CpuHpBarScene.new()
+	_cpu_hp_bar.position = Vector2(center_x, top_y - 18)
+	add_child(_cpu_hp_bar)
+	_cpu_hp_bar.set_hp(_cpu_hp, CPU_HP)
 
 
 func _start_trigger_timer() -> void:
@@ -372,3 +415,12 @@ func _update_temperature_meter() -> void:
 		_default_gate_button.disabled = not can_place
 		if not can_place:
 			_set_gate_placement_enabled(false)
+
+
+func _on_enemy_reached_cpu(damage: int) -> void:
+	_cpu_hp -= damage
+	_cpu_hp = max(_cpu_hp, 0)
+	if _cpu_hp_bar != null:
+		_cpu_hp_bar.set_hp(_cpu_hp, CPU_HP)
+	if _cpu_hp <= 0:
+		_hud.show_game_over()
