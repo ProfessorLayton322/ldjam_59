@@ -30,6 +30,8 @@ const HudScene := preload("res://scripts/hud.gd")
 const CpuHpBarScene := preload("res://scripts/cpu_hp_bar.gd")
 var _hud: Node
 var _cpu_regions: Array[Dictionary] = []
+var _level_timer: Timer
+var _level_finished := false
 
 
 func _get_balance_params() -> BalanceParams:
@@ -59,7 +61,7 @@ func _get_gate_placement_radius() -> float:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
-		get_tree().change_scene_to_file("res://scenes/level_selection.tscn")
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -145,6 +147,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if LevelState.selected_level != null:
 		level = LevelState.selected_level
+	elif LevelState.get_current_level() != null:
+		level = LevelState.get_current_level()
 
 	_camera = Camera2D.new()
 	_camera.name = "Camera"
@@ -167,6 +171,7 @@ func _ready() -> void:
 	_configure_core_gates()
 	_start_trigger_timer()
 	_create_gate_buttons()
+	_start_level_timer()
 
 
 func _instantiate_level_board() -> bool:
@@ -496,7 +501,42 @@ func _create_gate_buttons() -> void:
 	_add_key_hint(root, "Spc", pause_btn.offset_top)
 
 	_create_temperature_meter(root)
+	_create_debug_victory_button(root)
 	_update_temperature_meter()
+
+
+func _start_level_timer() -> void:
+	if level == null:
+		return
+
+	_level_timer = Timer.new()
+	_level_timer.name = "LevelTimer"
+	_level_timer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	_level_timer.one_shot = true
+	_level_timer.wait_time = maxf(level.duration_seconds, 0.01)
+	_level_timer.timeout.connect(_complete_level_with_victory)
+	add_child(_level_timer)
+	_level_timer.start()
+
+
+func _create_debug_victory_button(root: Control) -> void:
+	if not OS.is_debug_build():
+		return
+
+	var button := Button.new()
+	button.name = "DebugVictoryButton"
+	button.text = "Win"
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = "Debug: finish this level with victory"
+	button.custom_minimum_size = Vector2(64.0, 40.0)
+	button.anchor_left = 1.0
+	button.anchor_right = 1.0
+	button.offset_left = -80.0
+	button.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0 + 64.0 + 8.0 + 160.0 + 12.0
+	button.offset_right = -16.0
+	button.offset_bottom = button.offset_top + 40.0
+	button.pressed.connect(_complete_level_with_victory)
+	root.add_child(button)
 
 
 func _add_key_hint(root: Control, key_text: String, top_offset: float) -> void:
@@ -686,6 +726,22 @@ func _set_pause_mode_enabled(enabled: bool) -> void:
 		_pause_button.set_pressed_no_signal(enabled)
 
 
+func _complete_level_with_victory() -> void:
+	if _level_finished:
+		return
+
+	_level_finished = true
+	get_tree().paused = false
+	if _spawn_enemy_manager != null:
+		_spawn_enemy_manager.stop()
+	if _level_timer != null:
+		_level_timer.stop()
+
+	if LevelState.advance_to_next_level():
+		get_tree().call_deferred("change_scene_to_file", "res://scenes/ld_gameplay.tscn")
+	else:
+		_hud.show_victory()
+
 
 func _pickup_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
@@ -749,6 +805,7 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 		bar.set_hp(region["hp"], _get_cpu_hp())
 		_spawn_damage_label(damage, bar.position)
 	if region["hp"] <= 0:
+		_level_finished = true
 		_hud.show_game_over()
 
 
