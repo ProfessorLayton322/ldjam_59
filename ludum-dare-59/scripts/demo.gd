@@ -12,16 +12,16 @@ const POSITION_MATCH_EPSILON := 1.0
 const GATE_PLACEMENT_RADIUS := 32.0
 const EXPECTED_SPAWNER_COUNT := 3
 const MAX_TEMPERATURE := 19
+const DEFAULT_LEVEL := preload("res://scripts/resources/levels/demo_level.tres")
 
-@export var tilemap_path: NodePath = ^"TileMap"
+@export var level: LevelDefinition = DEFAULT_LEVEL
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
-@export var tilemap_layer := 0
-@export var require_mutual_connections := true
 
 const CPU_HP := 20
 
 var _graph: Graph
+var _level_board: Node
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
@@ -57,6 +57,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _ready() -> void:
+	if not _instantiate_level_board():
+		return
+
 	_hud = HudScene.new()
 	add_child(_hud)
 
@@ -72,16 +75,34 @@ func _ready() -> void:
 	_create_gate_buttons()
 
 
-func _build_graph_from_tilemap() -> void:
-	var level := get_node_or_null(tilemap_path)
+func _instantiate_level_board() -> bool:
 	if level == null:
-		push_error("Demo scene: TileMap not found at %s" % tilemap_path)
+		push_error("Demo scene: no LevelDefinition assigned.")
+		return false
+	if level.board_scene == null:
+		push_error("Demo scene: LevelDefinition '%s' has no board_scene." % level.title)
+		return false
+
+	_level_board = level.board_scene.instantiate()
+	_level_board.name = "LevelBoard"
+	add_child(_level_board)
+	print("Demo scene: loaded level '%s' from %s" % [level.title, level.board_scene.resource_path])
+	return true
+
+
+func _build_graph_from_tilemap() -> void:
+	if level == null or _level_board == null:
 		return
 
-	print("Demo scene: parsing graph from %s layer %d" % [level.get_path(), tilemap_layer])
-	_graph.build_from_level(level, tilemap_layer, require_mutual_connections, true)
+	var tilemap := _level_board.get_node_or_null(level.tilemap_path)
+	if tilemap == null:
+		push_error("Demo scene: TileMap not found at %s in level '%s'" % [level.tilemap_path, level.title])
+		return
+
+	print("Demo scene: parsing graph from %s layer %d" % [tilemap.get_path(), level.tilemap_layer])
+	_graph.build_from_level(tilemap, level.tilemap_layer, level.require_mutual_connections, true)
 	if _graph.nodes.is_empty():
-		push_error("Demo scene: TileMap at %s produced an empty graph" % tilemap_path)
+		push_error("Demo scene: TileMap at %s produced an empty graph" % tilemap.get_path())
 		return
 
 	for vertex: GraphVertex in _graph.nodes:
@@ -105,7 +126,7 @@ func _build_cpu_vertices() -> Array[CpuVertex]:
 
 
 func _collect_tiles() -> void:
-	_tiles = _find_tiles(self)
+	_tiles = _find_tiles(_level_board)
 	_tiles_by_node_id.clear()
 	var spawner_count := 0
 	var cpu_count := 0
@@ -196,6 +217,9 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 	if _spawn_enemy_manager == null:
 		push_error("Demo scene: SpawnEnemyManager not found at %s" % spawn_enemy_manager_path)
 		return
+
+	if level != null and level.spawn_cfg != null:
+		_spawn_enemy_manager.cfg = level.spawn_cfg
 
 	_spawn_enemy_manager.clear_spawners()
 	for tile: BaseTile in _tiles:
