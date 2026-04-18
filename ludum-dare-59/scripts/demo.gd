@@ -7,6 +7,7 @@ const TUTORIAL_DIALOGUE_ID := "tutorial_dialogue_1_1"
 const TUTORIAL_DIALOGUE_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
 const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
 const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
+const GAME_UI_CANVAS_LAYER := 10
 const TUTORIAL_BALLISTA_ID := "ballista"
 
 enum TutorialStep {
@@ -148,6 +149,13 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		if event is InputEventMouseButton:
+			var tutorial_mouse := event as InputEventMouseButton
+			if tutorial_mouse.button_index == MOUSE_BUTTON_LEFT:
+				if tutorial_mouse.pressed:
+					_try_place_tutorial_ballista(get_global_mouse_position())
+				get_viewport().set_input_as_handled()
+				return
 		get_viewport().set_input_as_handled()
 		return
 
@@ -491,11 +499,13 @@ func _trigger_tiles() -> void:
 func _create_gate_buttons() -> void:
 	var ui_layer := CanvasLayer.new()
 	ui_layer.name = "UI"
+	ui_layer.layer = GAME_UI_CANVAS_LAYER
 	ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(ui_layer)
 
 	var root := Control.new()
 	root.name = "Root"
+	root.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_layer.add_child(root)
@@ -504,6 +514,7 @@ func _create_gate_buttons() -> void:
 		var definition: Resource = _get_gate_definitions()[i]
 		var button := Button.new()
 		button.name = "%sButton" % definition.id.capitalize().replace(" ", "")
+		button.process_mode = Node.PROCESS_MODE_ALWAYS
 		button.icon = definition.texture
 		button.expand_icon = true
 		button.toggle_mode = true
@@ -524,6 +535,7 @@ func _create_gate_buttons() -> void:
 
 	var pause_btn := Button.new()
 	pause_btn.name = "PauseButton"
+	pause_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_btn.text = "II"
 	pause_btn.toggle_mode = true
 	pause_btn.focus_mode = Control.FOCUS_NONE
@@ -566,6 +578,7 @@ func _create_debug_victory_button(root: Control) -> void:
 
 	var button := Button.new()
 	button.name = "DebugVictoryButton"
+	button.process_mode = Node.PROCESS_MODE_ALWAYS
 	button.text = "Win"
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = "Debug: finish this level with victory"
@@ -879,15 +892,50 @@ func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
 		get_viewport().set_input_as_handled()
 		return true
 
-	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
-	if vertex_id == _tutorial_target_vertex_id and _selected_gate_definition != null and _selected_gate_definition.id == TUTORIAL_BALLISTA_ID:
-		if _place_gate(vertex_id, _selected_gate_definition):
-			var gate := Gate.get_gate(_graph, vertex_id)
-			_set_gate_placement_enabled(false)
-			TutorialEvents.emit_target_ballista_placed(vertex_id, gate)
+	_try_place_tutorial_ballista(get_global_mouse_position())
 
 	get_viewport().set_input_as_handled()
 	return true
+
+
+func _try_place_tutorial_ballista(global_position: Vector2) -> bool:
+	if _selected_gate_definition == null or _selected_gate_definition.id != TUTORIAL_BALLISTA_ID:
+		return false
+
+	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if vertex_id != _tutorial_target_vertex_id:
+		if not _is_global_position_on_tutorial_target(global_position):
+			return false
+		vertex_id = _tutorial_target_vertex_id
+
+	if vertex_id == -1:
+		return false
+
+	if not _place_gate(vertex_id, _selected_gate_definition):
+		return false
+
+	var gate := Gate.get_gate(_graph, vertex_id)
+	_set_gate_placement_enabled(false)
+	TutorialEvents.emit_target_ballista_placed(vertex_id, gate)
+	return true
+
+
+func _is_global_position_on_tutorial_target(global_position: Vector2) -> bool:
+	if _tutorial_target_vertex_id == -1:
+		return false
+
+	var target_position := Vector2.ZERO
+	var target_vertex := _graph.get_node_by_id(_tutorial_target_vertex_id)
+	if target_vertex != null:
+		target_position = target_vertex.position
+	elif _tutorial_target_tile != null:
+		target_position = to_local(_tutorial_target_tile.global_position)
+	else:
+		return false
+
+	var click_position := to_local(global_position)
+	var target_radius := maxf(_get_gate_placement_radius(), 48.0)
+	return click_position.distance_to(target_position) <= target_radius
 
 
 func _apply_tutorial_button_locks() -> void:
@@ -952,6 +1000,8 @@ func _position_tutorial_dialogue() -> void:
 	if not _tutorial_dialog_layout.is_node_ready():
 		await _tutorial_dialog_layout.ready
 
+	_disable_tutorial_dialogue_input_catcher()
+
 	var textbox_layer := _tutorial_dialog_layout.get_node_or_null("VN_TextboxLayer") as Control
 	if textbox_layer == null:
 		return
@@ -975,6 +1025,21 @@ func _position_tutorial_dialogue() -> void:
 
 	if textbox_layer.has_method("_apply_export_overrides"):
 		textbox_layer.call("_apply_export_overrides")
+
+
+func _disable_tutorial_dialogue_input_catcher() -> void:
+	if _tutorial_dialog_layout == null or not is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	var input_layer := _tutorial_dialog_layout.get_node_or_null("FullAdvanceInputLayer") as Control
+	if input_layer != null:
+		input_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		input_layer.process_mode = Node.PROCESS_MODE_DISABLED
+
+	var input_node := _tutorial_dialog_layout.get_node_or_null("FullAdvanceInputLayer/DialogicNode_Input") as Control
+	if input_node != null:
+		input_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		input_node.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
