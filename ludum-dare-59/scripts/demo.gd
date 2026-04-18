@@ -1,14 +1,17 @@
 class_name DemoScene
 extends Node2D
 
-const DEFAULT_GATE_SCENE := preload("res://scenes/gates/default_gate.tscn")
-const DEFAULT_GATE_TEXTURE := preload("res://assets/textures/gates/default_gate.svg")
+const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
+const GATE_DEFINITIONS := [
+	preload("res://scripts/resources/gate_def_barricade.tres"),
+	preload("res://scripts/resources/gate_def_ballista.tres"),
+	preload("res://scripts/resources/gate_def_tar.tres"),
+]
 const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
 const GATE_PLACEMENT_RADIUS := 32.0
 const EXPECTED_SPAWNER_COUNT := 3
-const MAX_TEMPERATURE := 5
-const DEFAULT_GATE_TEMPERATURE_COST := 1
+const MAX_TEMPERATURE := 19
 
 @export var tilemap_path: NodePath = ^"TileMap"
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
@@ -22,9 +25,9 @@ var _graph: Graph
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
-var _placing_default_gate := false
+var _selected_gate_definition: Resource
 var _temperature := 0
-var _default_gate_button: Button
+var _gate_buttons: Dictionary = {}
 var _temperature_fill: ColorRect
 var _temperature_label: Label
 var _cpu_hp: int = CPU_HP
@@ -39,7 +42,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 
-	if not _placing_default_gate or not event is InputEventMouseButton:
+	if _selected_gate_definition == null or not event is InputEventMouseButton:
 		return
 
 	var mouse_event := event as InputEventMouseButton
@@ -50,7 +53,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if vertex_id == -1:
 		return
 
-	if _place_default_gate(vertex_id):
+	if _place_gate(vertex_id, _selected_gate_definition):
 		_set_gate_placement_enabled(false)
 
 
@@ -67,7 +70,7 @@ func _ready() -> void:
 	_configure_spawners(cpu_vertices)
 	_configure_core_gates()
 	_start_trigger_timer()
-	_create_gate_button()
+	_create_gate_buttons()
 
 
 func _build_graph_from_tilemap() -> void:
@@ -266,7 +269,7 @@ func _trigger_tiles() -> void:
 		tile.OnTrigger(self)
 
 
-func _create_gate_button() -> void:
+func _create_gate_buttons() -> void:
 	var ui_layer := CanvasLayer.new()
 	ui_layer.name = "UI"
 	add_child(ui_layer)
@@ -277,23 +280,25 @@ func _create_gate_button() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_layer.add_child(root)
 
-	var button := Button.new()
-	button.name = "DefaultGateButton"
-	button.icon = DEFAULT_GATE_TEXTURE
-	button.expand_icon = true
-	button.toggle_mode = true
-	button.focus_mode = Control.FOCUS_NONE
-	button.tooltip_text = "Place default gate"
-	button.custom_minimum_size = Vector2(64.0, 64.0)
-	button.anchor_left = 1.0
-	button.anchor_right = 1.0
-	button.offset_left = -80.0
-	button.offset_top = 16.0
-	button.offset_right = -16.0
-	button.offset_bottom = 80.0
-	button.pressed.connect(_on_default_gate_button_pressed)
-	root.add_child(button)
-	_default_gate_button = button
+	for i in GATE_DEFINITIONS.size():
+		var definition: Resource = GATE_DEFINITIONS[i]
+		var button := Button.new()
+		button.name = "%sButton" % definition.id.capitalize().replace(" ", "")
+		button.icon = definition.texture
+		button.expand_icon = true
+		button.toggle_mode = true
+		button.focus_mode = Control.FOCUS_NONE
+		button.tooltip_text = "%s: %d power" % [definition.display_name, definition.power_cost]
+		button.custom_minimum_size = Vector2(64.0, 64.0)
+		button.anchor_left = 1.0
+		button.anchor_right = 1.0
+		button.offset_left = -80.0
+		button.offset_top = 16.0 + float(i) * 72.0
+		button.offset_right = -16.0
+		button.offset_bottom = button.offset_top + 64.0
+		button.pressed.connect(_on_gate_button_pressed.bind(definition, button))
+		root.add_child(button)
+		_gate_buttons[definition.id] = button
 
 	_create_temperature_meter(root)
 	_update_temperature_meter()
@@ -301,14 +306,14 @@ func _create_gate_button() -> void:
 
 func _create_temperature_meter(root: Control) -> void:
 	var meter := Panel.new()
-	meter.name = "TemperatureMeter"
+	meter.name = "PowerMeter"
 	meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meter.anchor_left = 1.0
 	meter.anchor_right = 1.0
 	meter.offset_left = -56.0
 	meter.offset_right = -16.0
-	meter.offset_top = 104.0
-	meter.offset_bottom = 264.0
+	meter.offset_top = 248.0
+	meter.offset_bottom = 408.0
 
 	var meter_style := StyleBoxFlat.new()
 	meter_style.bg_color = Color(0.08, 0.08, 0.08, 0.82)
@@ -340,7 +345,7 @@ func _create_temperature_meter(root: Control) -> void:
 	_temperature_fill = fill
 
 	var label := Label.new()
-	label.name = "TemperatureLabel"
+	label.name = "PowerLabel"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -353,14 +358,22 @@ func _create_temperature_meter(root: Control) -> void:
 	_temperature_label = label
 
 
-func _on_default_gate_button_pressed() -> void:
-	_set_gate_placement_enabled(_default_gate_button.button_pressed)
+func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
+	if button.button_pressed:
+		_set_gate_placement_enabled(true, definition)
+	else:
+		_set_gate_placement_enabled(false)
 
 
-func _set_gate_placement_enabled(enabled: bool) -> void:
-	_placing_default_gate = enabled and _can_place_default_gate()
-	if _default_gate_button != null:
-		_default_gate_button.set_pressed_no_signal(_placing_default_gate)
+func _set_gate_placement_enabled(enabled: bool, definition: Resource = null) -> void:
+	var next_definition: Resource = definition if definition != null else _selected_gate_definition
+	_selected_gate_definition = next_definition if enabled and _can_place_gate(next_definition) else null
+
+	for gate_definition: Resource in GATE_DEFINITIONS:
+		var button := _gate_buttons.get(gate_definition.id) as Button
+		if button == null:
+			continue
+		button.set_pressed_no_signal(_selected_gate_definition == gate_definition)
 
 
 func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
@@ -385,8 +398,8 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 	return best_vertex_id
 
 
-func _place_default_gate(vertex_id: int) -> bool:
-	if not _can_place_default_gate():
+func _place_gate(vertex_id: int, definition: Resource) -> bool:
+	if not _can_place_gate(definition):
 		_set_gate_placement_enabled(false)
 		return false
 
@@ -397,16 +410,18 @@ func _place_default_gate(vertex_id: int) -> bool:
 	if not (tile is WireTile):
 		return false
 
-	var gate := DEFAULT_GATE_SCENE.instantiate() as Gate
+	var gate := GATE_SCENE.instantiate() as Gate
+	gate.definition = definition
 	gate.graph = _graph
 	gate.vertex_id = vertex_id
+	gate.destroyed.connect(_on_gate_destroyed)
 	add_child(gate)
-	_change_temperature(DEFAULT_GATE_TEMPERATURE_COST)
+	_change_temperature(definition.power_cost)
 	return true
 
 
-func _can_place_default_gate() -> bool:
-	return _temperature + DEFAULT_GATE_TEMPERATURE_COST <= MAX_TEMPERATURE
+func _can_place_gate(definition: Resource) -> bool:
+	return definition != null and _temperature + definition.power_cost <= MAX_TEMPERATURE
 
 
 func _change_temperature(amount: int) -> void:
@@ -423,11 +438,18 @@ func _update_temperature_meter() -> void:
 	if _temperature_label != null:
 		_temperature_label.text = "%d/%d" % [_temperature, MAX_TEMPERATURE]
 
-	if _default_gate_button != null:
-		var can_place := _can_place_default_gate()
-		_default_gate_button.disabled = not can_place
-		if not can_place:
+	for definition: Resource in GATE_DEFINITIONS:
+		var button := _gate_buttons.get(definition.id) as Button
+		if button == null:
+			continue
+		var can_place := _can_place_gate(definition)
+		button.disabled = not can_place
+		if not can_place and _selected_gate_definition == definition:
 			_set_gate_placement_enabled(false)
+
+
+func _on_gate_destroyed(gate: Gate) -> void:
+	_change_temperature(-gate.get_power_cost())
 
 
 func _on_enemy_reached_cpu(damage: int) -> void:

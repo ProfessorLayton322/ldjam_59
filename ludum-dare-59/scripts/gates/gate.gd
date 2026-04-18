@@ -1,7 +1,15 @@
 class_name Gate
 extends Node2D
 
+signal destroyed(gate: Gate)
+
 static var _gates_by_graph_vertex: Dictionary = {}
+
+@export var definition: Resource:
+	set(value):
+		definition = value
+		_current_hp = _get_max_hp()
+		_update_icon()
 
 @export var graph: Graph:
 	set(value):
@@ -24,6 +32,8 @@ static var _gates_by_graph_vertex: Dictionary = {}
 		_register_gate()
 
 var _registry_key := ""
+var _current_hp := 1
+var _queued_enemy_hp := 0
 
 
 static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
@@ -41,6 +51,8 @@ static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
 
 func _ready() -> void:
 	_update_position_from_vertex()
+	_current_hp = _get_max_hp()
+	_update_icon()
 
 
 func _enter_tree() -> void:
@@ -52,7 +64,35 @@ func _exit_tree() -> void:
 
 
 func on_enter(enemy: Enemy) -> void:
-	print("ENEMY IN CONTACT")
+	if definition == null or enemy == null:
+		return
+
+	if definition.blocks_movement:
+		_queued_enemy_hp += enemy.hp
+		enemy.queue_free()
+		if not definition.indestructible and _queued_enemy_hp > _current_hp:
+			destroyed.emit(self)
+			queue_free()
+		return
+
+	if definition.damage_power > 0:
+		enemy.apply_damage(definition.damage_power)
+		if enemy.is_queued_for_deletion():
+			return
+
+	if definition.slow_extra_seconds_per_tile > 0.0 and definition.slow_duration > 0.0:
+		enemy.apply_slow(definition.slow_extra_seconds_per_tile, definition.slow_duration)
+
+
+func blocks_movement() -> bool:
+	return definition != null and definition.blocks_movement
+
+
+func get_power_cost() -> int:
+	if definition == null:
+		return 0
+
+	return definition.power_cost
 
 
 func _register_gate() -> void:
@@ -94,3 +134,24 @@ func _update_position_from_vertex() -> void:
 
 static func _get_registry_key(target_graph: Graph, target_vertex_id: int) -> String:
 	return "%d:%d" % [target_graph.get_instance_id(), target_vertex_id]
+
+
+func _get_max_hp() -> int:
+	if definition == null:
+		return 1
+
+	return definition.max_hp
+
+
+func _update_icon() -> void:
+	if not is_inside_tree():
+		return
+
+	var sprite := get_node_or_null("Sprite2D") as Sprite2D
+	if sprite == null:
+		sprite = Sprite2D.new()
+		sprite.name = "Sprite2D"
+		add_child(sprite)
+
+	if definition != null:
+		sprite.texture = definition.texture

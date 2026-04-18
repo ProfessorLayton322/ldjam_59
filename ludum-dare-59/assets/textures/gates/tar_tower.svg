@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="8" y="10" width="48" height="44" rx="4" fill="#1d2226" stroke="#63d3ff" stroke-width="3"/>
+  <path d="M18 40 C22 30 26 46 31 34 C36 22 41 42 46 28" fill="none" stroke="#1c0f24" stroke-width="8" stroke-linecap="round"/>
+  <path d="M18 40 C22 30 26 46 31 34 C36 22 41 42 46 28" fill="none" stroke="#63d3ff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="22" cy="24" r="4" fill="#111217"/>
+  <circle cx="42" cy="44" r="5" fill="#111217"/>
+  <text x="32" y="61" font-family="monospace" font-size="7" fill="#63d3ff" text-anchor="middle">TAR</text>
+</svg>

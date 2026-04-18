@@ -6,11 +6,14 @@ extends Node2D
 @export var current_node_index: int = -1
 @export var move_duration: float = 3.0
 @export var damage: int = 1
+@export var hp: int = 10
 
 var path: Array[int] = []
 
 var _active_tween: Tween
 var _node_id_to_index: Dictionary = {}
+var _slow_extra_seconds_per_tile := 0.0
+var _slow_until_msec := 0
 
 
 func _ready() -> void:
@@ -26,7 +29,9 @@ func start_pathing() -> void:
 	if _has_valid_node_index(current_node_index):
 		position = _get_node_position(current_node_index)
 
-	path = _calculate_path()
+	path = _calculate_path(false)
+	if path.is_empty():
+		path = _calculate_path(true)
 	if path.is_empty():
 		return
 
@@ -43,7 +48,7 @@ func _ensure_icon() -> void:
 	icon.texture = load("res://assets/textures/enemies/circle_enemy.svg")
 
 
-func _calculate_path() -> Array[int]:
+func _calculate_path(allow_blocking_gate_target: bool) -> Array[int]:
 	_node_id_to_index = _build_node_id_to_index()
 
 	if not _has_valid_node_index(current_node_index):
@@ -73,6 +78,13 @@ func _calculate_path() -> Array[int]:
 			if visited.has(neighbour_index):
 				continue
 
+			var blocking_gate := _get_blocking_gate_at_node_id(neighbour_id)
+			if blocking_gate != null:
+				if allow_blocking_gate_target:
+					came_from[neighbour_index] = node_index
+					return _reconstruct_path(came_from, neighbour_index)
+				continue
+
 			visited[neighbour_index] = true
 			came_from[neighbour_index] = node_index
 			queue.append(neighbour_index)
@@ -88,7 +100,6 @@ func _build_cpu_index_set() -> Dictionary:
 		if _node_id_to_index.has(cpu.node_id):
 			result[_node_id_to_index[cpu.node_id]] = true
 	return result
-
 
 
 func _build_node_id_to_index() -> Dictionary:
@@ -124,7 +135,7 @@ func _move_to_next_node() -> void:
 
 	var next_node_index := path[1]
 	_active_tween = create_tween()
-	_active_tween.tween_property(self, "position", _get_node_position(next_node_index), move_duration)
+	_active_tween.tween_property(self, "position", _get_node_position(next_node_index), _get_current_move_duration())
 	_active_tween.finished.connect(_on_move_finished.bind(next_node_index), CONNECT_ONE_SHOT)
 
 
@@ -161,3 +172,30 @@ func _enter_current_node() -> void:
 
 func _has_valid_node_index(node_index: int) -> bool:
 	return graph != null and node_index >= 0 and node_index < graph.nodes.size()
+
+
+func apply_damage(amount: int) -> void:
+	hp -= amount
+	if hp <= 0:
+		queue_free()
+
+
+func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
+	_slow_extra_seconds_per_tile = maxf(_slow_extra_seconds_per_tile, extra_seconds_per_tile)
+	_slow_until_msec = max(_slow_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
+
+
+func _get_current_move_duration() -> float:
+	if Time.get_ticks_msec() <= _slow_until_msec:
+		return move_duration + _slow_extra_seconds_per_tile
+
+	_slow_extra_seconds_per_tile = 0.0
+	return move_duration
+
+
+func _get_blocking_gate_at_node_id(node_id: int) -> Gate:
+	var gate := Gate.get_gate(graph, node_id)
+	if gate == null or not gate.blocks_movement():
+		return null
+
+	return gate

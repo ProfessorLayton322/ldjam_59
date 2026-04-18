@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="8" y="10" width="48" height="44" rx="4" fill="#20242a" stroke="#d6d44a" stroke-width="3"/>
+  <rect x="14" y="18" width="36" height="8" fill="#6f747b"/>
+  <rect x="14" y="30" width="36" height="8" fill="#8b9199"/>
+  <rect x="14" y="42" width="36" height="8" fill="#6f747b"/>
+  <path d="M18 18 L26 26 M34 18 L42 26 M18 30 L26 38 M34 30 L42 38 M18 42 L26 50 M34 42 L42 50" stroke="#2a2e34" stroke-width="2"/>
+  <text x="32" y="61" font-family="monospace" font-size="7" fill="#d6d44a" text-anchor="middle">BARR</text>
+</svg>
