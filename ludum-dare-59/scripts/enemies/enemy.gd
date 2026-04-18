@@ -7,6 +7,8 @@ extends Node2D
 @export var move_duration: float = 3.0
 @export var damage: int = 1
 @export var hp: int = 10
+@export var can_stun_gate := false
+@export var gate_stun_duration := 3.0
 
 var path: Array[int] = []
 
@@ -182,6 +184,15 @@ func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
 	_slow_until_msec = max(_slow_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
 
 
+func consume_gate_stun(gate: Gate) -> float:
+	if not can_stun_gate:
+		return 0.0
+
+	can_stun_gate = false
+	_on_gate_stun_consumed(gate)
+	return gate_stun_duration
+
+
 func stall_at_gate(gate: Gate) -> void:
 	_stalled_gate = gate
 	_movement_interrupted = true
@@ -198,10 +209,13 @@ func release_from_gate(gate: Gate) -> void:
 	start_pathing()
 
 
+func _on_gate_stun_consumed(_gate: Gate) -> void:
+	pass
+
+
 func _get_current_move_duration() -> float:
 	if Time.get_ticks_msec() <= _slow_until_msec:
 		return move_duration + _slow_extra_seconds_per_tile
 
 	_slow_extra_seconds_per_tile = 0.0
 	return move_duration
-
