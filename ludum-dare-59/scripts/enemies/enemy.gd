@@ -2,8 +2,8 @@ class_name Enemy
 extends Node2D
 
 @export var graph: Graph
+@export var cpu_vertices: Array[CpuVertex] = []
 @export var current_node_index: int = -1
-@export var target_node_index: int = -1
 @export var move_duration: float = 3.0
 
 var path: Array[int] = []
@@ -29,10 +29,6 @@ func start_pathing() -> void:
 	if path.is_empty():
 		return
 
-	if current_node_index == target_node_index:
-		queue_free()
-		return
-
 	_move_to_next_node()
 
 
@@ -43,7 +39,7 @@ func _ensure_icon() -> void:
 		icon.name = "Icon"
 		add_child(icon)
 
-	icon.texture = load("res://icon.svg")
+	icon.texture = load("res://assets/textures/enemies/circle_enemy.svg")
 
 
 func _calculate_path() -> Array[int]:
@@ -52,7 +48,8 @@ func _calculate_path() -> Array[int]:
 	if not _has_valid_node_index(current_node_index):
 		return []
 
-	if not _has_valid_node_index(target_node_index):
+	var cpu_index_set := _build_cpu_index_set()
+	if cpu_index_set.is_empty():
 		return []
 
 	var queue: Array[int] = [current_node_index]
@@ -63,8 +60,8 @@ func _calculate_path() -> Array[int]:
 
 	while not queue.is_empty():
 		var node_index: int = queue.pop_front()
-		if node_index == target_node_index:
-			return _reconstruct_path(came_from)
+		if cpu_index_set.has(node_index):
+			return _reconstruct_path(came_from, node_index)
 
 		var node := graph.nodes[node_index]
 		for neighbour_id in node.neighbour_ids:
@@ -82,6 +79,17 @@ func _calculate_path() -> Array[int]:
 	return []
 
 
+func _build_cpu_index_set() -> Dictionary:
+	var result := {}
+	for cpu in cpu_vertices:
+		if cpu == null:
+			continue
+		if _node_id_to_index.has(cpu.node_id):
+			result[_node_id_to_index[cpu.node_id]] = true
+	return result
+
+
+
 func _build_node_id_to_index() -> Dictionary:
 	var result := {}
 	if graph == null:
@@ -93,9 +101,9 @@ func _build_node_id_to_index() -> Dictionary:
 	return result
 
 
-func _reconstruct_path(came_from: Dictionary) -> Array[int]:
-	var reversed_path: Array[int] = [target_node_index]
-	var node_index := target_node_index
+func _reconstruct_path(came_from: Dictionary, target_index: int) -> Array[int]:
+	var reversed_path: Array[int] = [target_index]
+	var node_index := target_index
 
 	while node_index != current_node_index:
 		if not came_from.has(node_index):
@@ -127,10 +135,6 @@ func _on_move_finished(reached_node_index: int) -> void:
 		path.pop_front()
 	elif path.size() > 1 and path[1] == reached_node_index:
 		path.pop_front()
-
-	if current_node_index == target_node_index:
-		queue_free()
-		return
 
 	_move_to_next_node()
 
