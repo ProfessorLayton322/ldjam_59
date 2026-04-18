@@ -46,7 +46,7 @@ var _cpu_regions: Array[Dictionary] = []
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		get_tree().change_scene_to_file("res://scenes/level_selection.tscn")
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
