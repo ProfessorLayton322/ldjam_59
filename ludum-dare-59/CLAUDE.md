@@ -28,7 +28,7 @@ Regenerate start-direction SVG textures:
 ### Scene Flow
 
 ```
-menu.tscn  →  demo.tscn   (Start button or Escape to quit)
+menu.tscn  →  demo.tscn      (Start button)
            →  settings.tscn  (Settings button; Escape or Back returns to menu)
 ```
 
@@ -37,28 +37,37 @@ menu.tscn  →  demo.tscn   (Start button or Escape to quit)
 ### Autoloads
 
 - **ResolutionManager** (`scripts/resolution_manager.gd`) — global singleton; persists resolution (Full HD / 4K) to `user://settings.cfg`. Other scripts call `ResolutionManager.set_resolution()` and listen to `resolution_changed`.
-- **MCPGameBridge** (`addons/godot_mcp/game_bridge/mcp_game_bridge.gd`) — addon only; ignore unless working on MCP tooling.
+- **MCPGameBridge** (`addons/godot_mcp/`) — MCP addon; ignore unless working on MCP tooling.
 
 ### Demo Scene (the game)
 
-`demo.tscn` is a bare Node2D; everything is built procedurally in `scripts/demo.gd` (class `DemoScene`):
+`demo.tscn` is a bare Node2D backed by `scripts/demo.gd` (`DemoScene`). Everything is wired at runtime:
 
 1. A `Graph` is built from a 5×3 grid of 64×64 px tiles at origin (100, 100).
 2. Tile objects (`BaseTile` subclasses) are instantiated per vertex; SVG sprites are layered on top.
 3. Node IDs 8, 9, 13, 14 become `CoreTile` (2×2 CPU block); IDs 0 and 10 become `SpawnerTile`.
 4. `SpawnEnemyManager` registers all `SpawnerTile` nodes and spawns from a random one every configured tick.
 5. `Enemy` runs BFS over the `Graph` to find the shortest path to any `CpuVertex`, then tweens tile-by-tile; on arrival it calls `OnEnter` on the destination `CoreTile`, which calls `queue_free()` on the enemy.
+1. A `Graph` is parsed from the TileMap (layer 0 = track tiles, layer 1 = gameplay tiles).
+2. `BaseTile` subclass nodes placed in the TileMap are collected and matched to graph vertices by world position.
+3. Each `SpawnerTile` gets `graph`, `cpu_vertices`, and `spawn_parent` assigned; it then spawns `Enemy` instances on a timer.
+4. Each `CoreTile` (the 2×2 CPU block) gets a programmatically created `CoreGate` registered at its vertex.
+5. A `CpuHpBar` (world-space Node2D) is placed above the CPU block; a `Hud` (CanvasLayer) holds the game-over panel.
 
-### Graph / Data Model
+### Enemy → CPU Interaction
 
-`Graph` (Resource) and `GraphVertex` (RefCounted) live in `scripts/resources/` and are registered as global classes — do not export their fields. Key invariants:
+Enemies do **not** call tile methods directly. The flow is:
 
-- Vertex ID: `id = y * width + x` (row-major).
-- Position: tile centre = `origin + Vector2((x + 0.5) * tile_size.x, (y + 0.5) * tile_size.y)`.
-- Neighbours stored in bottom, top, left, right order; missing neighbours are omitted.
-- `Graph.build_from_grid()` is the primary constructor; `build_from_tilemap_layer()` / `build_from_level()` parse live TileMaps.
+1. `Enemy` runs BFS over `Graph` to find the shortest path to a `CpuVertex` node, then tweens tile-by-tile.
+2. On each step, `Enemy._enter_current_node()` calls `Gate.get_gate(graph, node_id)` (static registry lookup).
+3. If a `Gate` is registered at that vertex, `gate.on_enter(enemy)` fires.
+4. `CoreGate.on_enter` emits `enemy_reached(damage)` and frees the enemy. `DemoScene._on_enemy_reached_cpu` subtracts from `_cpu_hp` and shows the game-over panel at 0.
 
-`CpuVertex` (Resource, exported `node_id`) marks goal nodes for enemy pathfinding.
+### Gate System
+
+`Gate` (`scripts/gates/gate.gd`) is a `Node2D` with a static dictionary registry keyed by `"<graph_instance_id>:<vertex_id>"`. Gates self-register on `_enter_tree` and unregister on `_exit_tree`. Setting `graph` or `vertex_id` via the exported setters triggers re-registration and snaps `position` to the vertex world position.
+
+`CoreGate` extends `Gate` and is the only concrete gate subclass currently. Gates are created programmatically in `DemoScene._configure_core_gates()` — there are no Gate nodes in any `.tscn` file.
 
 ### Tile Class Hierarchy
 
@@ -67,34 +76,48 @@ BaseTile (Node2D)       signals: triggered(source), entered(source)
 ├── CoreTile            OnEnter → queue_free(source)
 ├── SpawnEnemyManager   Timer → random SpawnerTile → spawn Enemy
 └── TowerTile           (stub, not yet implemented)
+├── CoreTile            OnEnter → queue_free(source)  [enemy removal handled by CoreGate]
+├── SpawnerTile         SpawnTimer → OnTrigger → instantiate Enemy
+└── TowerTile           (stub)
 ```
 
-Tiles are created as plain `new()` objects by `DemoScene._create_tile()`; visual sprites are added as children immediately after.
+`BaseTile.OnTrigger` / `OnEnter` emit signals and call `super`. Tiles are scene nodes in the TileMap (placed via `.tscn` prefabs in `TileSetScenesCollectionSource`), not created in code.
+
+### UI
+
+- **`scripts/hud.gd`** (`Hud`, CanvasLayer) — game-over full-screen panel with Retry / Return to Menu buttons. Built entirely in code; no scene file. Loaded via `preload` in `demo.gd` (not a global class).
+- **`scripts/cpu_hp_bar.gd`** — world-space `Node2D` that draws the HP bar with `_draw()`. Positioned above the CPU tile block. Call `set_hp(current, maximum)` to update. Also not a global class; loaded via `preload`.
+
+### Graph / Data Model
+
+`Graph` (Resource) and `GraphVertex` (RefCounted) live in `scripts/resources/` and are registered as global classes — do **not** export their fields. Key invariants:
+
+- Vertex ID: `id = y * width + x` (row-major).
+- Position: tile centre = `origin + Vector2((x + 0.5) * tile_size.x, (y + 0.5) * tile_size.y)`.
+- Neighbours stored in bottom, top, left, right order; missing neighbours are omitted.
+- `Graph.build_from_level()` parses a live TileMap (used in demo); `build_from_grid()` and `build_from_tilemap_layer()` are alternative constructors.
+
+`CpuVertex` (Resource, exported `node_id`) marks goal nodes for enemy BFS pathfinding.
 
 ### Assets
 
 SVG textures under `assets/textures/`:
 - `tracks/` — `pcb_empty`, `track_straight_v/h`, `track_corner_ne`, `track_t_junction`, `track_cross`
-- `start/` — directional spawner overlays; generated by `generate_start.py`
+- `start/` — directional spawner overlays generated by `generate_start.py`
 - `base/cpu.svg`, `enemies/circle_enemy.svg`
 
-`scenes/tiles/track_*.tscn` are prefabs used by `scenes/example.tscn` (debug/test scene showing all track variants via TileMap).
+`scenes/tiles/track_*.tscn` are prefabs used by the TileSet. `scenes/example.tscn` is a debug scene showing all track variants.
 
-## Graph Resource Notes
+## Key Notes
 
-- `graph.gd` — `Graph` Resource; `nodes: Array[GraphVertex]` is a plain var, intentionally not exported.
-- `graph_vertex.gd` — `GraphVertex` RefCounted; `id`, `position`, `neighbour_ids` are plain vars, not exported.
-- `GraphVertex` name was chosen to avoid collisions with Godot's internal `Node`-adjacent names.
-
-Keep these Godot-generated UID files:
-- `ludum-dare-59/scripts/resources/graph.gd.uid`
-- `ludum-dare-59/scripts/resources/graph_vertex.gd.uid`
+- `Graph.nodes` and `GraphVertex` fields are intentionally **not exported** — keep them as plain vars.
+- Keep Godot-generated UID files: `scripts/resources/graph.gd.uid` and `scripts/resources/graph_vertex.gd.uid`.
+- New scripts that need to be used as types in other scripts before Godot's class scanner picks them up should be loaded with `preload` (see `HudScene` and `CpuHpBarScene` constants in `demo.gd`).
+- `Gate._gates_by_graph_vertex` is a static Dictionary — it persists across scene reloads within the same process. Gates unregister themselves in `_exit_tree`, so this is safe as long as gates are scene nodes (not orphaned).
 
 ## Verification
-
-Verify global class registration:
 
     cd ludum-dare-59
     godot --headless --editor --quit
 
-Expected: Godot registers global classes `Graph` and `GraphVertex`, exits 0. Unrelated `godot_mcp` warnings or shutdown errors are normal and not caused by graph scripts.
+Expected: Godot registers global classes `Graph` and `GraphVertex`, exits 0. Unrelated `godot_mcp` warnings or shutdown errors are normal.
