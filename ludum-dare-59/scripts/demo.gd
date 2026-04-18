@@ -2,10 +2,12 @@ class_name DemoScene
 extends Node2D
 
 const ENEMY_SCENE := preload("res://scenes/enemies/enemy.tscn")
+const DEFAULT_GATE_SCENE := preload("res://scenes/gates/default_gate.tscn")
+const DEFAULT_GATE_TEXTURE := preload("res://assets/textures/gates/default_gate.svg")
 const GRID_SIZE := Vector2i(5, 3)
 const TILE_SIZE := Vector2(64.0, 64.0)
 const ORIGIN := Vector2(100.0, 100.0)
-# 2x2 block: x=3-4, y=1-2  →  ids 8,9 (row 1) and 13,14 (row 2)
+# 2x2 block: x=3-4, y=1-2  -> ids 8,9 (row 1) and 13,14 (row 2)
 const CPU_NODE_IDS := [8, 9, 13, 14]
 const SPAWNER_NODE_IDS := [0, 10]
 
@@ -13,11 +15,28 @@ const _TRACKS := "res://assets/textures/tracks/"
 const _STARTS := "res://assets/textures/start/"
 
 var _graph: Graph
+var _placing_default_gate := false
+var _default_gate_button: Button
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		return
+
+	if not _placing_default_gate or not event is InputEventMouseButton:
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+
+	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if vertex_id == -1:
+		return
+
+	if _place_default_gate(vertex_id):
+		_set_gate_placement_enabled(false)
 
 
 func _ready() -> void:
@@ -31,6 +50,7 @@ func _ready() -> void:
 		cpu_vertices.append(cv)
 
 	_place_visuals(cpu_vertices)
+	_create_gate_button()
 
 
 func _place_visuals(cpu_vertices: Array[CpuVertex]) -> void:
@@ -57,7 +77,7 @@ func _place_visuals(cpu_vertices: Array[CpuVertex]) -> void:
 
 		add_child(tile)
 
-	# Single cpu sprite centered on the 2x2 block, scaled to cover 2×2 tiles
+	# Single cpu sprite centered on the 2x2 block, scaled to cover 2x2 tiles.
 	var tl := _graph.get_node_by_id(CPU_NODE_IDS[0])
 	var br := _graph.get_node_by_id(CPU_NODE_IDS[3])
 	var cpu_sprite := Sprite2D.new()
@@ -81,6 +101,76 @@ func _create_tile(vertex: GraphVertex, cpu_vertices: Array[CpuVertex]) -> BaseTi
 		return CoreTile.new()
 
 	return BaseTile.new()
+
+
+func _create_gate_button() -> void:
+	var ui_layer := CanvasLayer.new()
+	ui_layer.name = "UI"
+	add_child(ui_layer)
+
+	var root := Control.new()
+	root.name = "Root"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_layer.add_child(root)
+
+	var button := Button.new()
+	button.name = "DefaultGateButton"
+	button.icon = DEFAULT_GATE_TEXTURE
+	button.expand_icon = true
+	button.toggle_mode = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = "Place default gate"
+	button.custom_minimum_size = Vector2(64.0, 64.0)
+	button.anchor_left = 1.0
+	button.anchor_right = 1.0
+	button.offset_left = -80.0
+	button.offset_top = 16.0
+	button.offset_right = -16.0
+	button.offset_bottom = 80.0
+	button.pressed.connect(_on_default_gate_button_pressed)
+	root.add_child(button)
+	_default_gate_button = button
+
+
+func _on_default_gate_button_pressed() -> void:
+	_set_gate_placement_enabled(_default_gate_button.button_pressed)
+
+
+func _set_gate_placement_enabled(enabled: bool) -> void:
+	_placing_default_gate = enabled
+	if _default_gate_button != null:
+		_default_gate_button.set_pressed_no_signal(enabled)
+
+
+func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
+	var local_position := global_position - ORIGIN
+	if local_position.x < 0.0 or local_position.y < 0.0:
+		return -1
+
+	var cell := Vector2i(
+		floori(local_position.x / TILE_SIZE.x),
+		floori(local_position.y / TILE_SIZE.y)
+	)
+	if cell.x < 0 or cell.x >= GRID_SIZE.x or cell.y < 0 or cell.y >= GRID_SIZE.y:
+		return -1
+
+	var vertex_id := cell.y * GRID_SIZE.x + cell.x
+	if vertex_id in CPU_NODE_IDS:
+		return -1
+
+	return vertex_id
+
+
+func _place_default_gate(vertex_id: int) -> bool:
+	if Gate.get_gate(_graph, vertex_id) != null:
+		return false
+
+	var gate := DEFAULT_GATE_SCENE.instantiate() as Gate
+	gate.graph = _graph
+	gate.vertex_id = vertex_id
+	add_child(gate)
+	return true
 
 
 func _connection_key(vertex: GraphVertex) -> int:
