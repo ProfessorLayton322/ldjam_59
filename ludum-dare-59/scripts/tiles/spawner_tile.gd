@@ -7,8 +7,6 @@ extends BaseTile
 @export var spawn_interval: float = 1.0
 @export var enemy_scene: PackedScene
 
-var tiles_by_node_id: Dictionary = {}
-
 
 func _ready() -> void:
 	var timer := Timer.new()
@@ -32,7 +30,6 @@ func OnTrigger(source: Node = null) -> void:
 	enemy.graph = graph
 	enemy.cpu_vertices = cpu_vertices
 	enemy.current_node_index = node_index
-	enemy.tiles_by_node_id = tiles_by_node_id
 	enemy.position = graph.nodes[node_index].position
 	get_parent().add_child(enemy)
 
