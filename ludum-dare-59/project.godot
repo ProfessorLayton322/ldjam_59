@@ -18,6 +18,13 @@ config/icon="res://icon.svg"
 [autoload]
 
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
+ResolutionManager="*res://scripts/resolution_manager.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/resizable=true
 
 [editor_plugins]
 
@@ -29,11 +36,6 @@ bind_mode=1
 custom_bind_ip="0.0.0.0"
 port_override_enabled=false
 port_override=6550
-
-[display]
-
-window/size/viewport_width=1920
-window/size/viewport_height=1080
 
 [rendering]
 
