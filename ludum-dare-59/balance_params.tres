@@ -1,21 +1,19 @@
-[gd_resource type="Resource" script_class="BalanceParams" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="BalanceParams" load_steps=12 format=3 uid="uid://3qxn6kw7v1p"]
 
-[ext_resource type="Script" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
-[ext_resource type="Script" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
+[ext_resource type="Script" uid="uid://c6csnsosm7dfa" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
+[ext_resource type="Script" uid="uid://cya641xsabq38" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_barricade.tres" id="3_barricade"]
+[ext_resource type="Script" uid="uid://dc2ke2b6entve" path="res://scripts/resources/gate_definition.gd" id="3_vh0te"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_ballista.tres" id="4_ballista"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_tar.tres" id="5_tar"]
-[ext_resource type="Resource" path="res://scripts/resources/spawner_cfg_default.tres" id="6_spawner_cfg"]
+[ext_resource type="Resource" uid="uid://cqvhan4kpp86q" path="res://scripts/resources/spawner_cfg_default.tres" id="6_spawner_cfg"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_divider.tres" id="7_divider"]
 
 [sub_resource type="Resource" id="EnemyParams_crytter"]
 script = ExtResource("2_enemy_params")
 id = "crytter"
-damage = 1
 max_hp = 8
 move_duration = 0.7
-can_stun_gate = false
-gate_stun_duration = 3.0
 modulate = Color(0.4, 1, 0.4, 1)
 
 [sub_resource type="Resource" id="EnemyParams_raider_stunner"]
@@ -25,7 +23,6 @@ damage = 2
 max_hp = 15
 move_duration = 1.0
 can_stun_gate = true
-gate_stun_duration = 3.0
 modulate = Color(0.95, 0.85, 0.2, 1)
 
 [sub_resource type="Resource" id="EnemyParams_brute"]
@@ -34,16 +31,10 @@ id = "brute"
 damage = 4
 max_hp = 24
 move_duration = 1.5
-can_stun_gate = false
-gate_stun_duration = 3.0
 modulate = Color(1, 0.3, 0.3, 1)
 
 [resource]
 script = ExtResource("1_balance_params")
-max_temperature = 38
-cpu_hp = 20
-trigger_interval = 1.0
-gate_placement_radius = 32.0
-gate_definitions = Array[GateDefinition]([ExtResource("3_barricade"), ExtResource("4_ballista"), ExtResource("5_tar"), ExtResource("7_divider")])
-enemy_params = Array[EnemyParams]([SubResource("EnemyParams_crytter"), SubResource("EnemyParams_raider_stunner"), SubResource("EnemyParams_brute")])
+gate_definitions = Array[ExtResource("3_vh0te")]([ExtResource("3_barricade"), ExtResource("4_ballista"), ExtResource("5_tar"), ExtResource("7_divider")])
+enemy_params = Array[ExtResource("2_enemy_params")]([SubResource("EnemyParams_crytter"), SubResource("EnemyParams_raider_stunner"), SubResource("EnemyParams_brute")])
 default_spawner_cfg = ExtResource("6_spawner_cfg")

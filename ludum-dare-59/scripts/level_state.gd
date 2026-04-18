@@ -1,6 +1,7 @@
 extends Node
 
 const LEVELS: Array[LevelDefinition] = [
+	preload("res://scripts/resources/levels/level_01.tres"),
 	preload("res://scripts/resources/levels/level_02.tres"),
 ]
 
