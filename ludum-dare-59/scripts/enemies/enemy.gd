@@ -6,6 +6,7 @@ extends Node2D
 @export var current_node_index: int = -1
 @export var move_duration: float = 3.0
 
+var tiles_by_node_id: Dictionary = {}
 var path: Array[int] = []
 
 var _active_tween: Tween
@@ -130,6 +131,9 @@ func _move_to_next_node() -> void:
 func _on_move_finished(reached_node_index: int) -> void:
 	_active_tween = null
 	current_node_index = reached_node_index
+	_enter_current_node()
+	if is_queued_for_deletion():
+		return
 
 	if not path.is_empty() and path[0] == reached_node_index:
 		path.pop_front()
@@ -141,6 +145,18 @@ func _on_move_finished(reached_node_index: int) -> void:
 
 func _get_node_position(node_index: int) -> Vector2:
 	return graph.nodes[node_index].position
+
+
+func _enter_current_node() -> void:
+	if not _has_valid_node_index(current_node_index):
+		return
+
+	var node_id := graph.nodes[current_node_index].id
+	var tile := tiles_by_node_id.get(node_id) as BaseTile
+	if tile == null:
+		return
+
+	tile.OnEnter(self)
 
 
 func _has_valid_node_index(node_index: int) -> bool:
