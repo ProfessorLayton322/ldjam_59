@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PCB tile background -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- IC package body -->
+  <rect x="10" y="14" width="44" height="36" rx="3" fill="#1a1a2e" stroke="#4444aa" stroke-width="2"/>
+  <!-- IC notch -->
+  <path d="M30,14 Q32,11 34,14" fill="#1a1a2e" stroke="#4444aa" stroke-width="1.5"/>
+  <!-- AND gate symbol drawn on chip -->
+  <!-- Gate body: flat left, rounded right -->
+  <path d="M20,26 L20,38 L30,38 Q40,38 40,32 Q40,26 30,26 Z" fill="none" stroke="#00ccff" stroke-width="2"/>
+  <!-- Input pins -->
+  <line x1="14" y1="29" x2="20" y2="29" stroke="#00ccff" stroke-width="1.5"/>
+  <line x1="14" y1="35" x2="20" y2="35" stroke="#00ccff" stroke-width="1.5"/>
+  <!-- Output pin -->
+  <line x1="40" y1="32" x2="46" y2="32" stroke="#00ccff" stroke-width="1.5"/>
+  <!-- IC legs left -->
+  <rect x="4" y="22" width="6" height="3" fill="#c8a020"/>
+  <rect x="4" y="30" width="6" height="3" fill="#c8a020"/>
+  <rect x="4" y="38" width="6" height="3" fill="#c8a020"/>
+  <!-- IC legs right -->
+  <rect x="54" y="22" width="6" height="3" fill="#c8a020"/>
+  <rect x="54" y="30" width="6" height="3" fill="#c8a020"/>
+  <rect x="54" y="38" width="6" height="3" fill="#c8a020"/>
+  <!-- Label -->
+  <text x="32" y="57" font-family="monospace" font-size="7" fill="#00ff88" text-anchor="middle">AND</text>
+</svg>

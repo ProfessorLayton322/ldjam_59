@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PCB background -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <!-- Solder mask texture -->
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- Copper trace horizontal -->
+  <rect x="0" y="22" width="64" height="20" fill="#b8860b"/>
+  <rect x="0" y="24" width="64" height="16" fill="#d4a017"/>
+  <!-- Trace edge highlights -->
+  <rect x="0" y="23" width="64" height="2" fill="#e8c040" opacity="0.5"/>
+  <!-- Via pads on edges -->
+  <circle cx="2" cy="32" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
+  <circle cx="62" cy="32" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
+  <!-- Grid dots -->
+  <circle cx="16" cy="16" r="1" fill="#2a6a2a" opacity="0.5"/>
+  <circle cx="48" cy="16" r="1" fill="#2a6a2a" opacity="0.5"/>
+  <circle cx="16" cy="48" r="1" fill="#2a6a2a" opacity="0.5"/>
+  <circle cx="48" cy="48" r="1" fill="#2a6a2a" opacity="0.5"/>
+</svg>

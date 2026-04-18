@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PCB tile background -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- Electrolytic capacitor (cylindrical, top-down view hint) -->
+  <!-- Body cylinder side view -->
+  <rect x="20" y="12" width="24" height="38" rx="4" fill="#2255aa" stroke="#4488cc" stroke-width="1.5"/>
+  <!-- Top cap -->
+  <ellipse cx="32" cy="14" rx="12" ry="4" fill="#3366cc"/>
+  <!-- K stripe (negative) -->
+  <rect x="34" y="12" width="10" height="38" rx="0" fill="#1a1a3a" opacity="0.6"/>
+  <!-- Plus symbol -->
+  <text x="26" y="36" font-family="monospace" font-size="12" fill="#88ccff" text-anchor="middle">+</text>
+  <!-- Leads at bottom -->
+  <rect x="25" y="50" width="4" height="10" fill="#c8a020"/>
+  <rect x="35" y="50" width="4" height="10" fill="#c8a020"/>
+  <!-- Capacitor schematic on top cap -->
+  <text x="32" y="9" font-family="monospace" font-size="5" fill="#aaddff" text-anchor="middle">CAP</text>
+  <!-- Label -->
+  <text x="32" y="62" font-family="monospace" font-size="5" fill="#00ff88" text-anchor="middle">CAPACITOR</text>
+</svg>

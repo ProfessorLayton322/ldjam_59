@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PCB tile background -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- Lead wires -->
+  <rect x="4" y="30" width="12" height="4" fill="#c8a020"/>
+  <rect x="48" y="30" width="12" height="4" fill="#c8a020"/>
+  <!-- Resistor body -->
+  <rect x="16" y="22" width="32" height="20" rx="3" fill="#d4a060"/>
+  <!-- Color bands -->
+  <rect x="21" y="22" width="4" height="20" fill="#8B0000" opacity="0.9"/>
+  <rect x="27" y="22" width="4" height="20" fill="#333" opacity="0.9"/>
+  <rect x="33" y="22" width="4" height="20" fill="#ff6600" opacity="0.9"/>
+  <rect x="39" y="22" width="4" height="20" fill="#ffd700" opacity="0.85"/>
+  <!-- Body shading -->
+  <rect x="16" y="22" width="32" height="4" rx="3" fill="#e8c080" opacity="0.5"/>
+  <!-- Label -->
+  <text x="32" y="56" font-family="monospace" font-size="6" fill="#00ff88" text-anchor="middle">RESISTOR</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PCB background -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- Corner: comes from bottom, goes left -->
+  <!-- Vertical segment (bottom half) -->
+  <rect x="22" y="32" width="20" height="32" fill="#b8860b"/>
+  <rect x="24" y="32" width="16" height="32" fill="#d4a017"/>
+  <!-- Horizontal segment (left half) -->
+  <rect x="0" y="22" width="32" height="20" fill="#b8860b"/>
+  <rect x="0" y="24" width="32" height="16" fill="#d4a017"/>
+  <!-- Corner fillet -->
+  <path d="M42,22 Q22,22 22,42 L22,64 L24,64 L24,42 Q24,24 42,24 Z" fill="#d4a017"/>
+  <!-- Via pad at bottom -->
+  <circle cx="32" cy="62" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
+  <!-- Via pad at left -->
+  <circle cx="2" cy="32" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
+</svg>

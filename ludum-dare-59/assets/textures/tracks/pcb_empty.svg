@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Empty PCB tile (buildable area / ground) -->
+  <rect width="64" height="64" fill="#1e3a1e"/>
+  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
+  <!-- Subtle grid of PCB registration dots -->
+  <circle cx="16" cy="16" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="32" cy="16" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="48" cy="16" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="16" cy="32" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="32" cy="32" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="48" cy="32" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="16" cy="48" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="32" cy="48" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <circle cx="48" cy="48" r="1.5" fill="#2a7a2a" opacity="0.6"/>
+  <!-- Faint crosshatch -->
+  <line x1="0" y1="64" x2="64" y2="0" stroke="#225522" stroke-width="0.3" opacity="0.3"/>
+  <line x1="0" y1="0" x2="64" y2="64" stroke="#225522" stroke-width="0.3" opacity="0.3"/>
+</svg>
