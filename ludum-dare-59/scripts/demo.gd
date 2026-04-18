@@ -16,7 +16,7 @@ const DEFAULT_GATE_TEMPERATURE_COST := 1
 @export var tilemap_layer := 0
 @export var require_mutual_connections := true
 
-const CPU_HP := 10
+const CPU_HP := 20
 
 var _graph: Graph
 var _tiles: Array[BaseTile] = []
@@ -435,5 +435,25 @@ func _on_enemy_reached_cpu(damage: int) -> void:
 	_cpu_hp = max(_cpu_hp, 0)
 	if _cpu_hp_bar != null:
 		_cpu_hp_bar.set_hp(_cpu_hp, CPU_HP)
+		_spawn_damage_label(damage, _cpu_hp_bar.position)
 	if _cpu_hp <= 0:
 		_hud.show_game_over()
+
+
+func _spawn_damage_label(damage: int, world_pos: Vector2) -> void:
+	var label := Label.new()
+	label.text = "-%d" % damage
+	label.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_font_size_override("font_size", 18)
+	label.position = world_pos + Vector2(-12.0, 0.0)
+	label.z_index = 10
+	add_child(label)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", world_pos.y - 40.0, 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 1.0).set_trans(Tween.TRANS_LINEAR)
+	tween.chain().tween_callback(label.queue_free)
