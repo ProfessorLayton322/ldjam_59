@@ -62,6 +62,8 @@ func _spawn_from_random_spawner() -> void:
 		return
 
 	var spawner := _spawners[_rng.randi_range(0, _spawners.size() - 1)]
+	if cfg != null and not cfg.enemy_scenes.is_empty():
+		spawner.enemy_scene = cfg.enemy_scenes[_rng.randi_range(0, cfg.enemy_scenes.size() - 1)]
 	spawner.OnTrigger(self)
 
 
