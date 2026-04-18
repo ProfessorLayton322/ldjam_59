@@ -1,12 +1,5 @@
-[gd_scene load_steps=26 format=3 uid="uid://dinkrnfpvqyse"]
+[gd_scene load_steps=20 format=3 uid="uid://wgowa33ej31c"]
 
-[ext_resource type="Texture2D" uid="uid://cw10n4prubm64" path="res://assets/textures/tracks/pcb_empty.svg" id="1_4vkub"]
-[ext_resource type="Texture2D" uid="uid://bj0wicc561gtv" path="res://assets/textures/tracks/track_corner_ne.svg" id="2_1ywam"]
-[ext_resource type="Texture2D" uid="uid://fhxt53e7pryv" path="res://assets/textures/tracks/track_straight_h.svg" id="3_ba3wm"]
-[ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="4_3hvnp"]
-[ext_resource type="Texture2D" uid="uid://b4kre37knet61" path="res://assets/textures/towers/resistor.svg" id="5_sbkjb"]
-[ext_resource type="Texture2D" uid="uid://ehje7t8cs38k" path="res://assets/textures/start/start_NE.svg" id="6_6ydoj"]
-[ext_resource type="Texture2D" uid="uid://c8iu0xx6dhssk" path="res://assets/textures/tracks/track_t_junction.svg" id="7_rhq5j"]
 [ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="9_none"]
 [ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="10_w"]
 [ext_resource type="PackedScene" uid="uid://trkvariant02" path="res://scenes/tiles/track_e.tscn" id="11_e"]
@@ -23,8 +16,9 @@
 [ext_resource type="PackedScene" uid="uid://trkvariant0d" path="res://scenes/tiles/track_nsw.tscn" id="22_nsw"]
 [ext_resource type="PackedScene" uid="uid://trkvariant0e" path="res://scenes/tiles/track_nse.tscn" id="23_nse"]
 [ext_resource type="PackedScene" uid="uid://trkvariant0f" path="res://scenes/tiles/track_nsew.tscn" id="24_nsew"]
+[ext_resource type="Script" uid="uid://bayu5isovlve6" path="res://scenes/example_graph_debug.gd" id="25_debug"]
 
-[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_ba3wm"]
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_14lfh"]
 resource_name = "test"
 scenes/0/scene = ExtResource("9_none")
 scenes/1/scene = ExtResource("10_w")
@@ -45,156 +39,13 @@ scenes/15/scene = ExtResource("24_nsew")
 
 [sub_resource type="TileSet" id="TileSet_3hvnp"]
 tile_size = Vector2i(64, 64)
-sources/0 = SubResource("TileSetScenesCollectionSource_ba3wm")
+sources/0 = SubResource("TileSetScenesCollectionSource_14lfh")
 
-[node name="PcbEmpty" type="Sprite2D"]
-position = Vector2(160, 119)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="."]
-position = Vector2(-63.999992, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2"]
-position = Vector2(127, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(-383, 64)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(-384, 64)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty3" type="Sprite2D" parent="."]
-position = Vector2(0, 128)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty3"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty3/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty3/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty3/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="PcbEmpty2" type="Sprite2D" parent="PcbEmpty3/PcbEmpty2/PcbEmpty2/PcbEmpty2/PcbEmpty2"]
-position = Vector2(64, 0)
-texture = ExtResource("1_4vkub")
-
-[node name="TrackCornerNe" type="Sprite2D" parent="."]
-position = Vector2(64, 0)
-texture = ExtResource("2_1ywam")
-
-[node name="TrackStraightH" type="Sprite2D" parent="."]
-position = Vector2(128, 0)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackStraightH2" type="Sprite2D" parent="."]
-position = Vector2(192, 0)
-texture = ExtResource("3_ba3wm")
-
-[node name="Cpu" type="Sprite2D" parent="."]
-position = Vector2(288, 32)
-texture = ExtResource("4_3hvnp")
-
-[node name="TrackStraightH3" type="Sprite2D" parent="."]
-position = Vector2(128, 64)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackStraightH4" type="Sprite2D" parent="."]
-position = Vector2(192, 64)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackCornerNe2" type="Sprite2D" parent="."]
-position = Vector2(-64, 64)
-texture = ExtResource("2_1ywam")
-
-[node name="Resistor" type="Sprite2D" parent="."]
-position = Vector2(192, 128)
-texture = ExtResource("5_sbkjb")
-
-[node name="TrackCornerNe3" type="Sprite2D" parent="."]
-position = Vector2(256, 128)
-rotation = 3.1415927
-texture = ExtResource("2_1ywam")
-
-[node name="TrackStraightH5" type="Sprite2D" parent="."]
-position = Vector2(128, 128)
-texture = ExtResource("3_ba3wm")
-
-[node name="StartNe" type="Sprite2D" parent="."]
-position = Vector2(-64, 128)
-texture = ExtResource("6_6ydoj")
-
-[node name="TrackStraightH6" type="Sprite2D" parent="."]
-position = Vector2(0, 64)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackStraightH7" type="Sprite2D" parent="."]
-position = Vector2(0, 128)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackStraightH8" type="Sprite2D" parent="."]
-position = Vector2(64, 128)
-texture = ExtResource("3_ba3wm")
-
-[node name="TrackTJunction" type="Sprite2D" parent="."]
-position = Vector2(64, 64)
-rotation = 3.1415927
-texture = ExtResource("7_rhq5j")
+[node name="PcbEmpty" type="Node2D"]
+script = ExtResource("25_debug")
 
 [node name="TileMap" type="TileMap" parent="."]
 position = Vector2(541, 306)
 tile_set = SubResource("TileSet_3hvnp")
 format = 2
-layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 196608, 2, 0, 196608, 3, 0, 327680, 65536, 0, 786432, 65539, 0, 786432, 131072, 0, 655360, 131073, 0, 196608, 131074, 0, 196608, 131075, 0, 589824, 131070, 0, 131072, 131069, 0, 655360, 65533, 0, 393216, 65534, 0, 196608, 65535, 0, 327680, 131071, 0, 589824)
+layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 196608, 2, 0, 196608, 3, 0, 327680, 65536, 0, 786432, 65539, 0, 786432, 131072, 0, 655360, 131073, 0, 196608, 131074, 0, 196608, 131075, 0, 589824, 131070, 0, 196608, 131069, 0, 655360, 65533, 0, 393216, 65534, 0, 196608, 65535, 0, 327680, 131071, 0, 589824)
