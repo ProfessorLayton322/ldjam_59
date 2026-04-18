@@ -48,9 +48,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 
-	if event is InputEventKey and event.keycode == KEY_SPACE and event.pressed and not event.echo:
-		_set_pause_mode_enabled(not get_tree().paused)
-		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key := event as InputEventKey
+		match key.keycode:
+			KEY_SPACE:
+				_set_pause_mode_enabled(not get_tree().paused)
+				return
+			KEY_1, KEY_2, KEY_3:
+				var idx := key.keycode - KEY_1
+				if idx < GATE_DEFINITIONS.size():
+					var def: Resource = GATE_DEFINITIONS[idx]
+					var btn := _gate_buttons.get(def.id) as Button
+					if btn != null and not btn.disabled:
+						btn.set_pressed_no_signal(not btn.button_pressed)
+						_on_gate_button_pressed(def, btn)
+				return
+			KEY_DELETE:
+				_set_delete_mode_enabled(not _delete_mode)
+				return
+			KEY_M:
+				_set_move_mode_enabled(not _move_mode)
+				return
 
 	if not event is InputEventMouseButton:
 		return
@@ -85,7 +103,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	if _moving_gate != null:
-		_moving_gate.position = to_local(get_global_mouse_position())
+		_moving_gate.position = _nearest_wire_vertex_position(get_global_mouse_position())
 
 
 func _ready() -> void:
@@ -399,6 +417,7 @@ func _create_gate_buttons() -> void:
 		button.pressed.connect(_on_gate_button_pressed.bind(definition, button))
 		root.add_child(button)
 		_gate_buttons[definition.id] = button
+		_add_key_hint(root, str(i + 1), button.offset_top)
 
 	var delete_btn := Button.new()
 	delete_btn.name = "DeleteButton"
@@ -416,6 +435,7 @@ func _create_gate_buttons() -> void:
 	delete_btn.pressed.connect(_on_delete_button_pressed)
 	root.add_child(delete_btn)
 	_delete_button = delete_btn
+	_add_key_hint(root, "Del", delete_btn.offset_top)
 
 	var move_btn := Button.new()
 	move_btn.name = "MoveButton"
@@ -433,6 +453,7 @@ func _create_gate_buttons() -> void:
 	move_btn.pressed.connect(_on_move_button_pressed)
 	root.add_child(move_btn)
 	_move_button = move_btn
+	_add_key_hint(root, "M", move_btn.offset_top)
 
 	var pause_btn := Button.new()
 	pause_btn.name = "PauseButton"
@@ -450,9 +471,30 @@ func _create_gate_buttons() -> void:
 	pause_btn.pressed.connect(_on_pause_button_pressed)
 	root.add_child(pause_btn)
 	_pause_button = pause_btn
+	_add_key_hint(root, "Spc", pause_btn.offset_top)
 
 	_create_temperature_meter(root)
 	_update_temperature_meter()
+
+
+func _add_key_hint(root: Control, key_text: String, top_offset: float) -> void:
+	var hint := Label.new()
+	hint.text = "[%s]" % key_text
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 0.9))
+	hint.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.8))
+	hint.add_theme_constant_override("shadow_offset_x", 1)
+	hint.add_theme_constant_override("shadow_offset_y", 1)
+	hint.add_theme_font_size_override("font_size", 11)
+	hint.anchor_left = 1.0
+	hint.anchor_right = 1.0
+	hint.offset_left = -80.0 - 36.0
+	hint.offset_right = -80.0
+	hint.offset_top = top_offset + 26.0
+	hint.offset_bottom = top_offset + 44.0
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	root.add_child(hint)
 
 
 func _create_temperature_meter(root: Control) -> void:
@@ -528,6 +570,20 @@ func _set_gate_placement_enabled(enabled: bool, definition: Resource = null) -> 
 		if button == null:
 			continue
 		button.set_pressed_no_signal(_selected_gate_definition == gate_definition)
+
+
+func _nearest_wire_vertex_position(global_position: Vector2) -> Vector2:
+	var local_position := to_local(global_position)
+	var best_vertex: GraphVertex
+	var best_distance := INF
+	for vertex: GraphVertex in _graph.nodes:
+		if not (_tiles_by_node_id.get(vertex.id) is WireTile):
+			continue
+		var distance := local_position.distance_to(vertex.position)
+		if distance < best_distance:
+			best_vertex = vertex
+			best_distance = distance
+	return best_vertex.position if best_vertex != null else local_position
 
 
 func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:

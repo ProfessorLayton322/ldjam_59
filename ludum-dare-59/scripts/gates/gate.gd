@@ -27,6 +27,7 @@ static var _gates_by_graph_vertex: Dictionary = {}
 			return
 
 		_unregister_gate()
+		_release_stalled_enemies()
 		vertex_id = value
 		_update_position_from_vertex()
 		_register_gate()
@@ -63,6 +64,7 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	_unregister_gate()
+	_release_stalled_enemies()
 
 
 func on_enter(enemy: Enemy) -> void:
