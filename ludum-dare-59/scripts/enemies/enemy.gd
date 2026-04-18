@@ -4,8 +4,10 @@ extends Node2D
 @export var graph: Graph
 @export var cpu_vertices: Array[CpuVertex] = []
 @export var current_node_index: int = -1
+@export var balance_id := "enemy"
 @export var move_duration: float = 3.0
 @export var damage: int = 1
+@export var max_hp: int = 10
 @export var hp: int = 10
 @export var can_stun_gate := false
 @export var gate_stun_duration := 3.0
@@ -22,6 +24,7 @@ var _movement_interrupted := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	_apply_balance_params()
 	_ensure_icon()
 	start_pathing()
 
@@ -211,6 +214,25 @@ func release_from_gate(gate: Gate) -> void:
 
 func _on_gate_stun_consumed(_gate: Gate) -> void:
 	pass
+
+
+func _get_balance_id() -> String:
+	return balance_id
+
+
+func _apply_balance_params() -> void:
+	var params := BalanceManager.get_enemy_params(_get_balance_id())
+	if params == null:
+		return
+
+	balance_id = params.id
+	damage = params.damage
+	max_hp = params.max_hp
+	hp = max_hp
+	move_duration = params.move_duration
+	can_stun_gate = params.can_stun_gate
+	gate_stun_duration = params.gate_stun_duration
+	modulate = params.modulate
 
 
 func _get_current_move_duration() -> float:

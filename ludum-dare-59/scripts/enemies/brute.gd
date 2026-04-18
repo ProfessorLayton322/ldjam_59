@@ -2,9 +2,5 @@ class_name Brute
 extends Enemy
 
 
-func _ready() -> void:
-	damage = 4
-	hp = 24
-	move_duration = 1.5
-	modulate = Color(1.0, 0.3, 0.3)
-	super._ready()
+func _get_balance_id() -> String:
+	return "brute"
