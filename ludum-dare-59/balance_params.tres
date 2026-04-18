@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BalanceParams" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="BalanceParams" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
 [ext_resource type="Script" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_ballista.tres" id="4_ballista"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_tar.tres" id="5_tar"]
 [ext_resource type="Resource" path="res://scripts/resources/spawner_cfg_default.tres" id="6_spawner_cfg"]
+[ext_resource type="Resource" path="res://scripts/resources/gate_def_divider.tres" id="7_divider"]
 
 [sub_resource type="Resource" id="EnemyParams_crytter"]
 script = ExtResource("2_enemy_params")
@@ -43,6 +44,6 @@ max_temperature = 38
 cpu_hp = 20
 trigger_interval = 1.0
 gate_placement_radius = 32.0
-gate_definitions = Array[GateDefinition]([ExtResource("3_barricade"), ExtResource("4_ballista"), ExtResource("5_tar")])
+gate_definitions = Array[GateDefinition]([ExtResource("3_barricade"), ExtResource("4_ballista"), ExtResource("5_tar"), ExtResource("7_divider")])
 enemy_params = Array[EnemyParams]([SubResource("EnemyParams_crytter"), SubResource("EnemyParams_raider_stunner"), SubResource("EnemyParams_brute")])
 default_spawner_cfg = ExtResource("6_spawner_cfg")

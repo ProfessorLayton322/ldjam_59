@@ -68,7 +68,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_SPACE:
 				_set_pause_mode_enabled(not get_tree().paused)
 				return
-			KEY_1, KEY_2, KEY_3:
+			KEY_1, KEY_2, KEY_3, KEY_4:
 				var idx := key.keycode - KEY_1
 				if idx < _get_gate_definitions().size():
 					var def: Resource = _get_gate_definitions()[idx]

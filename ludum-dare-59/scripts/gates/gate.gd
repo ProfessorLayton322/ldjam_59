@@ -97,6 +97,15 @@ func on_enter(enemy: Enemy) -> void:
 		if enemy.is_queued_for_deletion():
 			return
 
+	if definition.halve_hp_round_up:
+		var target_hp := ceili(float(enemy.hp) / 2.0)
+		var damage_amount := enemy.hp - target_hp
+		if damage_amount > 0:
+			enemy.apply_damage(damage_amount)
+			_spawn_damage_label(damage_amount, enemy.position)
+			if enemy.is_queued_for_deletion():
+				return
+
 	if definition.slow_extra_seconds_per_tile > 0.0 and definition.slow_duration > 0.0:
 		enemy.apply_slow(definition.slow_extra_seconds_per_tile, definition.slow_duration)
 
