@@ -143,6 +143,7 @@ func _ready() -> void:
 
 	_graph = Graph.new()
 	_build_graph_from_tilemap()
+	_center_camera_on_graph()
 
 	await get_tree().process_frame
 	_collect_tiles()
@@ -194,6 +195,17 @@ func _build_graph_from_tilemap() -> void:
 		vertex.position = to_local(vertex.position)
 
 	print("Demo scene: parsed %d graph nodes" % _graph.nodes.size())
+
+
+func _center_camera_on_graph() -> void:
+	if _camera == null or _graph == null or _graph.nodes.is_empty():
+		return
+
+	var bounds := Rect2(_graph.nodes[0].position, Vector2.ZERO)
+	for vertex: GraphVertex in _graph.nodes:
+		bounds = bounds.expand(vertex.position)
+
+	_camera.position = bounds.get_center()
 
 
 func _build_cpu_vertices() -> Array[CpuVertex]:
@@ -701,6 +713,8 @@ func _cancel_moving_gate() -> void:
 func _delete_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
 	if gate == null:
+		return
+	if gate.is_stunned():
 		return
 	_change_temperature(-gate.get_power_cost())
 	gate.queue_free()
