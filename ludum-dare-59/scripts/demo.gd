@@ -11,9 +11,7 @@ const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
 const GATE_PLACEMENT_RADIUS := 32.0
 const MAX_TEMPERATURE := 38
-const DEFAULT_LEVEL := preload("res://scripts/resources/levels/demo_level.tres")
-
-@export var level: LevelDefinition = DEFAULT_LEVEL
+@export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
 
@@ -157,8 +155,10 @@ func _ready() -> void:
 
 func _instantiate_level_board() -> bool:
 	if level == null:
-		push_error("Demo scene: no LevelDefinition assigned.")
-		return false
+		_level_board = self
+		print("Demo scene: using embedded level board from %s" % scene_file_path)
+		return true
+
 	if level.board_scene == null:
 		push_error("Demo scene: LevelDefinition '%s' has no board_scene." % level.title)
 		return false
@@ -171,16 +171,21 @@ func _instantiate_level_board() -> bool:
 
 
 func _build_graph_from_tilemap() -> void:
-	if level == null or _level_board == null:
+	if _level_board == null:
 		return
 
-	var tilemap := _level_board.get_node_or_null(level.tilemap_path)
+	var tilemap_path := ^"TileMap" if level == null else level.tilemap_path
+	var tilemap_layer := 0 if level == null else level.tilemap_layer
+	var require_mutual_connections := true if level == null else level.require_mutual_connections
+	var level_title := "embedded" if level == null else level.title
+
+	var tilemap := _level_board.get_node_or_null(tilemap_path)
 	if tilemap == null:
-		push_error("Demo scene: TileMap not found at %s in level '%s'" % [level.tilemap_path, level.title])
+		push_error("Demo scene: TileMap not found at %s in level %s" % [tilemap_path, level_title])
 		return
 
-	print("Demo scene: parsing graph from %s layer %d" % [tilemap.get_path(), level.tilemap_layer])
-	_graph.build_from_level(tilemap, level.tilemap_layer, level.require_mutual_connections, true)
+	print("Demo scene: parsing graph from %s layer %d" % [tilemap.get_path(), tilemap_layer])
+	_graph.build_from_level(tilemap, tilemap_layer, require_mutual_connections, true)
 	if _graph.nodes.is_empty():
 		push_error("Demo scene: TileMap at %s produced an empty graph" % tilemap.get_path())
 		return
