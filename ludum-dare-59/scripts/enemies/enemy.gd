@@ -6,7 +6,6 @@ extends Node2D
 @export var current_node_index: int = -1
 @export var move_duration: float = 3.0
 
-var tiles_by_node_id: Dictionary = {}
 var path: Array[int] = []
 
 var _active_tween: Tween
@@ -152,11 +151,11 @@ func _enter_current_node() -> void:
 		return
 
 	var node_id := graph.nodes[current_node_index].id
-	var tile := tiles_by_node_id.get(node_id) as BaseTile
-	if tile == null:
+	var gate := Gate.get_gate(graph, node_id)
+	if gate == null:
 		return
 
-	tile.OnEnter(self)
+	gate.on_enter(self)
 
 
 func _has_valid_node_index(node_index: int) -> bool:

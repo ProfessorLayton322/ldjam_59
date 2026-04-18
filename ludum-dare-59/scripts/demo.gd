@@ -3,6 +3,7 @@ extends Node2D
 
 const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
+const EXPECTED_SPAWNER_COUNT := 3
 
 @export var tilemap_path: NodePath = ^"TileMap"
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
@@ -12,6 +13,11 @@ const POSITION_MATCH_EPSILON := 1.0
 var _graph: Graph
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
 func _ready() -> void:
@@ -83,8 +89,11 @@ func _collect_tiles() -> void:
 		spawner_count,
 		cpu_count,
 	])
-	if spawner_count != 3:
-		push_warning("Demo scene: expected 3 spawner tiles from TileMap, found %d" % spawner_count)
+	if spawner_count != EXPECTED_SPAWNER_COUNT:
+		push_warning("Demo scene: expected %d spawner tiles from TileMap, found %d" % [
+			EXPECTED_SPAWNER_COUNT,
+			spawner_count,
+		])
 
 
 func _find_tiles(root: Node) -> Array[BaseTile]:
@@ -149,7 +158,6 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		var spawner := tile as SpawnerTile
 		spawner.graph = _graph
 		spawner.cpu_vertices = cpu_vertices
-		spawner.tiles_by_node_id = _tiles_by_node_id
 		spawner.spawn_parent = self
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
 

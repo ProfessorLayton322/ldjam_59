@@ -7,7 +7,6 @@ extends BaseTile
 @export var enemy_scene: PackedScene
 @export var auto_trigger := true
 
-var tiles_by_node_id: Dictionary = {}
 var spawn_parent: Node
 
 
@@ -44,7 +43,6 @@ func OnTrigger(source: Node = null) -> void:
 	enemy.graph = graph
 	enemy.cpu_vertices = cpu_vertices
 	enemy.current_node_index = node_index
-	enemy.tiles_by_node_id = tiles_by_node_id
 	enemy.position = graph.nodes[node_index].position
 	var parent := spawn_parent if spawn_parent != null else get_parent()
 	parent.add_child(enemy)
