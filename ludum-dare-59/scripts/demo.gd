@@ -11,7 +11,7 @@ const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
 const GATE_PLACEMENT_RADIUS := 32.0
 const EXPECTED_SPAWNER_COUNT := 3
-const MAX_TEMPERATURE := 19
+const MAX_TEMPERATURE := 38
 const DEFAULT_LEVEL := preload("res://scripts/resources/levels/demo_level.tres")
 
 @export var level: LevelDefinition = DEFAULT_LEVEL
@@ -28,6 +28,13 @@ var _spawn_enemy_manager: SpawnEnemyManager
 var _selected_gate_definition: Resource
 var _temperature := 0
 var _gate_buttons: Dictionary = {}
+var _delete_mode := false
+var _delete_button: Button
+var _move_mode := false
+var _move_button: Button
+var _moving_gate: Gate = null
+var _moving_gate_origin := -1
+var _pause_button: Button
 var _temperature_fill: ColorRect
 var _temperature_label: Label
 const HudScene := preload("res://scripts/hud.gd")
@@ -38,25 +45,52 @@ var _cpu_regions: Array[Dictionary] = []
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 
-	if _selected_gate_definition == null or not event is InputEventMouseButton:
+	if event is InputEventKey and event.keycode == KEY_SPACE and event.pressed and not event.echo:
+		_set_pause_mode_enabled(not get_tree().paused)
+		return
+
+	if not event is InputEventMouseButton:
 		return
 
 	var mouse_event := event as InputEventMouseButton
-	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+
+	if not mouse_event.pressed:
+		if _moving_gate != null:
+			_drop_moving_gate(get_global_mouse_position())
 		return
 
 	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
 	if vertex_id == -1:
 		return
 
+	if _delete_mode:
+		_delete_gate_at(vertex_id)
+		return
+
+	if _move_mode:
+		_pickup_gate_at(vertex_id)
+		return
+
+	if _selected_gate_definition == null:
+		return
+
 	if _place_gate(vertex_id, _selected_gate_definition):
 		_set_gate_placement_enabled(false)
 
 
+func _process(_delta: float) -> void:
+	if _moving_gate != null:
+		_moving_gate.position = to_local(get_global_mouse_position())
+
+
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	if not _instantiate_level_board():
 		return
 
@@ -221,6 +255,7 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 	if level != null and level.spawn_cfg != null:
 		_spawn_enemy_manager.cfg = level.spawn_cfg
 
+	_spawn_enemy_manager.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_spawn_enemy_manager.clear_spawners()
 	for tile: BaseTile in _tiles:
 		if not (tile is SpawnerTile):
@@ -313,6 +348,7 @@ func _start_trigger_timer() -> void:
 		timer.name = "TriggerTimer"
 		add_child(timer)
 
+	timer.process_mode = Node.PROCESS_MODE_PAUSABLE
 	timer.wait_time = TRIGGER_INTERVAL
 	timer.autostart = true
 	if not timer.timeout.is_connected(_trigger_tiles):
@@ -333,6 +369,7 @@ func _trigger_tiles() -> void:
 func _create_gate_buttons() -> void:
 	var ui_layer := CanvasLayer.new()
 	ui_layer.name = "UI"
+	ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(ui_layer)
 
 	var root := Control.new()
@@ -361,6 +398,57 @@ func _create_gate_buttons() -> void:
 		root.add_child(button)
 		_gate_buttons[definition.id] = button
 
+	var delete_btn := Button.new()
+	delete_btn.name = "DeleteButton"
+	delete_btn.text = "DEL"
+	delete_btn.toggle_mode = true
+	delete_btn.focus_mode = Control.FOCUS_NONE
+	delete_btn.tooltip_text = "Delete gate (refunds power)"
+	delete_btn.custom_minimum_size = Vector2(64.0, 64.0)
+	delete_btn.anchor_left = 1.0
+	delete_btn.anchor_right = 1.0
+	delete_btn.offset_left = -80.0
+	delete_btn.offset_top = 16.0 + float(GATE_DEFINITIONS.size()) * 72.0
+	delete_btn.offset_right = -16.0
+	delete_btn.offset_bottom = delete_btn.offset_top + 64.0
+	delete_btn.pressed.connect(_on_delete_button_pressed)
+	root.add_child(delete_btn)
+	_delete_button = delete_btn
+
+	var move_btn := Button.new()
+	move_btn.name = "MoveButton"
+	move_btn.text = "MOV"
+	move_btn.toggle_mode = true
+	move_btn.focus_mode = Control.FOCUS_NONE
+	move_btn.tooltip_text = "Move gate (drag to relocate)"
+	move_btn.custom_minimum_size = Vector2(64.0, 64.0)
+	move_btn.anchor_left = 1.0
+	move_btn.anchor_right = 1.0
+	move_btn.offset_left = -80.0
+	move_btn.offset_top = 16.0 + float(GATE_DEFINITIONS.size() + 1) * 72.0
+	move_btn.offset_right = -16.0
+	move_btn.offset_bottom = move_btn.offset_top + 64.0
+	move_btn.pressed.connect(_on_move_button_pressed)
+	root.add_child(move_btn)
+	_move_button = move_btn
+
+	var pause_btn := Button.new()
+	pause_btn.name = "PauseButton"
+	pause_btn.text = "II"
+	pause_btn.toggle_mode = true
+	pause_btn.focus_mode = Control.FOCUS_NONE
+	pause_btn.tooltip_text = "Pause / resume"
+	pause_btn.custom_minimum_size = Vector2(64.0, 64.0)
+	pause_btn.anchor_left = 1.0
+	pause_btn.anchor_right = 1.0
+	pause_btn.offset_left = -80.0
+	pause_btn.offset_top = 16.0 + float(GATE_DEFINITIONS.size() + 2) * 72.0
+	pause_btn.offset_right = -16.0
+	pause_btn.offset_bottom = pause_btn.offset_top + 64.0
+	pause_btn.pressed.connect(_on_pause_button_pressed)
+	root.add_child(pause_btn)
+	_pause_button = pause_btn
+
 	_create_temperature_meter(root)
 	_update_temperature_meter()
 
@@ -373,8 +461,8 @@ func _create_temperature_meter(root: Control) -> void:
 	meter.anchor_right = 1.0
 	meter.offset_left = -56.0
 	meter.offset_right = -16.0
-	meter.offset_top = 248.0
-	meter.offset_bottom = 408.0
+	meter.offset_top = 16.0 + float(GATE_DEFINITIONS.size() + 2) * 72.0 + 64.0 + 8.0
+	meter.offset_bottom = meter.offset_top + 160.0
 
 	var meter_style := StyleBoxFlat.new()
 	meter_style.bg_color = Color(0.08, 0.08, 0.08, 0.82)
@@ -429,6 +517,9 @@ func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
 func _set_gate_placement_enabled(enabled: bool, definition: Resource = null) -> void:
 	var next_definition: Resource = definition if definition != null else _selected_gate_definition
 	_selected_gate_definition = next_definition if enabled and _can_place_gate(next_definition) else null
+	if enabled and _selected_gate_definition != null:
+		_set_delete_mode_enabled(false)
+		_set_move_mode_enabled(false)
 
 	for gate_definition: Resource in GATE_DEFINITIONS:
 		var button := _gate_buttons.get(gate_definition.id) as Button
@@ -507,6 +598,90 @@ func _update_temperature_meter() -> void:
 		button.disabled = not can_place
 		if not can_place and _selected_gate_definition == definition:
 			_set_gate_placement_enabled(false)
+
+
+func _on_pause_button_pressed() -> void:
+	_set_pause_mode_enabled(_pause_button.button_pressed)
+
+
+func _set_pause_mode_enabled(enabled: bool) -> void:
+	get_tree().paused = enabled
+	if _pause_button != null:
+		_pause_button.set_pressed_no_signal(enabled)
+
+
+func _on_delete_button_pressed() -> void:
+	_set_delete_mode_enabled(_delete_button.button_pressed)
+
+
+func _set_delete_mode_enabled(enabled: bool) -> void:
+	_delete_mode = enabled
+	if enabled:
+		_set_gate_placement_enabled(false)
+		_set_move_mode_enabled(false)
+	if _delete_button != null:
+		_delete_button.set_pressed_no_signal(_delete_mode)
+
+
+func _on_move_button_pressed() -> void:
+	_set_move_mode_enabled(_move_button.button_pressed)
+
+
+func _set_move_mode_enabled(enabled: bool) -> void:
+	if not enabled and _moving_gate != null:
+		_cancel_moving_gate()
+	_move_mode = enabled
+	if enabled:
+		_set_gate_placement_enabled(false)
+		_set_delete_mode_enabled(false)
+	if _move_button != null:
+		_move_button.set_pressed_no_signal(_move_mode)
+
+
+func _pickup_gate_at(vertex_id: int) -> void:
+	var gate := Gate.get_gate(_graph, vertex_id)
+	if gate == null:
+		return
+	_moving_gate = gate
+	_moving_gate_origin = vertex_id
+	gate.modulate = Color(1.3, 1.3, 0.5)
+
+
+func _drop_moving_gate(global_pos: Vector2) -> void:
+	var gate := _moving_gate
+	_moving_gate = null
+	gate.modulate = Color.WHITE
+
+	var target_vertex_id := _get_track_vertex_id_at_global_position(global_pos)
+	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
+		gate.vertex_id = _moving_gate_origin
+		_moving_gate_origin = -1
+		return
+
+	if Gate.get_gate(_graph, target_vertex_id) != null:
+		gate.vertex_id = _moving_gate_origin
+		_moving_gate_origin = -1
+		return
+
+	gate.vertex_id = target_vertex_id
+	_moving_gate_origin = -1
+
+
+func _cancel_moving_gate() -> void:
+	if _moving_gate == null:
+		return
+	_moving_gate.modulate = Color.WHITE
+	_moving_gate.vertex_id = _moving_gate_origin
+	_moving_gate = null
+	_moving_gate_origin = -1
+
+
+func _delete_gate_at(vertex_id: int) -> void:
+	var gate := Gate.get_gate(_graph, vertex_id)
+	if gate == null:
+		return
+	_change_temperature(-gate.get_power_cost())
+	gate.queue_free()
 
 
 func _on_gate_destroyed(gate: Gate) -> void:

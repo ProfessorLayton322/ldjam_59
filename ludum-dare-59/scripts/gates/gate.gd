@@ -77,6 +77,7 @@ func on_enter(enemy: Enemy) -> void:
 
 	if definition.damage_power > 0:
 		enemy.apply_damage(definition.damage_power)
+		_spawn_damage_label(definition.damage_power, enemy.position)
 		if enemy.is_queued_for_deletion():
 			return
 
@@ -173,6 +174,20 @@ func _get_max_hp() -> int:
 		return 1
 
 	return definition.max_hp
+
+
+func _spawn_damage_label(amount: int, spawn_position: Vector2) -> void:
+	var label := Label.new()
+	label.text = "-%d" % amount
+	label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
+	label.add_theme_font_size_override("font_size", 18)
+	label.position = spawn_position - Vector2(16, 24)
+	get_parent().add_child(label)
+
+	var tween := label.create_tween()
+	tween.tween_property(label, "position", label.position + Vector2(0, -40), 0.8)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(label.queue_free)
 
 
 func _update_icon() -> void:
