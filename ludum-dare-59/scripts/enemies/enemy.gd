@@ -5,6 +5,7 @@ extends Node2D
 @export var cpu_vertices: Array[CpuVertex] = []
 @export var current_node_index: int = -1
 @export var move_duration: float = 3.0
+@export var damage: int = 1
 
 var path: Array[int] = []
 
