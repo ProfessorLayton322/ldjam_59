@@ -21,6 +21,11 @@ func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
 func _on_resolution_changed(_res: ResolutionManager.Resolution) -> void:
 	_update_buttons()
 
