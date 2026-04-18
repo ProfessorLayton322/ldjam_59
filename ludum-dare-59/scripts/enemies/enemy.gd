@@ -14,6 +14,8 @@ var _active_tween: Tween
 var _node_id_to_index: Dictionary = {}
 var _slow_extra_seconds_per_tile := 0.0
 var _slow_until_msec := 0
+var _stalled_gate: Gate
+var _movement_interrupted := false
 
 
 func _ready() -> void:
@@ -145,6 +147,9 @@ func _on_move_finished(reached_node_index: int) -> void:
 	_enter_current_node()
 	if is_queued_for_deletion():
 		return
+	if _movement_interrupted:
+		_movement_interrupted = false
+		return
 
 	if not path.is_empty() and path[0] == reached_node_index:
 		path.pop_front()
@@ -183,6 +188,22 @@ func apply_damage(amount: int) -> void:
 func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
 	_slow_extra_seconds_per_tile = maxf(_slow_extra_seconds_per_tile, extra_seconds_per_tile)
 	_slow_until_msec = max(_slow_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
+
+
+func stall_at_gate(gate: Gate) -> void:
+	_stalled_gate = gate
+	_movement_interrupted = true
+	if _active_tween:
+		_active_tween.kill()
+		_active_tween = null
+
+
+func release_from_gate(gate: Gate) -> void:
+	if _stalled_gate != gate:
+		return
+
+	_stalled_gate = null
+	start_pathing()
 
 
 func _get_current_move_duration() -> float:
