@@ -16,6 +16,11 @@ var _graph: Graph
 var _tiles_by_node_id: Dictionary = {}
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
 func _ready() -> void:
 	_graph = Graph.new()
 	_graph.build_from_grid(GRID_SIZE, TILE_SIZE, ORIGIN)
