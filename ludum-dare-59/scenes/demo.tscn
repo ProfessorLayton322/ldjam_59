@@ -1,6 +1,51 @@
-[gd_scene load_steps=2 format=3 uid="uid://demoscene001x"]
+[gd_scene load_steps=20 format=3 uid="uid://demoscene001x"]
 
 [ext_resource type="Script" path="res://scripts/demo.gd" id="1_demo"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_none.tscn" id="2_none"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_w.tscn" id="3_w"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_e.tscn" id="4_e"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_ew.tscn" id="5_ew"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_s.tscn" id="6_s"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_sw.tscn" id="7_sw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_se.tscn" id="8_se"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_sew.tscn" id="9_sew"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_n.tscn" id="10_n"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_nw.tscn" id="11_nw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_ne.tscn" id="12_ne"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_new.tscn" id="13_new"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_ns.tscn" id="14_ns"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_nsw.tscn" id="15_nsw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_nse.tscn" id="16_nse"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/track_nsew.tscn" id="17_nsew"]
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_demo"]
+resource_name = "tracks"
+scenes/0/scene = ExtResource("2_none")
+scenes/1/scene = ExtResource("3_w")
+scenes/2/scene = ExtResource("4_e")
+scenes/3/scene = ExtResource("5_ew")
+scenes/4/scene = ExtResource("6_s")
+scenes/5/scene = ExtResource("7_sw")
+scenes/6/scene = ExtResource("8_se")
+scenes/7/scene = ExtResource("9_sew")
+scenes/8/scene = ExtResource("10_n")
+scenes/9/scene = ExtResource("11_nw")
+scenes/10/scene = ExtResource("12_ne")
+scenes/11/scene = ExtResource("13_new")
+scenes/12/scene = ExtResource("14_ns")
+scenes/13/scene = ExtResource("15_nsw")
+scenes/14/scene = ExtResource("16_nse")
+scenes/15/scene = ExtResource("17_nsew")
+
+[sub_resource type="TileSet" id="TileSet_demo"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetScenesCollectionSource_demo")
 
 [node name="Demo" type="Node2D"]
 script = ExtResource("1_demo")
+
+[node name="TileMap" type="TileMap" parent="."]
+position = Vector2(100, 100)
+tile_set = SubResource("TileSet_demo")
+format = 2
+layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 458752, 2, 0, 458752, 3, 0, 458752, 4, 0, 327680, 65536, 0, 917504, 65537, 0, 983040, 65538, 0, 983040, 65539, 0, 983040, 65540, 0, 851968, 131072, 0, 655360, 131073, 0, 720896, 131074, 0, 720896, 131075, 0, 720896, 131076, 0, 589824)
