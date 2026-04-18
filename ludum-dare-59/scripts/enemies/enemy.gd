@@ -19,6 +19,7 @@ var _movement_interrupted := false
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_ensure_icon()
 	start_pathing()
 
