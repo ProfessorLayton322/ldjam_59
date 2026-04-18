@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/level_definition.gd" id="1_level_definition"]
+[ext_resource type="PackedScene" path="res://scenes/levels/level_02_board.tscn" id="2_board"]
+[ext_resource type="Resource" path="res://scripts/resources/spawner_cfg_default.tres" id="3_spawn_cfg"]
+
+[resource]
+script = ExtResource("1_level_definition")
+title = "Level 2"
+board_scene = ExtResource("2_board")
+expected_spawner_count = 8
+duration_seconds = 75.0
+spawn_cfg = ExtResource("3_spawn_cfg")

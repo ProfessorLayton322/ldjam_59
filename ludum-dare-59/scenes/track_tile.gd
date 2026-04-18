@@ -1,5 +1,6 @@
 @tool
-extends Node2D
+class_name WireTile
+extends BaseTile
 
 @export var north: bool = false:
 	set(value):
@@ -23,8 +24,18 @@ extends Node2D
 
 const TRACKS := "res://assets/textures/tracks/"
 
+
 func _ready() -> void:
 	_update_track()
+
+
+func OnTrigger(source: Node = null) -> void:
+	super.OnTrigger(source)
+
+
+func OnEnter(source: Node = null) -> void:
+	super.OnEnter(source)
+
 
 func _update_track() -> void:
 	var track_node: Sprite2D = $Track if has_node("Track") else null
@@ -37,38 +48,37 @@ func _update_track() -> void:
 	var rot := 0.0
 
 	match key:
-		0b1100:  # N+S
+		0b1100:
 			tex = TRACKS + "track_straight_v.svg"
-		0b0011:  # E+W
+		0b0011:
 			tex = TRACKS + "track_straight_h.svg"
-		0b1000, 0b0100:  # N or S dead-end
+		0b1000, 0b0100:
 			tex = TRACKS + "track_straight_v.svg"
-		0b0010, 0b0001:  # E or W dead-end
+		0b0010, 0b0001:
 			tex = TRACKS + "track_straight_h.svg"
-		0b0110:  # S+E — default orientation
+		0b0110:
 			tex = TRACKS + "track_corner_ne.svg"
-		0b0101:  # S+W — rotate 90° CW
+		0b0101:
 			tex = TRACKS + "track_corner_ne.svg"
 			rot = 90.0
-		0b1001:  # N+W — rotate 180°
+		0b1001:
 			tex = TRACKS + "track_corner_ne.svg"
 			rot = 180.0
-		0b1010:  # N+E — rotate 270° CW
+		0b1010:
 			tex = TRACKS + "track_corner_ne.svg"
 			rot = 270.0
-		# T-junctions: default asset assumed to connect N+E+W (missing S)
-		0b1011:  # N+E+W
+		0b1011:
 			tex = TRACKS + "track_t_junction.svg"
 			rot = 180.0
-		0b1110:  # N+S+E
+		0b1110:
 			tex = TRACKS + "track_t_junction.svg"
 			rot = -90
-		0b0111:  # S+E+W
+		0b0111:
 			tex = TRACKS + "track_t_junction.svg"
-		0b1101:  # N+S+W
+		0b1101:
 			tex = TRACKS + "track_t_junction.svg"
 			rot = 90.0
-		0b1111:  # all four
+		0b1111:
 			tex = TRACKS + "track_cross.svg"
 
 	if tex.is_empty():
