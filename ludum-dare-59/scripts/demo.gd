@@ -3,6 +3,20 @@ extends Node2D
 
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
 const POSITION_MATCH_EPSILON := 1.0
+const TUTORIAL_DIALOGUE_ID := "tutorial_dialogue_1_1"
+const TUTORIAL_DIALOGUE_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
+const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
+const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
+const TUTORIAL_BALLISTA_ID := "ballista"
+
+enum TutorialStep {
+	NONE,
+	SELECT_BALLISTA,
+	PLACE_BALLISTA,
+	WAIT_CRYTTER_DESPAWN,
+	DONE,
+}
+
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
@@ -32,6 +46,12 @@ var _hud: Node
 var _cpu_regions: Array[Dictionary] = []
 var _level_timer: Timer
 var _level_finished := false
+var _tutorial_step := TutorialStep.NONE
+var _tutorial_target_vertex_id := -1
+var _tutorial_target_tile: BaseTile
+var _tutorial_ballista_button: Button
+var _tutorial_dialog_manual_advance_was_enabled := true
+var _tutorial_dialog_layout: Node
 
 
 func _get_balance_params() -> BalanceParams:
@@ -59,6 +79,9 @@ func _get_gate_placement_radius() -> float:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _handle_tutorial_unhandled_input(event):
+		return
+
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
 		AudioManager.stop_music()
@@ -116,6 +139,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if event is InputEventMouseButton:
+			var tutorial_mouse := event as InputEventMouseButton
+			if tutorial_mouse.button_index == MOUSE_BUTTON_LEFT:
+				return
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_MIDDLE:
@@ -150,6 +185,7 @@ func _ready() -> void:
 		level = LevelState.selected_level
 	elif LevelState.get_current_level() != null:
 		level = LevelState.get_current_level()
+	_setup_tutorial_state()
 
 	_camera = Camera2D.new()
 	_camera.name = "Camera"
@@ -172,6 +208,8 @@ func _ready() -> void:
 	_configure_core_gates()
 	_start_trigger_timer()
 	_create_gate_buttons()
+	_configure_tutorial_flow()
+	_start_enemy_spawning()
 	_start_level_timer()
 	AudioManager.play_music()
 
@@ -353,7 +391,10 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		_spawn_enemy_manager.register_spawner(spawner)
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
 
-	_spawn_enemy_manager.start()
+
+func _start_enemy_spawning() -> void:
+	if _spawn_enemy_manager != null:
+		_spawn_enemy_manager.start()
 
 
 func _configure_core_gates() -> void:
@@ -650,6 +691,22 @@ func _create_temperature_meter(root: Control) -> void:
 
 
 func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if definition == null or definition.id != TUTORIAL_BALLISTA_ID:
+			button.set_pressed_no_signal(false)
+			return
+
+		TutorialEvents.stop_highlighter(button)
+		TutorialEvents.emit_ballista_spawn_button_pressed()
+		_set_gate_placement_enabled(true, definition)
+		_begin_tutorial_ballista_placement()
+		return
+
+	if _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		if definition == null or definition.id != TUTORIAL_BALLISTA_ID:
+			button.set_pressed_no_signal(false)
+			return
+
 	if button.button_pressed:
 		_set_gate_placement_enabled(true, definition)
 	else:
@@ -724,6 +781,223 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 	return true
 
 
+func _setup_tutorial_state() -> void:
+	if LevelState.current_level_index == 0:
+		TutorialEvents.start_first_level_tutorial()
+	else:
+		TutorialEvents.reset_first_level_tutorial()
+
+
+func _configure_tutorial_flow() -> void:
+	if not TutorialEvents.first_level_tutorial_active:
+		return
+
+	if not TutorialEvents.first_crytter_spawned.is_connected(_on_tutorial_first_crytter_spawned):
+		TutorialEvents.first_crytter_spawned.connect(_on_tutorial_first_crytter_spawned)
+	if not TutorialEvents.first_crytter_moved_two_tiles.is_connected(_on_tutorial_first_crytter_moved_two_tiles):
+		TutorialEvents.first_crytter_moved_two_tiles.connect(_on_tutorial_first_crytter_moved_two_tiles)
+	if not TutorialEvents.target_ballista_placed.is_connected(_on_tutorial_target_ballista_placed):
+		TutorialEvents.target_ballista_placed.connect(_on_tutorial_target_ballista_placed)
+	if not TutorialEvents.first_crytter_despawned.is_connected(_on_tutorial_first_crytter_despawned):
+		TutorialEvents.first_crytter_despawned.connect(_on_tutorial_first_crytter_despawned)
+
+	_tutorial_ballista_button = _gate_buttons.get(TUTORIAL_BALLISTA_ID) as Button
+	_apply_tutorial_button_locks()
+
+
+func _on_tutorial_first_crytter_spawned(_enemy: Enemy, spawner_node_id: int) -> void:
+	_tutorial_target_vertex_id = _find_tutorial_target_vertex_id(spawner_node_id)
+	TutorialEvents.target_ballista_vertex_id = _tutorial_target_vertex_id
+	_tutorial_target_tile = _tiles_by_node_id.get(_tutorial_target_vertex_id) as BaseTile
+
+
+func _on_tutorial_first_crytter_moved_two_tiles(_enemy: Enemy) -> void:
+	if _tutorial_step != TutorialStep.NONE:
+		return
+
+	_tutorial_step = TutorialStep.SELECT_BALLISTA
+	_set_pause_mode_enabled(true)
+	_start_tutorial_dialogue()
+	_apply_tutorial_button_locks()
+	if _tutorial_ballista_button != null:
+		TutorialEvents.start_highlighter(_tutorial_ballista_button)
+
+
+func _begin_tutorial_ballista_placement() -> void:
+	_tutorial_step = TutorialStep.PLACE_BALLISTA
+	_apply_tutorial_button_locks()
+	if _tutorial_target_tile != null:
+		TutorialEvents.start_highlighter(_tutorial_target_tile)
+
+
+func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
+	if _tutorial_target_tile != null:
+		TutorialEvents.stop_highlighter(_tutorial_target_tile)
+
+	_tutorial_step = TutorialStep.WAIT_CRYTTER_DESPAWN
+	_end_tutorial_dialogue()
+	_set_pause_mode_enabled(false)
+	_apply_tutorial_button_locks()
+
+
+func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
+	_tutorial_step = TutorialStep.DONE
+	TutorialEvents.stop_all_highlighters()
+	_apply_tutorial_button_locks()
+
+
+func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if event is InputEventKey and event.pressed and not event.echo:
+			var key := event as InputEventKey
+			if key.keycode == KEY_2 and _tutorial_ballista_button != null:
+				_tutorial_ballista_button.set_pressed_no_signal(true)
+				_on_gate_button_pressed(BalanceManager.get_gate_definition(TUTORIAL_BALLISTA_ID), _tutorial_ballista_button)
+			get_viewport().set_input_as_handled()
+			return true
+
+		if event is InputEventMouseButton:
+			get_viewport().set_input_as_handled()
+			return true
+
+		get_viewport().set_input_as_handled()
+		return true
+
+	if _tutorial_step != TutorialStep.PLACE_BALLISTA:
+		return false
+
+	if not event is InputEventMouseButton:
+		get_viewport().set_input_as_handled()
+		return true
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()
+		return true
+
+	if not mouse_event.pressed:
+		get_viewport().set_input_as_handled()
+		return true
+
+	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if vertex_id == _tutorial_target_vertex_id and _selected_gate_definition != null and _selected_gate_definition.id == TUTORIAL_BALLISTA_ID:
+		if _place_gate(vertex_id, _selected_gate_definition):
+			var gate := Gate.get_gate(_graph, vertex_id)
+			_set_gate_placement_enabled(false)
+			TutorialEvents.emit_target_ballista_placed(vertex_id, gate)
+
+	get_viewport().set_input_as_handled()
+	return true
+
+
+func _apply_tutorial_button_locks() -> void:
+	if _gate_buttons.is_empty():
+		return
+
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA or _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button == null:
+				continue
+			button.disabled = gate_definition.id != TUTORIAL_BALLISTA_ID
+
+		if _pause_button != null:
+			_pause_button.disabled = true
+	else:
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button == null:
+				continue
+			button.disabled = not _can_place_gate(gate_definition)
+
+		if _pause_button != null:
+			_pause_button.disabled = false
+
+
+func _start_tutorial_dialogue() -> void:
+	if _tutorial_dialog_layout != null and is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	_tutorial_dialog_manual_advance_was_enabled = Dialogic.Inputs.manual_advance.system_enabled
+	Dialogic.Inputs.manual_advance.system_enabled = false
+	Dialogic.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	var timeline: String = TUTORIAL_DIALOGUE_ID
+	if not Dialogic.timeline_exists(timeline):
+		timeline = TUTORIAL_DIALOGUE_PATH
+
+	_tutorial_dialog_layout = Dialogic.start(timeline)
+	if _tutorial_dialog_layout == null:
+		Dialogic.Inputs.manual_advance.system_enabled = _tutorial_dialog_manual_advance_was_enabled
+		push_error("Tutorial dialogue failed to start: %s" % timeline)
+		return
+
+	_tutorial_dialog_layout.process_mode = Node.PROCESS_MODE_ALWAYS
+	call_deferred("_position_tutorial_dialogue")
+
+
+func _end_tutorial_dialogue() -> void:
+	Dialogic.Inputs.manual_advance.system_enabled = _tutorial_dialog_manual_advance_was_enabled
+	if Dialogic.current_timeline != null:
+		Dialogic.end_timeline(true)
+	elif _tutorial_dialog_layout != null and is_instance_valid(_tutorial_dialog_layout):
+		_tutorial_dialog_layout.queue_free()
+	_tutorial_dialog_layout = null
+
+
+func _position_tutorial_dialogue() -> void:
+	if _tutorial_dialog_layout == null or not is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	if not _tutorial_dialog_layout.is_node_ready():
+		await _tutorial_dialog_layout.ready
+
+	var textbox_layer := _tutorial_dialog_layout.get_node_or_null("VN_TextboxLayer") as Control
+	if textbox_layer == null:
+		return
+
+	textbox_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	if "box_size" in textbox_layer:
+		textbox_layer.set("box_size", TUTORIAL_DIALOGUE_BOX_SIZE)
+	if "box_margin_bottom" in textbox_layer:
+		textbox_layer.set("box_margin_bottom", int(TUTORIAL_DIALOGUE_MARGIN.y))
+
+	var anchor := textbox_layer.get_node_or_null("Anchor") as Control
+	if anchor == null:
+		return
+
+	anchor.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	var anchor_offset := Vector2(-(TUTORIAL_DIALOGUE_MARGIN.x + TUTORIAL_DIALOGUE_BOX_SIZE.x * 0.5), 0.0)
+	anchor.offset_left = anchor_offset.x
+	anchor.offset_right = anchor_offset.x
+	anchor.offset_top = anchor_offset.y
+	anchor.offset_bottom = anchor_offset.y
+
+	if textbox_layer.has_method("_apply_export_overrides"):
+		textbox_layer.call("_apply_export_overrides")
+
+
+func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
+	var spawner_vertex := _graph.get_node_by_id(spawner_node_id)
+	if spawner_vertex == null:
+		return -1
+
+	var target_position := spawner_vertex.position + Vector2(256.0, 0.0)
+	var best_vertex_id := -1
+	var best_distance := INF
+	for vertex: GraphVertex in _graph.nodes:
+		if not (_tiles_by_node_id.get(vertex.id) is WireTile):
+			continue
+
+		var distance := target_position.distance_to(vertex.position)
+		if distance >= best_distance:
+			continue
+
+		best_vertex_id = vertex.id
+		best_distance = distance
+
+	return best_vertex_id
+
 func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
@@ -750,6 +1024,8 @@ func _update_temperature_meter() -> void:
 		button.disabled = not can_place
 		if not can_place and _selected_gate_definition == definition:
 			_set_gate_placement_enabled(false)
+
+	_apply_tutorial_button_locks()
 
 
 func _on_pause_button_pressed() -> void:

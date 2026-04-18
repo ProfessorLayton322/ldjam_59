@@ -6,11 +6,13 @@ extends BaseTile
 @export var enemy_scene: PackedScene
 
 var spawn_parent: Node
+var last_spawned_enemy: Enemy
 
 
 func OnTrigger(source: Node = null) -> void:
 	super.OnTrigger(source)
 
+	last_spawned_enemy = null
 	if graph == null or enemy_scene == null:
 		return
 
@@ -25,6 +27,7 @@ func OnTrigger(source: Node = null) -> void:
 	enemy.position = graph.nodes[node_index].position
 	var parent := spawn_parent if spawn_parent != null else get_parent()
 	parent.add_child(enemy)
+	last_spawned_enemy = enemy
 
 
 func OnEnter(source: Node = null) -> void:

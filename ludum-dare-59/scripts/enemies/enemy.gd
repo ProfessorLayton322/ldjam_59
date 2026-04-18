@@ -21,6 +21,8 @@ var _slow_extra_seconds_per_tile := 0.0
 var _slow_until_msec := 0
 var _stalled_gate: Gate
 var _movement_interrupted := false
+var _is_first_tutorial_crytter := false
+var _tutorial_tiles_moved := 0
 
 
 func _ready() -> void:
@@ -142,6 +144,7 @@ func _move_to_next_node() -> void:
 func _on_move_finished(reached_node_index: int) -> void:
 	_active_tween = null
 	current_node_index = reached_node_index
+	_track_tutorial_movement()
 	_enter_current_node()
 	if is_queued_for_deletion():
 		return
@@ -167,10 +170,12 @@ func _enter_current_node() -> void:
 
 	var node_id := graph.nodes[current_node_index].id
 	var gate := Gate.get_gate(graph, node_id)
-	if gate == null:
-		return
+	if gate != null:
+		gate.on_enter(self)
 
-	gate.on_enter(self)
+	if _is_first_tutorial_crytter and node_id == TutorialEvents.target_ballista_vertex_id:
+		TutorialEvents.emit_first_crytter_despawned(self)
+		queue_free()
 
 
 func _has_valid_node_index(node_index: int) -> bool:
@@ -220,6 +225,20 @@ func release_from_gate(gate: Gate) -> void:
 
 	_stalled_gate = null
 	start_pathing()
+
+
+func mark_as_first_tutorial_crytter() -> void:
+	_is_first_tutorial_crytter = true
+	_tutorial_tiles_moved = 0
+
+
+func _track_tutorial_movement() -> void:
+	if not _is_first_tutorial_crytter:
+		return
+
+	_tutorial_tiles_moved += 1
+	if _tutorial_tiles_moved == 2:
+		TutorialEvents.emit_first_crytter_moved_two_tiles(self)
 
 
 func _on_gate_stun_consumed(_gate: Gate) -> void:

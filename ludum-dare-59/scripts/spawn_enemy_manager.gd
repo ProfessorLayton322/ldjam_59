@@ -1,6 +1,8 @@
 class_name SpawnEnemyManager
 extends Node
 
+const TUTORIAL_CRYTTER_SCENE := preload("res://scenes/enemies/crytter.tscn")
+
 @export var cfg: SpawnerCfg
 
 var _spawners: Array[SpawnerTile] = []
@@ -32,6 +34,10 @@ func clear_spawners() -> void:
 
 func start() -> void:
 	_ensure_timer()
+	if TutorialEvents.should_run_first_level_tutorial():
+		_start_first_level_tutorial_spawn()
+		return
+
 	_timer.wait_time = _get_tick()
 	_timer.start()
 
@@ -67,6 +73,73 @@ func _spawn_from_random_spawner() -> void:
 	if cfg != null and not cfg.enemy_scenes.is_empty():
 		spawner.enemy_scene = cfg.enemy_scenes[_rng.randi_range(0, cfg.enemy_scenes.size() - 1)]
 	spawner.OnTrigger(self)
+
+
+func _start_first_level_tutorial_spawn() -> void:
+	_timer.stop()
+	_prune_spawners()
+	if _spawners.is_empty():
+		return
+
+	var spawner := _spawners[0]
+	_ensure_tutorial_spawner_target(spawner)
+	spawner.enemy_scene = TUTORIAL_CRYTTER_SCENE
+	spawner.OnTrigger(self)
+	var enemy := spawner.last_spawned_enemy
+	if enemy != null:
+		enemy.mark_as_first_tutorial_crytter()
+		TutorialEvents.emit_first_crytter_spawned(enemy, spawner.node_id)
+
+	if not TutorialEvents.first_crytter_despawned.is_connected(_on_tutorial_first_crytter_despawned):
+		TutorialEvents.first_crytter_despawned.connect(_on_tutorial_first_crytter_despawned)
+
+
+func _ensure_tutorial_spawner_target(spawner: SpawnerTile) -> void:
+	if spawner == null or not spawner.cpu_vertices.is_empty():
+		return
+
+	var target_node_id := _find_farthest_reachable_node_id(spawner.graph, spawner.node_id)
+	if target_node_id == -1:
+		return
+
+	var cpu := CpuVertex.new()
+	cpu.node_id = target_node_id
+	spawner.cpu_vertices = [cpu]
+
+
+func _find_farthest_reachable_node_id(graph: Graph, start_node_id: int) -> int:
+	if graph == null or graph.get_node_by_id(start_node_id) == null:
+		return -1
+
+	var queue: Array[int] = [start_node_id]
+	var visited := {start_node_id: 0}
+	var farthest_node_id := start_node_id
+
+	while not queue.is_empty():
+		var node_id: int = queue.pop_front()
+		var distance: int = visited[node_id]
+		if distance > int(visited[farthest_node_id]):
+			farthest_node_id = node_id
+
+		var vertex := graph.get_node_by_id(node_id)
+		if vertex == null:
+			continue
+
+		for neighbour_id in vertex.neighbour_ids:
+			if visited.has(neighbour_id):
+				continue
+
+			visited[neighbour_id] = distance + 1
+			queue.append(neighbour_id)
+
+	return farthest_node_id
+
+func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
+	if _timer == null:
+		return
+
+	_timer.wait_time = _get_tick()
+	_timer.start()
 
 
 func _prune_spawners() -> void:
