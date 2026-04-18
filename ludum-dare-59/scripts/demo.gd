@@ -7,6 +7,8 @@ const DEFAULT_GATE_TEXTURE := preload("res://assets/textures/gates/default_gate.
 const GRID_SIZE := Vector2i(5, 3)
 const TILE_SIZE := Vector2(64.0, 64.0)
 const ORIGIN := Vector2(100.0, 100.0)
+const MAX_TEMPERATURE := 5
+const DEFAULT_GATE_TEMPERATURE_COST := 1
 # 2x2 block: x=3-4, y=1-2  -> ids 8,9 (row 1) and 13,14 (row 2)
 const CPU_NODE_IDS := [8, 9, 13, 14]
 const SPAWNER_NODE_IDS := [0, 10]
@@ -16,7 +18,10 @@ const _STARTS := "res://assets/textures/start/"
 
 var _graph: Graph
 var _placing_default_gate := false
+var _temperature := 0
 var _default_gate_button: Button
+var _temperature_fill: ColorRect
+var _temperature_label: Label
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -132,15 +137,72 @@ func _create_gate_button() -> void:
 	root.add_child(button)
 	_default_gate_button = button
 
+	_create_temperature_meter(root)
+	_update_temperature_meter()
+
+
+func _create_temperature_meter(root: Control) -> void:
+	var meter := Panel.new()
+	meter.name = "TemperatureMeter"
+	meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meter.anchor_left = 1.0
+	meter.anchor_right = 1.0
+	meter.offset_left = -56.0
+	meter.offset_right = -16.0
+	meter.offset_top = 104.0
+	meter.offset_bottom = 264.0
+
+	var meter_style := StyleBoxFlat.new()
+	meter_style.bg_color = Color(0.08, 0.08, 0.08, 0.82)
+	meter_style.border_color = Color(0.32, 0.05, 0.04, 1.0)
+	meter_style.border_width_left = 2
+	meter_style.border_width_top = 2
+	meter_style.border_width_right = 2
+	meter_style.border_width_bottom = 2
+	meter_style.corner_radius_top_left = 4
+	meter_style.corner_radius_top_right = 4
+	meter_style.corner_radius_bottom_right = 4
+	meter_style.corner_radius_bottom_left = 4
+	meter.add_theme_stylebox_override("panel", meter_style)
+	root.add_child(meter)
+
+	var fill := ColorRect.new()
+	fill.name = "Fill"
+	fill.color = Color(0.92, 0.05, 0.02, 1.0)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fill.anchor_left = 0.0
+	fill.anchor_top = 1.0
+	fill.anchor_right = 1.0
+	fill.anchor_bottom = 1.0
+	fill.offset_left = 4.0
+	fill.offset_top = 0.0
+	fill.offset_right = -4.0
+	fill.offset_bottom = -4.0
+	meter.add_child(fill)
+	_temperature_fill = fill
+
+	var label := Label.new()
+	label.name = "TemperatureLabel"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	meter.add_child(label)
+	_temperature_label = label
+
 
 func _on_default_gate_button_pressed() -> void:
 	_set_gate_placement_enabled(_default_gate_button.button_pressed)
 
 
 func _set_gate_placement_enabled(enabled: bool) -> void:
-	_placing_default_gate = enabled
+	_placing_default_gate = enabled and _can_place_default_gate()
 	if _default_gate_button != null:
-		_default_gate_button.set_pressed_no_signal(enabled)
+		_default_gate_button.set_pressed_no_signal(_placing_default_gate)
 
 
 func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
@@ -163,6 +225,10 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 
 func _place_default_gate(vertex_id: int) -> bool:
+	if not _can_place_default_gate():
+		_set_gate_placement_enabled(false)
+		return false
+
 	if Gate.get_gate(_graph, vertex_id) != null:
 		return false
 
@@ -170,7 +236,33 @@ func _place_default_gate(vertex_id: int) -> bool:
 	gate.graph = _graph
 	gate.vertex_id = vertex_id
 	add_child(gate)
+	_change_temperature(DEFAULT_GATE_TEMPERATURE_COST)
 	return true
+
+
+func _can_place_default_gate() -> bool:
+	return _temperature + DEFAULT_GATE_TEMPERATURE_COST <= MAX_TEMPERATURE
+
+
+func _change_temperature(amount: int) -> void:
+	_temperature = clampi(_temperature + amount, 0, MAX_TEMPERATURE)
+	_update_temperature_meter()
+
+
+func _update_temperature_meter() -> void:
+	if _temperature_fill != null:
+		var ratio := float(_temperature) / float(MAX_TEMPERATURE)
+		_temperature_fill.anchor_top = 1.0 - ratio
+		_temperature_fill.offset_top = 0.0
+
+	if _temperature_label != null:
+		_temperature_label.text = "%d/%d" % [_temperature, MAX_TEMPERATURE]
+
+	if _default_gate_button != null:
+		var can_place := _can_place_default_gate()
+		_default_gate_button.disabled = not can_place
+		if not can_place:
+			_set_gate_placement_enabled(false)
 
 
 func _connection_key(vertex: GraphVertex) -> int:
