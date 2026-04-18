@@ -3,17 +3,30 @@ extends BaseTile
 
 @export var graph: Graph
 @export var cpu_vertices: Array[CpuVertex] = []
-@export var node_id: int = -1
 @export var spawn_interval: float = 1.0
 @export var enemy_scene: PackedScene
+@export var auto_trigger := true
+
+var spawn_parent: Node
 
 
 func _ready() -> void:
-	var timer := Timer.new()
+	var timer := get_node_or_null("SpawnTimer") as Timer
+	if not auto_trigger:
+		if timer != null:
+			timer.stop()
+		return
+
+	if timer == null:
+		timer = Timer.new()
+		timer.name = "SpawnTimer"
+		add_child(timer)
+
 	timer.wait_time = spawn_interval
 	timer.autostart = true
-	timer.timeout.connect(OnTrigger)
-	add_child(timer)
+	if not timer.timeout.is_connected(OnTrigger):
+		timer.timeout.connect(OnTrigger)
+	timer.start()
 
 
 func OnTrigger(source: Node = null) -> void:
@@ -31,7 +44,8 @@ func OnTrigger(source: Node = null) -> void:
 	enemy.cpu_vertices = cpu_vertices
 	enemy.current_node_index = node_index
 	enemy.position = graph.nodes[node_index].position
-	get_parent().add_child(enemy)
+	var parent := spawn_parent if spawn_parent != null else get_parent()
+	parent.add_child(enemy)
 
 
 func OnEnter(source: Node = null) -> void:
