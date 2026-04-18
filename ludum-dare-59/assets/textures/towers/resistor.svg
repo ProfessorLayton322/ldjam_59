@@ -1,7 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <!-- PCB tile background -->
-  <rect width="64" height="64" fill="#1e3a1e"/>
-  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
   <!-- Lead wires -->
   <rect x="4" y="30" width="12" height="4" fill="#c8a020"/>
   <rect x="48" y="30" width="12" height="4" fill="#c8a020"/>

@@ -1,7 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <!-- PCB tile background -->
-  <rect width="64" height="64" fill="#1e3a1e"/>
-  <rect width="64" height="64" fill="#1a5c2a" opacity="0.6"/>
   <!-- Electrolytic capacitor (cylindrical, top-down view hint) -->
   <!-- Body cylinder side view -->
   <rect x="20" y="12" width="24" height="38" rx="4" fill="#2255aa" stroke="#4488cc" stroke-width="1.5"/>

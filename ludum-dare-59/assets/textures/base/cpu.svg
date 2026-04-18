@@ -1,7 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <!-- PCB background (larger tile for the base) -->
-  <rect width="128" height="128" fill="#1e3a1e"/>
-  <rect width="128" height="128" fill="#1a5c2a" opacity="0.6"/>
   <!-- PCB grid pattern -->
   <line x1="32" y1="0" x2="32" y2="128" stroke="#225522" stroke-width="0.5" opacity="0.5"/>
   <line x1="64" y1="0" x2="64" y2="128" stroke="#225522" stroke-width="0.5" opacity="0.5"/>
