@@ -2,20 +2,11 @@ class_name DemoScene
 extends Node2D
 
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
-const GATE_DEFINITIONS := [
-	preload("res://scripts/resources/gate_def_barricade.tres"),
-	preload("res://scripts/resources/gate_def_ballista.tres"),
-	preload("res://scripts/resources/gate_def_tar.tres"),
-]
-const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
-const GATE_PLACEMENT_RADIUS := 32.0
-const MAX_TEMPERATURE := 38
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
 
-const CPU_HP := 20
 
 var _graph: Graph
 var _level_board: Node
@@ -41,6 +32,30 @@ var _hud: Node
 var _cpu_regions: Array[Dictionary] = []
 
 
+func _get_balance_params() -> BalanceParams:
+	return BalanceManager.get_params()
+
+
+func _get_gate_definitions() -> Array[GateDefinition]:
+	return BalanceManager.get_gate_definitions()
+
+
+func _get_max_temperature() -> int:
+	return _get_balance_params().max_temperature
+
+
+func _get_cpu_hp() -> int:
+	return _get_balance_params().cpu_hp
+
+
+func _get_trigger_interval() -> float:
+	return _get_balance_params().trigger_interval
+
+
+func _get_gate_placement_radius() -> float:
+	return _get_balance_params().gate_placement_radius
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
@@ -55,8 +70,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			KEY_1, KEY_2, KEY_3:
 				var idx := key.keycode - KEY_1
-				if idx < GATE_DEFINITIONS.size():
-					var def: Resource = GATE_DEFINITIONS[idx]
+				if idx < _get_gate_definitions().size():
+					var def: Resource = _get_gate_definitions()[idx]
 					var btn := _gate_buttons.get(def.id) as Button
 					if btn != null and not btn.disabled:
 						btn.set_pressed_no_signal(not btn.button_pressed)
@@ -400,8 +415,8 @@ func _configure_core_gates() -> void:
 		var bar := CpuHpBarScene.new()
 		bar.position = Vector2(center_x, top_y - 18)
 		add_child(bar)
-		bar.set_hp(CPU_HP, CPU_HP)
-		_cpu_regions.append({"hp": CPU_HP, "bar": bar})
+		bar.set_hp(_get_cpu_hp(), _get_cpu_hp())
+		_cpu_regions.append({"hp": _get_cpu_hp(), "bar": bar})
 
 
 func _start_trigger_timer() -> void:
@@ -412,7 +427,7 @@ func _start_trigger_timer() -> void:
 		add_child(timer)
 
 	timer.process_mode = Node.PROCESS_MODE_PAUSABLE
-	timer.wait_time = TRIGGER_INTERVAL
+	timer.wait_time = _get_trigger_interval()
 	timer.autostart = true
 	if not timer.timeout.is_connected(_trigger_tiles):
 		timer.timeout.connect(_trigger_tiles)
@@ -441,8 +456,8 @@ func _create_gate_buttons() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_layer.add_child(root)
 
-	for i in GATE_DEFINITIONS.size():
-		var definition: Resource = GATE_DEFINITIONS[i]
+	for i in _get_gate_definitions().size():
+		var definition: Resource = _get_gate_definitions()[i]
 		var button := Button.new()
 		button.name = "%sButton" % definition.id.capitalize().replace(" ", "")
 		button.icon = definition.texture
@@ -472,7 +487,7 @@ func _create_gate_buttons() -> void:
 	pause_btn.anchor_left = 1.0
 	pause_btn.anchor_right = 1.0
 	pause_btn.offset_left = -80.0
-	pause_btn.offset_top = 16.0 + float(GATE_DEFINITIONS.size()) * 72.0
+	pause_btn.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0
 	pause_btn.offset_right = -16.0
 	pause_btn.offset_bottom = pause_btn.offset_top + 64.0
 	pause_btn.pressed.connect(_on_pause_button_pressed)
@@ -512,7 +527,7 @@ func _create_temperature_meter(root: Control) -> void:
 	meter.anchor_right = 1.0
 	meter.offset_left = -56.0
 	meter.offset_right = -16.0
-	meter.offset_top = 16.0 + float(GATE_DEFINITIONS.size()) * 72.0 + 64.0 + 8.0
+	meter.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0 + 64.0 + 8.0
 	meter.offset_bottom = meter.offset_top + 160.0
 
 	var meter_style := StyleBoxFlat.new()
@@ -568,7 +583,7 @@ func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
 func _set_gate_placement_enabled(enabled: bool, definition: Resource = null) -> void:
 	var next_definition: Resource = definition if definition != null else _selected_gate_definition
 	_selected_gate_definition = next_definition if enabled and _can_place_gate(next_definition) else null
-	for gate_definition: Resource in GATE_DEFINITIONS:
+	for gate_definition: Resource in _get_gate_definitions():
 		var button := _gate_buttons.get(gate_definition.id) as Button
 		if button == null:
 			continue
@@ -605,7 +620,7 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 		best_vertex_id = vertex.id
 		best_distance = distance
 
-	if best_distance > GATE_PLACEMENT_RADIUS:
+	if best_distance > _get_gate_placement_radius():
 		return -1
 
 	return best_vertex_id
@@ -634,24 +649,24 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 
 
 func _can_place_gate(definition: Resource) -> bool:
-	return definition != null and _temperature + definition.power_cost <= MAX_TEMPERATURE
+	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
 
 func _change_temperature(amount: int) -> void:
-	_temperature = clampi(_temperature + amount, 0, MAX_TEMPERATURE)
+	_temperature = clampi(_temperature + amount, 0, _get_max_temperature())
 	_update_temperature_meter()
 
 
 func _update_temperature_meter() -> void:
 	if _temperature_fill != null:
-		var ratio := float(_temperature) / float(MAX_TEMPERATURE)
+		var ratio := float(_temperature) / float(_get_max_temperature())
 		_temperature_fill.anchor_top = 1.0 - ratio
 		_temperature_fill.offset_top = 0.0
 
 	if _temperature_label != null:
-		_temperature_label.text = "%d/%d" % [_temperature, MAX_TEMPERATURE]
+		_temperature_label.text = "%d/%d" % [_temperature, _get_max_temperature()]
 
-	for definition: Resource in GATE_DEFINITIONS:
+	for definition: Resource in _get_gate_definitions():
 		var button := _gate_buttons.get(definition.id) as Button
 		if button == null:
 			continue
@@ -728,10 +743,10 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
-	region["hp"] = clampi(int(region["hp"]) - damage, 0, CPU_HP)
+	region["hp"] = clampi(int(region["hp"]) - damage, 0, _get_cpu_hp())
 	var bar: Node2D = region["bar"] as Node2D
 	if bar != null:
-		bar.set_hp(region["hp"], CPU_HP)
+		bar.set_hp(region["hp"], _get_cpu_hp())
 		_spawn_damage_label(damage, bar.position)
 	if region["hp"] <= 0:
 		_hud.show_game_over()

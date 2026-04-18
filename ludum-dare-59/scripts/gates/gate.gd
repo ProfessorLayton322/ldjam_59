@@ -5,11 +5,15 @@ signal destroyed(gate: Gate)
 
 static var _gates_by_graph_vertex: Dictionary = {}
 
-@export var definition: Resource:
+@export var definition: GateDefinition:
 	set(value):
 		definition = value
+		if definition != null:
+			definition_id = definition.id
 		_current_hp = _get_max_hp()
 		_update_icon()
+
+@export var definition_id := ""
 
 @export var graph: Graph:
 	set(value):
@@ -55,6 +59,7 @@ static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
 
 
 func _ready() -> void:
+	_load_definition_from_balance()
 	_update_position_from_vertex()
 	_current_hp = _get_max_hp()
 	_update_icon()
@@ -136,6 +141,18 @@ func get_power_cost() -> int:
 		return 0
 
 	return definition.power_cost
+
+
+func _load_definition_from_balance() -> void:
+	var id := definition_id
+	if id.is_empty() and definition != null:
+		id = definition.id
+	if id.is_empty():
+		return
+
+	var balanced_definition := BalanceManager.get_gate_definition(id)
+	if balanced_definition != null:
+		definition = balanced_definition
 
 
 func _register_gate() -> void:

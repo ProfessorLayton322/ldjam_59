@@ -1,13 +1,10 @@
 class_name RaiderStunner
-extends Raider
+extends Enemy
 
 
-func _ready() -> void:
-	can_stun_gate = true
-	gate_stun_duration = 3.0
-	super._ready()
-	modulate = Color(0.95, 0.85, 0.2)
+func _get_balance_id() -> String:
+	return "raider_stunner"
 
 
 func _on_gate_stun_consumed(_gate: Gate) -> void:
-	modulate = Color(0.4, 0.6, 1.0)
+	modulate = Color(0.65, 0.62, 0.35)
