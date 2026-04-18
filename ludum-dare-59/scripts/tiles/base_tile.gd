@@ -1,6 +1,8 @@
 class_name BaseTile
 extends Node2D
 
+@export var node_id: int = -1
+
 signal triggered(source: Node)
 signal entered(source: Node)
 
