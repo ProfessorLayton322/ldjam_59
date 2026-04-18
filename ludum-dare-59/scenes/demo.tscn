@@ -1,9 +1,8 @@
-[gd_scene load_steps=30 format=3 uid="uid://demoscene001x"]
+[gd_scene load_steps=31 format=3 uid="uid://demoscene001x"]
 
 [ext_resource type="Script" uid="uid://dl1pahc16kaj0" path="res://scripts/demo.gd" id="1_demo"]
-[ext_resource type="Script" path="res://scripts/spawn_enemy_manager.gd" id="2_spawn_enemy_manager"]
-[ext_resource type="Resource" path="res://scripts/resources/spawner_cfg_default.tres" id="3_spawner_cfg"]
 [ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="2_none"]
+[ext_resource type="Script" uid="uid://bu8e28ud0207r" path="res://scripts/spawn_enemy_manager.gd" id="2_spawn_enemy_manager"]
 [ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="3_w"]
 [ext_resource type="PackedScene" uid="uid://trkvariant02" path="res://scenes/tiles/track_e.tscn" id="4_e"]
 [ext_resource type="PackedScene" uid="uid://trkvariant03" path="res://scenes/tiles/track_ew.tscn" id="5_ew"]
@@ -26,6 +25,7 @@
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_9.tscn" id="22_core_9"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_13.tscn" id="23_core_13"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_14.tscn" id="24_core_14"]
+[ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="26_6abv7"]
 
 [sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_demo"]
 resource_name = "tracks"
@@ -56,17 +56,25 @@ scenes/4/scene = ExtResource("22_core_9")
 scenes/5/scene = ExtResource("23_core_13")
 scenes/6/scene = ExtResource("24_core_14")
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k1mpm"]
+texture = ExtResource("26_6abv7")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_demo"]
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetScenesCollectionSource_demo")
 sources/1 = SubResource("TileSetScenesCollectionSource_gameplay")
+sources/2 = SubResource("TileSetAtlasSource_k1mpm")
 
 [node name="Demo" type="Node2D"]
 script = ExtResource("1_demo")
 
 [node name="SpawnEnemyManager" type="Node" parent="."]
 script = ExtResource("2_spawn_enemy_manager")
-cfg = ExtResource("3_spawner_cfg")
 
 [node name="TriggerTimer" type="Timer" parent="."]
 autostart = true
@@ -75,6 +83,6 @@ autostart = true
 position = Vector2(100, 100)
 tile_set = SubResource("TileSet_demo")
 format = 2
-layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 983040, 2, 0, 983040, 3, 0, 458752, 4, 0, 327680, 65536, 0, 917504, 65537, 0, 983040, 65538, 0, 983040, 65539, 0, 983040, 65540, 0, 851968, 131072, 0, 655360, 131073, 0, 720896, 131074, 0, 720896, 131075, 0, 720896, 131076, 0, 589824, -65535, 0, 196608, -65534, 0, 327680)
+layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 983040, 2, 0, 983040, 3, 0, 458752, 4, 0, 327680, 65536, 0, 917504, 65537, 0, 983040, 65538, 0, 983040, 65539, 0, 983040, 65540, 0, 851968, 131072, 0, 655360, 131073, 0, 720896, 131074, 0, 720896, 131075, 0, 720896, 131076, 0, 589824, -65535, 0, 196608, -65534, 0, 327680, 393225, 1, 393216, 327683, 1, 327680, 196613, 2, 0, 196614, 65538, 0, 262149, 2, 1, 262150, 65538, 1, 262153, 65538, 1, 196616, 2, 0, 196617, 65538, 0, 262152, 2, 1, 262154, 2, 1)
 layer_1/name = "Layer1"
 layer_1/tile_data = PackedInt32Array(0, 1, 0, 131072, 1, 65536, 65539, 1, 196608, 65540, 1, 262144, 131075, 1, 327680, 131076, 1, 393216, -65535, 1, 131072)
