@@ -31,9 +31,7 @@ func start_pathing() -> void:
 	if _has_valid_node_index(current_node_index):
 		position = _get_node_position(current_node_index)
 
-	path = _calculate_path(false)
-	if path.is_empty():
-		path = _calculate_path(true)
+	path = _calculate_path()
 	if path.is_empty():
 		return
 
@@ -50,7 +48,7 @@ func _ensure_icon() -> void:
 	icon.texture = load("res://assets/textures/enemies/circle_enemy.svg")
 
 
-func _calculate_path(allow_blocking_gate_target: bool) -> Array[int]:
+func _calculate_path() -> Array[int]:
 	_node_id_to_index = _build_node_id_to_index()
 
 	if not _has_valid_node_index(current_node_index):
@@ -78,13 +76,6 @@ func _calculate_path(allow_blocking_gate_target: bool) -> Array[int]:
 
 			var neighbour_index: int = _node_id_to_index[neighbour_id]
 			if visited.has(neighbour_index):
-				continue
-
-			var blocking_gate := _get_blocking_gate_at_node_id(neighbour_id)
-			if blocking_gate != null:
-				if allow_blocking_gate_target:
-					came_from[neighbour_index] = node_index
-					return _reconstruct_path(came_from, neighbour_index)
 				continue
 
 			visited[neighbour_index] = true
@@ -213,10 +204,3 @@ func _get_current_move_duration() -> float:
 	_slow_extra_seconds_per_tile = 0.0
 	return move_duration
 
-
-func _get_blocking_gate_at_node_id(node_id: int) -> Gate:
-	var gate := Gate.get_gate(graph, node_id)
-	if gate == null or not gate.blocks_movement():
-		return null
-
-	return gate
