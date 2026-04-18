@@ -47,8 +47,10 @@ func _build_game_over_panel() -> void:
 
 
 func _on_retry_pressed() -> void:
+	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/demo.tscn")
 
 
 func _on_menu_pressed() -> void:
+	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
