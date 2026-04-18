@@ -13,7 +13,6 @@ const _TRACKS := "res://assets/textures/tracks/"
 const _STARTS := "res://assets/textures/start/"
 
 var _graph: Graph
-var _tiles_by_node_id: Dictionary = {}
 
 
 func _ready() -> void:
@@ -30,15 +29,11 @@ func _ready() -> void:
 
 
 func _place_visuals(cpu_vertices: Array[CpuVertex]) -> void:
-	_tiles_by_node_id.clear()
-
 	for vertex: GraphVertex in _graph.nodes:
 		var key := _connection_key(vertex)
 
 		var tile := _create_tile(vertex, cpu_vertices)
 		tile.position = vertex.position
-		_tiles_by_node_id[vertex.id] = tile
-
 		var bg := Sprite2D.new()
 		bg.texture = load(_TRACKS + "pcb_empty.svg")
 		tile.add_child(bg)
@@ -75,7 +70,6 @@ func _create_tile(vertex: GraphVertex, cpu_vertices: Array[CpuVertex]) -> BaseTi
 		spawner.node_id = vertex.id
 		spawner.enemy_scene = ENEMY_SCENE
 		spawner.spawn_interval = 2.0
-		spawner.tiles_by_node_id = _tiles_by_node_id
 		return spawner
 
 	if vertex.id in CPU_NODE_IDS:
