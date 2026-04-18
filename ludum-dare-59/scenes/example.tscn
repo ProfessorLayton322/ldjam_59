@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://dinkrnfpvqyse"]
+[gd_scene load_steps=26 format=3 uid="uid://dinkrnfpvqyse"]
 
 [ext_resource type="Texture2D" uid="uid://cw10n4prubm64" path="res://assets/textures/tracks/pcb_empty.svg" id="1_4vkub"]
 [ext_resource type="Texture2D" uid="uid://bj0wicc561gtv" path="res://assets/textures/tracks/track_corner_ne.svg" id="2_1ywam"]
@@ -7,6 +7,45 @@
 [ext_resource type="Texture2D" uid="uid://b4kre37knet61" path="res://assets/textures/towers/resistor.svg" id="5_sbkjb"]
 [ext_resource type="Texture2D" uid="uid://ehje7t8cs38k" path="res://assets/textures/start/start_NE.svg" id="6_6ydoj"]
 [ext_resource type="Texture2D" uid="uid://c8iu0xx6dhssk" path="res://assets/textures/tracks/track_t_junction.svg" id="7_rhq5j"]
+[ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="9_none"]
+[ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="10_w"]
+[ext_resource type="PackedScene" uid="uid://trkvariant02" path="res://scenes/tiles/track_e.tscn" id="11_e"]
+[ext_resource type="PackedScene" uid="uid://trkvariant03" path="res://scenes/tiles/track_ew.tscn" id="12_ew"]
+[ext_resource type="PackedScene" uid="uid://trkvariant04" path="res://scenes/tiles/track_s.tscn" id="13_s"]
+[ext_resource type="PackedScene" uid="uid://trkvariant05" path="res://scenes/tiles/track_sw.tscn" id="14_sw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant06" path="res://scenes/tiles/track_se.tscn" id="15_se"]
+[ext_resource type="PackedScene" uid="uid://trkvariant07" path="res://scenes/tiles/track_sew.tscn" id="16_sew"]
+[ext_resource type="PackedScene" uid="uid://trkvariant08" path="res://scenes/tiles/track_n.tscn" id="17_n"]
+[ext_resource type="PackedScene" uid="uid://trkvariant1a" path="res://scenes/tiles/track_nw.tscn" id="18_nw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0a" path="res://scenes/tiles/track_ne.tscn" id="19_ne"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0b" path="res://scenes/tiles/track_new.tscn" id="20_new"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0c" path="res://scenes/tiles/track_ns.tscn" id="21_ns"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0d" path="res://scenes/tiles/track_nsw.tscn" id="22_nsw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0e" path="res://scenes/tiles/track_nse.tscn" id="23_nse"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0f" path="res://scenes/tiles/track_nsew.tscn" id="24_nsew"]
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_ba3wm"]
+resource_name = "test"
+scenes/0/scene = ExtResource("9_none")
+scenes/1/scene = ExtResource("10_w")
+scenes/2/scene = ExtResource("11_e")
+scenes/3/scene = ExtResource("12_ew")
+scenes/4/scene = ExtResource("13_s")
+scenes/5/scene = ExtResource("14_sw")
+scenes/6/scene = ExtResource("15_se")
+scenes/7/scene = ExtResource("16_sew")
+scenes/8/scene = ExtResource("17_n")
+scenes/9/scene = ExtResource("18_nw")
+scenes/10/scene = ExtResource("19_ne")
+scenes/11/scene = ExtResource("20_new")
+scenes/12/scene = ExtResource("21_ns")
+scenes/13/scene = ExtResource("22_nsw")
+scenes/14/scene = ExtResource("23_nse")
+scenes/15/scene = ExtResource("24_nsew")
+
+[sub_resource type="TileSet" id="TileSet_3hvnp"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetScenesCollectionSource_ba3wm")
 
 [node name="PcbEmpty" type="Sprite2D"]
 position = Vector2(160, 119)
@@ -153,3 +192,9 @@ texture = ExtResource("3_ba3wm")
 position = Vector2(64, 64)
 rotation = 3.1415927
 texture = ExtResource("7_rhq5j")
+
+[node name="TileMap" type="TileMap" parent="."]
+position = Vector2(541, 306)
+tile_set = SubResource("TileSet_3hvnp")
+format = 2
+layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 196608, 2, 0, 196608, 3, 0, 327680, 65536, 0, 786432, 65539, 0, 786432, 131072, 0, 655360, 131073, 0, 196608, 131074, 0, 196608, 131075, 0, 589824, 131070, 0, 131072, 131069, 0, 655360, 65533, 0, 393216, 65534, 0, 196608, 65535, 0, 327680, 131071, 0, 589824)
