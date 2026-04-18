@@ -1,88 +1,15 @@
-[gd_scene load_steps=31 format=3 uid="uid://demoscene001x"]
+[gd_scene load_steps=4 format=3 uid="uid://demoscene001x"]
 
 [ext_resource type="Script" uid="uid://dl1pahc16kaj0" path="res://scripts/demo.gd" id="1_demo"]
-[ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="2_none"]
 [ext_resource type="Script" uid="uid://bu8e28ud0207r" path="res://scripts/spawn_enemy_manager.gd" id="2_spawn_enemy_manager"]
-[ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="3_w"]
-[ext_resource type="PackedScene" uid="uid://trkvariant02" path="res://scenes/tiles/track_e.tscn" id="4_e"]
-[ext_resource type="PackedScene" uid="uid://trkvariant03" path="res://scenes/tiles/track_ew.tscn" id="5_ew"]
-[ext_resource type="PackedScene" uid="uid://trkvariant04" path="res://scenes/tiles/track_s.tscn" id="6_s"]
-[ext_resource type="PackedScene" uid="uid://trkvariant05" path="res://scenes/tiles/track_sw.tscn" id="7_sw"]
-[ext_resource type="PackedScene" uid="uid://trkvariant06" path="res://scenes/tiles/track_se.tscn" id="8_se"]
-[ext_resource type="PackedScene" uid="uid://trkvariant07" path="res://scenes/tiles/track_sew.tscn" id="9_sew"]
-[ext_resource type="PackedScene" uid="uid://trkvariant08" path="res://scenes/tiles/track_n.tscn" id="10_n"]
-[ext_resource type="PackedScene" uid="uid://trkvariant1a" path="res://scenes/tiles/track_nw.tscn" id="11_nw"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0a" path="res://scenes/tiles/track_ne.tscn" id="12_ne"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0b" path="res://scenes/tiles/track_new.tscn" id="13_new"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0c" path="res://scenes/tiles/track_ns.tscn" id="14_ns"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0d" path="res://scenes/tiles/track_nsw.tscn" id="15_nsw"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0e" path="res://scenes/tiles/track_nse.tscn" id="16_nse"]
-[ext_resource type="PackedScene" uid="uid://trkvariant0f" path="res://scenes/tiles/track_nsew.tscn" id="17_nsew"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_top.tscn" id="18_spawner_top"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_bottom.tscn" id="19_spawner_bottom"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_middle.tscn" id="20_spawner_middle"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_8.tscn" id="21_core_8"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_9.tscn" id="22_core_9"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_13.tscn" id="23_core_13"]
-[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_14.tscn" id="24_core_14"]
-[ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="26_6abv7"]
-
-[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_demo"]
-resource_name = "tracks"
-scenes/0/scene = ExtResource("2_none")
-scenes/1/scene = ExtResource("3_w")
-scenes/2/scene = ExtResource("4_e")
-scenes/3/scene = ExtResource("5_ew")
-scenes/4/scene = ExtResource("6_s")
-scenes/5/scene = ExtResource("7_sw")
-scenes/6/scene = ExtResource("8_se")
-scenes/7/scene = ExtResource("9_sew")
-scenes/8/scene = ExtResource("10_n")
-scenes/9/scene = ExtResource("11_nw")
-scenes/10/scene = ExtResource("12_ne")
-scenes/11/scene = ExtResource("13_new")
-scenes/12/scene = ExtResource("14_ns")
-scenes/13/scene = ExtResource("15_nsw")
-scenes/14/scene = ExtResource("16_nse")
-scenes/15/scene = ExtResource("17_nsew")
-
-[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_gameplay"]
-resource_name = "gameplay"
-scenes/0/scene = ExtResource("18_spawner_top")
-scenes/1/scene = ExtResource("19_spawner_bottom")
-scenes/2/scene = ExtResource("20_spawner_middle")
-scenes/3/scene = ExtResource("21_core_8")
-scenes/4/scene = ExtResource("22_core_9")
-scenes/5/scene = ExtResource("23_core_13")
-scenes/6/scene = ExtResource("24_core_14")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k1mpm"]
-texture = ExtResource("26_6abv7")
-texture_region_size = Vector2i(64, 64)
-0:0/0 = 0
-1:0/0 = 0
-0:1/0 = 0
-1:1/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_demo"]
-tile_size = Vector2i(64, 64)
-sources/0 = SubResource("TileSetScenesCollectionSource_demo")
-sources/1 = SubResource("TileSetScenesCollectionSource_gameplay")
-sources/2 = SubResource("TileSetAtlasSource_k1mpm")
+[ext_resource type="Resource" path="res://scripts/resources/levels/demo_level.tres" id="3_level"]
 
 [node name="Demo" type="Node2D"]
 script = ExtResource("1_demo")
+level = ExtResource("3_level")
 
 [node name="SpawnEnemyManager" type="Node" parent="."]
 script = ExtResource("2_spawn_enemy_manager")
 
 [node name="TriggerTimer" type="Timer" parent="."]
 autostart = true
-
-[node name="TileMap" type="TileMap" parent="."]
-position = Vector2(100, 100)
-tile_set = SubResource("TileSet_demo")
-format = 2
-layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 983040, 2, 0, 983040, 3, 0, 458752, 4, 0, 327680, 65536, 0, 917504, 65537, 0, 983040, 65538, 0, 983040, 65539, 0, 983040, 65540, 0, 851968, 131072, 0, 655360, 131073, 0, 720896, 131074, 0, 720896, 131075, 0, 720896, 131076, 0, 589824, -65535, 0, 196608, -65534, 0, 327680, 393225, 1, 393216, 327683, 1, 327680, 196613, 2, 0, 196614, 65538, 0, 262149, 2, 1, 262150, 65538, 1, 262153, 65538, 1, 196616, 2, 0, 196617, 65538, 0, 262152, 2, 1, 262154, 2, 1)
-layer_1/name = "Layer1"
-layer_1/tile_data = PackedInt32Array(0, 1, 0, 131072, 1, 65536, 65539, 1, 196608, 65540, 1, 262144, 131075, 1, 327680, 131076, 1, 393216, -65535, 1, 131072)

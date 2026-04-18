@@ -33,7 +33,9 @@ static var _gates_by_graph_vertex: Dictionary = {}
 
 var _registry_key := ""
 var _current_hp := 1
-var _queued_enemy_hp := 0
+var _stalled_enemies: Array[Enemy] = []
+var _stalled_enemy_power := 0
+var _is_destroying := false
 
 
 static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
@@ -68,11 +70,9 @@ func on_enter(enemy: Enemy) -> void:
 		return
 
 	if definition.blocks_movement:
-		_queued_enemy_hp += enemy.hp
-		enemy.queue_free()
-		if not definition.indestructible and _queued_enemy_hp > _current_hp:
-			destroyed.emit(self)
-			queue_free()
+		_stall_enemy(enemy)
+		if not definition.indestructible and _stalled_enemy_power > _current_hp:
+			_destroy_gate()
 		return
 
 	if definition.damage_power > 0:
@@ -118,6 +118,38 @@ func _unregister_gate() -> void:
 		_gates_by_graph_vertex.erase(_registry_key)
 
 	_registry_key = ""
+
+
+func _stall_enemy(enemy: Enemy) -> void:
+	if _stalled_enemies.has(enemy):
+		return
+
+	_stalled_enemies.append(enemy)
+	_stalled_enemy_power += enemy.damage
+	enemy.stall_at_gate(self)
+
+
+func _destroy_gate() -> void:
+	if _is_destroying:
+		return
+
+	_is_destroying = true
+	_unregister_gate()
+	_release_stalled_enemies()
+	destroyed.emit(self)
+	queue_free()
+
+
+func _release_stalled_enemies() -> void:
+	var enemies := _stalled_enemies.duplicate()
+	_stalled_enemies.clear()
+	_stalled_enemy_power = 0
+
+	for enemy in enemies:
+		if enemy == null or not is_instance_valid(enemy):
+			continue
+
+		enemy.release_from_gate(self)
 
 
 func _update_position_from_vertex() -> void:

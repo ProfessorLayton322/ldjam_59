@@ -10,18 +10,18 @@ Ludum Dare 59 entry — a tower-defense–style game built in Godot 4.5 (GL Comp
 
 Run the game headlessly (verify script registration, check for parse errors):
 
-    cd ludum-dare-59
-    godot --headless --editor --quit
+	cd ludum-dare-59
+	godot --headless --editor --quit
 
 Open the project in the editor (interactive):
 
-    cd ludum-dare-59
-    godot --editor
+	cd ludum-dare-59
+	godot --editor
 
 Regenerate start-direction SVG textures:
 
-    cd ludum-dare-59/assets/textures
-    python generate_start.py
+	cd ludum-dare-59/assets/textures
+	python generate_start.py
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Regenerate start-direction SVG textures:
 
 ```
 menu.tscn  →  demo.tscn      (Start button)
-           →  settings.tscn  (Settings button; Escape or Back returns to menu)
+		   →  settings.tscn  (Settings button; Escape or Back returns to menu)
 ```
 
 `menu.tscn` is the main scene. All scene transitions use `get_tree().change_scene_to_file()`.
