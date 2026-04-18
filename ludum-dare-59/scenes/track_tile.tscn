@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://cwo32yamquubq"]
+
+[ext_resource type="Script" uid="uid://cpb1iedds033h" path="res://scenes/track_tile.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cw10n4prubm64" path="res://assets/textures/tracks/pcb_empty.svg" id="2"]
+[ext_resource type="Texture2D" uid="uid://c8iu0xx6dhssk" path="res://assets/textures/tracks/track_t_junction.svg" id="3_87qat"]
+
+[node name="TrackTile" type="Node2D"]
+script = ExtResource("1")
+south = true
+east = true
+west = true
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("2")
+
+[node name="Track" type="Sprite2D" parent="."]
+rotation = 4.712389
+texture = ExtResource("3_87qat")
