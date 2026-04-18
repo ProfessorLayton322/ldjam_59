@@ -30,11 +30,10 @@ var _temperature := 0
 var _gate_buttons: Dictionary = {}
 var _temperature_fill: ColorRect
 var _temperature_label: Label
-var _cpu_hp: int = CPU_HP
 const HudScene := preload("res://scripts/hud.gd")
 const CpuHpBarScene := preload("res://scripts/cpu_hp_bar.gd")
 var _hud: Node
-var _cpu_hp_bar: Node2D
+var _cpu_regions: Array[Dictionary] = []
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -214,35 +213,73 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 
 
 func _configure_core_gates() -> void:
-	var cpu_positions: Array[Vector2] = []
-
+	var core_node_ids: Dictionary = {}
 	for tile in _tiles_by_node_id.values():
-		if not (tile is CoreTile):
+		if tile is CoreTile:
+			core_node_ids[tile.node_id] = true
+
+	var core_positions: Dictionary = {}
+	for node_id in core_node_ids:
+		var vertex: GraphVertex = _graph.get_node_by_id(node_id)
+		if vertex != null:
+			core_positions[node_id] = vertex.position
+
+	var visited: Dictionary = {}
+	var region_groups: Array = []
+	for node_id in core_node_ids:
+		if visited.has(node_id):
+			continue
+		var region_ids: Array[int] = []
+		var queue: Array[int] = [node_id]
+		visited[node_id] = true
+		while not queue.is_empty():
+			var current: int = queue.pop_front()
+			region_ids.append(current)
+			if not core_positions.has(current):
+				continue
+			var pos_a: Vector2 = core_positions[current]
+			for other_id in core_positions:
+				if visited.has(other_id):
+					continue
+				if pos_a.distance_to(core_positions[other_id]) < 70.0:
+					visited[other_id] = true
+					queue.append(other_id)
+		region_groups.append(region_ids)
+
+	_cpu_regions.clear()
+
+	for region_index in region_groups.size():
+		var region_ids: Array[int] = region_groups[region_index]
+		var cpu_positions: Array[Vector2] = []
+
+		for node_id in region_ids:
+			var tile: BaseTile = _tiles_by_node_id.get(node_id) as BaseTile
+			if tile == null:
+				continue
+			var gate := CoreGate.new()
+			add_child(gate)
+			gate.graph = _graph
+			gate.vertex_id = node_id
+			gate.enemy_reached.connect(_on_region_enemy_reached.bind(region_index))
+			cpu_positions.append(to_local(tile.global_position))
+			print("Demo scene: CoreGate registered at node %d (region %d)" % [node_id, region_index])
+
+		if cpu_positions.is_empty():
 			continue
 
-		var gate := CoreGate.new()
-		add_child(gate)
-		gate.graph = _graph
-		gate.vertex_id = tile.node_id
-		gate.enemy_reached.connect(_on_enemy_reached_cpu)
-		cpu_positions.append(to_local(tile.global_position))
-		print("Demo scene: CoreGate registered at node %d" % tile.node_id)
+		var top_y := cpu_positions[0].y
+		var center_x := 0.0
+		for p in cpu_positions:
+			if p.y < top_y:
+				top_y = p.y
+			center_x += p.x
+		center_x /= cpu_positions.size()
 
-	if cpu_positions.is_empty():
-		return
-
-	var top_y := cpu_positions[0].y
-	var center_x := 0.0
-	for p in cpu_positions:
-		if p.y < top_y:
-			top_y = p.y
-		center_x += p.x
-	center_x /= cpu_positions.size()
-
-	_cpu_hp_bar = CpuHpBarScene.new()
-	_cpu_hp_bar.position = Vector2(center_x, top_y - 18)
-	add_child(_cpu_hp_bar)
-	_cpu_hp_bar.set_hp(_cpu_hp, CPU_HP)
+		var bar := CpuHpBarScene.new()
+		bar.position = Vector2(center_x, top_y - 18)
+		add_child(bar)
+		bar.set_hp(CPU_HP, CPU_HP)
+		_cpu_regions.append({"hp": CPU_HP, "bar": bar})
 
 
 func _start_trigger_timer() -> void:
@@ -452,13 +489,16 @@ func _on_gate_destroyed(gate: Gate) -> void:
 	_change_temperature(-gate.get_power_cost())
 
 
-func _on_enemy_reached_cpu(damage: int) -> void:
-	_cpu_hp -= damage
-	_cpu_hp = max(_cpu_hp, 0)
-	if _cpu_hp_bar != null:
-		_cpu_hp_bar.set_hp(_cpu_hp, CPU_HP)
-		_spawn_damage_label(damage, _cpu_hp_bar.position)
-	if _cpu_hp <= 0:
+func _on_region_enemy_reached(damage: int, region_index: int) -> void:
+	if region_index >= _cpu_regions.size():
+		return
+	var region: Dictionary = _cpu_regions[region_index]
+	region["hp"] = max(region["hp"] - damage, 0)
+	var bar: Node2D = region["bar"] as Node2D
+	if bar != null:
+		bar.set_hp(region["hp"], CPU_HP)
+		_spawn_damage_label(damage, bar.position)
+	if region["hp"] <= 0:
 		_hud.show_game_over()
 
 
