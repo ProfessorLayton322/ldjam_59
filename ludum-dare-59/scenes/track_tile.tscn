@@ -2,17 +2,16 @@
 
 [ext_resource type="Script" uid="uid://cpb1iedds033h" path="res://scenes/track_tile.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://cw10n4prubm64" path="res://assets/textures/tracks/pcb_empty.svg" id="2"]
-[ext_resource type="Texture2D" uid="uid://c8iu0xx6dhssk" path="res://assets/textures/tracks/track_t_junction.svg" id="3_87qat"]
+[ext_resource type="Texture2D" uid="uid://bj0wicc561gtv" path="res://assets/textures/tracks/track_corner_ne.svg" id="3_87qat"]
 
 [node name="TrackTile" type="Node2D"]
 script = ExtResource("1")
 south = true
-east = true
 west = true
 
 [node name="Background" type="Sprite2D" parent="."]
 texture = ExtResource("2")
 
 [node name="Track" type="Sprite2D" parent="."]
-rotation = 4.712389
+rotation = 1.5707964
 texture = ExtResource("3_87qat")

@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://trkvariant01"]
+
+[ext_resource type="PackedScene" uid="uid://cwo32yamquubq" path="res://scenes/track_tile.tscn" id="1_trk"]
+
+[node name="TrackTile" instance=ExtResource("1_trk")]
+north = false
+south = false
+east = false
+west = true
