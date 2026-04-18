@@ -10,7 +10,6 @@ const GATE_DEFINITIONS := [
 const TRIGGER_INTERVAL := 1.0
 const POSITION_MATCH_EPSILON := 1.0
 const GATE_PLACEMENT_RADIUS := 32.0
-const EXPECTED_SPAWNER_COUNT := 3
 const MAX_TEMPERATURE := 38
 const DEFAULT_LEVEL := preload("res://scripts/resources/levels/demo_level.tres")
 
@@ -91,6 +90,9 @@ func _process(_delta: float) -> void:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if LevelState.selected_level != null:
+		level = LevelState.selected_level
+
 	if not _instantiate_level_board():
 		return
 
@@ -185,9 +187,9 @@ func _collect_tiles() -> void:
 		spawner_count,
 		cpu_count,
 	])
-	if spawner_count != EXPECTED_SPAWNER_COUNT:
+	if level != null and level.expected_spawner_count >= 0 and spawner_count != level.expected_spawner_count:
 		push_warning("Demo scene: expected %d spawner tiles from TileMap, found %d" % [
-			EXPECTED_SPAWNER_COUNT,
+			level.expected_spawner_count,
 			spawner_count,
 		])
 
