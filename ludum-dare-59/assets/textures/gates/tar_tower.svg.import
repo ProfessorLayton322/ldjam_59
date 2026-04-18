@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cucrjw5ldo7n5"
-path="res://.godot/imported/default_gate.svg-171be5d4d77e7b675ff186469bb4c876.ctex"
+uid="uid://d11tila355eua"
+path="res://.godot/imported/tar_tower.svg-a1776681129f8549c56c4c2831808bf8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/gates/default_gate.svg"
-dest_files=["res://.godot/imported/default_gate.svg-171be5d4d77e7b675ff186469bb4c876.ctex"]
+source_file="res://assets/textures/gates/tar_tower.svg"
+dest_files=["res://.godot/imported/tar_tower.svg-a1776681129f8549c56c4c2831808bf8.ctex"]
 
 [params]
 
