@@ -1,27 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://cblay0xjeb4rs"]
+[gd_scene load_steps=4 format=3 uid="uid://cblay0xjeb4rs"]
 
 [ext_resource type="Script" uid="uid://dl1pahc16kaj0" path="res://scripts/demo.gd" id="1_demo"]
 [ext_resource type="Script" uid="uid://bu8e28ud0207r" path="res://scripts/spawn_enemy_manager.gd" id="2_spawn_enemy_manager"]
 [ext_resource type="Resource" path="res://scripts/resources/levels/level_01.tres" id="3_level"]
-[ext_resource type="AudioStream" uid="uid://m4f0vsngydhg" path="res://assets/audio/music/slow-moonlight-synthwave.wav" id="4_2flce"]
-[ext_resource type="AudioStream" uid="uid://bdl7seng5todp" path="res://assets/audio/sfx/destruction_bitcrushed.wav" id="5_nvapi"]
-[ext_resource type="AudioStream" uid="uid://wdrltu5qttj6" path="res://assets/audio/sfx/zaps/Audio0.wav" id="6_8jyu6"]
-[ext_resource type="AudioStream" uid="uid://b2d0vax0x2xdw" path="res://assets/audio/sfx/zaps/Audio 1.wav" id="6_e0a4y"]
-[ext_resource type="AudioStream" uid="uid://cjrcg0dhteac6" path="res://assets/audio/sfx/zaps/Audio 2.wav" id="7_8jyu6"]
-[ext_resource type="AudioStream" uid="uid://0tbd136k4ldj" path="res://assets/audio/sfx/zaps/Audio 3.wav" id="8_uca6r"]
-[ext_resource type="AudioStream" uid="uid://0o3cyl2qjf42" path="res://assets/audio/sfx/zaps/Audio 4.wav" id="9_ofjoe"]
-[ext_resource type="AudioStream" uid="uid://bcbj1nnxoqn3e" path="res://assets/audio/sfx/zaps/Audio 5.wav" id="10_hk03j"]
-[ext_resource type="AudioStream" uid="uid://ycor01ghgx2f" path="res://assets/audio/sfx/zaps/Audio 6.wav" id="11_gxn0f"]
-
-[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_88lbe"]
-streams_count = 7
-stream_0/stream = ExtResource("6_8jyu6")
-stream_1/stream = ExtResource("6_e0a4y")
-stream_2/stream = ExtResource("7_8jyu6")
-stream_3/stream = ExtResource("8_uca6r")
-stream_4/stream = ExtResource("9_ofjoe")
-stream_5/stream = ExtResource("10_hk03j")
-stream_6/stream = ExtResource("11_gxn0f")
 
 [node name="Demo" type="Node2D"]
 script = ExtResource("1_demo")
@@ -32,18 +13,3 @@ script = ExtResource("2_spawn_enemy_manager")
 
 [node name="TriggerTimer" type="Timer" parent="."]
 autostart = true
-
-[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("4_2flce")
-volume_db = -20.0
-autoplay = true
-bus = &"Music"
-
-[node name="DeathSFXPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("5_nvapi")
-bus = &"SFX"
-
-[node name="DamageSFXPlayer" type="AudioStreamPlayer" parent="."]
-stream = SubResource("AudioStreamRandomizer_88lbe")
-volume_db = -30.0
-bus = &"SFX"

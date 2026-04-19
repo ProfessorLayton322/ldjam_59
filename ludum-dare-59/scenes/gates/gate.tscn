@@ -1,14 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://88ipgjhcm785"]
+[gd_scene load_steps=2 format=3 uid="uid://88ipgjhcm785"]
 
 [ext_resource type="Script" uid="uid://cgmrj828p5f6u" path="res://scripts/gates/gate.gd" id="1_gate"]
-[ext_resource type="AudioStream" uid="uid://cd1fx5wt0xwub" path="res://assets/audio/sfx/put_down_gate.wav" id="2_7c8ew"]
 
 [node name="Gate" type="Node2D"]
 script = ExtResource("1_gate")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-
-[node name="PlacementSFXPlayer" type="AudioStreamPlayer2D" parent="."]
-stream = ExtResource("2_7c8ew")
-autoplay = true
-bus = &"SFX"
