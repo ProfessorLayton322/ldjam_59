@@ -285,8 +285,8 @@ func _handle_ballista_remove_input(event: InputEvent) -> void:
 	var gate := Gate.get_gate(demo._graph, vertex_id)
 	if gate == null or gate != ballista_gate:
 		return
-	demo._delete_gate_at(vertex_id)
-	_complete_ballista_remove()
+	if demo._delete_gate_at(vertex_id):
+		_complete_ballista_remove()
 func _is_left_mouse_pressed(event: InputEvent) -> bool:
 	if not event is InputEventMouseButton:
 		return false
@@ -299,8 +299,8 @@ func _try_pickup_ballista(global_position: Vector2) -> void:
 	var vertex_id: int = demo._get_track_vertex_id_at_global_position(global_position)
 	if vertex_id != ballista_gate.vertex_id:
 		return
-	TutorialEvents.stop_highlighter(ballista_gate)
-	demo._pickup_gate_at(vertex_id)
+	if demo._pickup_gate_at(vertex_id):
+		TutorialEvents.stop_highlighter(ballista_gate)
 func _try_drop_ballista(global_position: Vector2) -> void:
 	var gate: Gate = demo._moving_gate
 	var target_vertex_id: int = demo._get_track_vertex_id_at_global_position(global_position)

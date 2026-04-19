@@ -97,16 +97,24 @@ func place_gate(vertex_id: int, definition: Resource, can_place: bool) -> bool:
 	return true
 
 
-func pickup_gate_at(vertex_id: int) -> void:
+func pickup_gate_at(vertex_id: int) -> bool:
 	var gate := Gate.get_gate(graph, vertex_id)
 	if gate == null:
 		DebugTrace.event("demo_gate", "pickup_gate:missing", {"vertex_id": vertex_id})
-		return
+		return false
+	if gate.is_stunned():
+		DebugTrace.event("demo_gate", "pickup_gate:stunned_blocked", {
+			"vertex_id": vertex_id,
+			"gate": DebugTrace.gate_state(gate),
+		})
+		AudioManager.play_invalid_gate_move()
+		return false
 	DebugTrace.event("demo_gate", "pickup_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_moving_gate = gate
 	_moving_gate_origin = vertex_id
 	gate.modulate = Color(1.3, 1.3, 0.5)
 	DebugTrace.event("demo_gate", "pickup_gate:done", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
+	return true
 
 
 func drop_moving_gate(global_pos: Vector2) -> void:
@@ -118,6 +126,15 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 	})
 	_moving_gate = null
 	gate.modulate = Color.WHITE
+
+	if gate.is_stunned():
+		AudioManager.play_invalid_gate_move()
+		_snap_gate_to_vertex(gate, _moving_gate_origin)
+		_moving_gate_origin = -1
+		DebugTrace.event("demo_gate", "drop_moving_gate:stunned_returned_origin", {
+			"gate": DebugTrace.gate_state(gate),
+		})
+		return
 
 	var target_vertex_id := get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
@@ -165,22 +182,24 @@ func cancel_moving_gate() -> void:
 	DebugTrace.event("demo_gate", "cancel_moving_gate:done", {})
 
 
-func delete_gate_at(vertex_id: int) -> void:
+func delete_gate_at(vertex_id: int) -> bool:
 	var gate := Gate.get_gate(graph, vertex_id)
 	if gate == null:
 		DebugTrace.event("demo_gate", "delete_gate:missing", {"vertex_id": vertex_id})
-		return
+		return false
 	if gate.is_stunned():
 		DebugTrace.event("demo_gate", "delete_gate:stunned_blocked", {
 			"vertex_id": vertex_id,
 			"gate": DebugTrace.gate_state(gate),
 		})
-		return
+		AudioManager.play_invalid_gate_move()
+		return false
 	DebugTrace.event("demo_gate", "delete_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	temperature_changed.emit(-gate.get_power_cost())
 	AudioManager.play_gate_deleted()
 	gate.queue_free()
 	DebugTrace.event("demo_gate", "delete_gate:queued_free", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
+	return true
 
 
 func _on_gate_destroyed(gate: Gate) -> void:

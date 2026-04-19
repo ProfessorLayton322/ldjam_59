@@ -275,8 +275,8 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 	return _gate_interaction.place_gate(vertex_id, definition, _can_place_gate(definition))
 
 
-func _pickup_gate_at(vertex_id: int) -> void:
-	_gate_interaction.pickup_gate_at(vertex_id)
+func _pickup_gate_at(vertex_id: int) -> bool:
+	return _gate_interaction.pickup_gate_at(vertex_id)
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
@@ -287,8 +287,8 @@ func _cancel_moving_gate() -> void:
 	_gate_interaction.cancel_moving_gate()
 
 
-func _delete_gate_at(vertex_id: int) -> void:
-	_gate_interaction.delete_gate_at(vertex_id)
+func _delete_gate_at(vertex_id: int) -> bool:
+	return _gate_interaction.delete_gate_at(vertex_id)
 
 
 func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
