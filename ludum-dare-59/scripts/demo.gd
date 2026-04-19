@@ -8,6 +8,7 @@ const GameCameraScene := preload("res://scripts/game_camera.gd")
 const GameSidebarScene := preload("res://scripts/game_sidebar.gd")
 const GateInteractionScene := preload("res://scripts/gate_interaction.gd")
 const DemoLevelSetupScene := preload("res://scripts/demo_level_setup.gd")
+const VICTORY_POPUP_SECONDS := 3.0
 
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
@@ -20,7 +21,8 @@ var _tiles_by_node_id: Dictionary = {}
 var _cpu_node_ids: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
 var _selected_gate_definition: Resource
-var _temperature := 0
+var _temperature: float = 0.0
+var _despawn_temperature_cooldowns: Array[Dictionary] = []
 var _gate_buttons: Dictionary = {}
 var _pause_button: Button
 var _hud: Node
@@ -60,6 +62,18 @@ func _get_trigger_interval() -> float:
 
 func _get_gate_placement_radius() -> float:
 	return _get_balance_params().gate_placement_radius
+
+
+func _get_despawn_cooldown_timing() -> float:
+	return _get_balance_params().despawn_cooldown_timing
+
+
+func _get_moving_penalty() -> float:
+	return _get_balance_params().moving_penalty
+
+
+func _get_moving_penalty_cooldown() -> float:
+	return _get_balance_params().moving_penalty_cooldown
 
 
 func _center_camera_on_graph() -> void:
@@ -156,8 +170,66 @@ func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
 
-func _change_temperature(amount: int) -> void:
-	_temperature = clampi(_temperature + amount, 0, _get_max_temperature())
+func _change_temperature(amount: float) -> void:
+	if amount < 0.0:
+		_start_temperature_cooldown(-amount, _get_despawn_cooldown_timing())
+		return
+	_temperature = clampf(_temperature + amount, 0.0, float(_get_max_temperature()))
+	_update_temperature_meter()
+
+
+func _apply_moving_penalty() -> void:
+	var amount := _get_moving_penalty()
+	if amount <= 0.0:
+		return
+	var previous_temperature := _temperature
+	_temperature = clampf(_temperature + amount, 0.0, float(_get_max_temperature()))
+	var added_amount := _temperature - previous_temperature
+	if added_amount <= 0.0:
+		return
+	_update_temperature_meter()
+	_start_temperature_cooldown(added_amount, _get_moving_penalty_cooldown())
+
+
+func _start_temperature_cooldown(amount: float, duration: float) -> void:
+	if amount <= 0.0:
+		return
+	if duration <= 0.0:
+		_temperature = clampf(_temperature - amount, 0.0, float(_get_max_temperature()))
+		_update_temperature_meter()
+		return
+	_despawn_temperature_cooldowns.append({
+		"remaining_amount": amount,
+		"remaining_time": duration,
+	})
+
+
+func _process_despawn_temperature_cooldowns(delta: float) -> void:
+	if _despawn_temperature_cooldowns.is_empty():
+		return
+
+	var total_decrease := 0.0
+	var active_cooldowns: Array[Dictionary] = []
+	for cooldown: Dictionary in _despawn_temperature_cooldowns:
+		var remaining_amount := float(cooldown["remaining_amount"])
+		var remaining_time := float(cooldown["remaining_time"])
+		if remaining_amount <= 0.0 or remaining_time <= 0.0:
+			continue
+
+		var elapsed := minf(delta, remaining_time)
+		var decrease := remaining_amount if elapsed >= remaining_time else remaining_amount * elapsed / remaining_time
+		total_decrease += decrease
+		remaining_amount -= decrease
+		remaining_time -= elapsed
+
+		if remaining_amount > 0.0 and remaining_time > 0.0:
+			active_cooldowns.append({
+				"remaining_amount": remaining_amount,
+				"remaining_time": remaining_time,
+			})
+
+	_despawn_temperature_cooldowns = active_cooldowns
+	_temperature = clampf(_temperature - total_decrease, 0.0, float(_get_max_temperature()))
 	_update_temperature_meter()
 
 
@@ -198,6 +270,12 @@ func _on_settings_button_pressed() -> void:
 		_hud.show_settings()
 
 
+func _on_pause_menu_resume_pressed() -> void:
+	if _hud != null:
+		_hud.hide_pause_menu()
+	_set_pause_mode_enabled(false)
+
+
 func _set_pause_mode_enabled(enabled: bool) -> void:
 	get_tree().paused = enabled
 	if enabled:
@@ -210,6 +288,31 @@ func _set_pause_mode_enabled(enabled: bool) -> void:
 		_hud.set_paused(enabled)
 
 
+func _is_win_button_input_event(event: InputEvent) -> bool:
+	if not event is InputEventMouseButton:
+		return false
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	return _sidebar != null and _sidebar.has_method("is_point_over_debug_victory_button") and _sidebar.is_point_over_debug_victory_button(mouse_event.position)
+
+
+func _despawn_level_objects() -> void:
+	_cancel_moving_gate()
+	for child in get_children():
+		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _spawn_enemy_manager or child == _level_timer:
+			continue
+		if child == get_node_or_null(trigger_timer_path):
+			continue
+		if child == _level_board or child == _gate_preview or child is Enemy or child is Gate or child is Label:
+			child.queue_free()
+	_tiles.clear()
+	_tiles_by_node_id.clear()
+	_cpu_node_ids.clear()
+	_cpu_regions.clear()
+	_gate_preview = null
+
+
 func _complete_level_with_victory() -> void:
 	if _level_finished:
 		return
@@ -220,12 +323,26 @@ func _complete_level_with_victory() -> void:
 		_spawn_enemy_manager.stop()
 	if _level_timer != null:
 		_level_timer.stop()
+	var trigger_timer := get_node_or_null(trigger_timer_path) as Timer
+	if trigger_timer != null:
+		trigger_timer.stop()
+	if _tutorial_manager != null and _tutorial_manager.has_method("abort_for_victory"):
+		_tutorial_manager.abort_for_victory()
+	_despawn_level_objects()
 
 	AudioManager.play_level_victory()
-	if LevelState.advance_to_next_level():
-		get_tree().call_deferred("change_scene_to_file", "res://scenes/ld_gameplay.tscn")
-	else:
+	if _hud != null:
 		_hud.show_victory()
+
+	await get_tree().create_timer(VICTORY_POPUP_SECONDS).timeout
+	if not is_inside_tree():
+		return
+
+	AudioManager.stop_level_audio()
+	if LevelState.advance_to_next_level():
+		get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
+	elif _hud != null:
+		_hud.hide_victory()
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
@@ -275,20 +392,21 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 	return _gate_interaction.place_gate(vertex_id, definition, _can_place_gate(definition))
 
 
-func _pickup_gate_at(vertex_id: int) -> void:
-	_gate_interaction.pickup_gate_at(vertex_id)
+func _pickup_gate_at(vertex_id: int) -> bool:
+	return _gate_interaction.pickup_gate_at(vertex_id)
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
-	_gate_interaction.drop_moving_gate(global_pos)
+	if _gate_interaction.drop_moving_gate(global_pos):
+		_apply_moving_penalty()
 
 
 func _cancel_moving_gate() -> void:
 	_gate_interaction.cancel_moving_gate()
 
 
-func _delete_gate_at(vertex_id: int) -> void:
-	_gate_interaction.delete_gate_at(vertex_id)
+func _delete_gate_at(vertex_id: int) -> bool:
+	return _gate_interaction.delete_gate_at(vertex_id)
 
 
 func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
@@ -296,6 +414,8 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_win_button_input_event(event):
+		return
 	if _tutorial_manager != null and _tutorial_manager.handle_unhandled_input(event):
 		return
 
@@ -376,11 +496,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _is_win_button_input_event(event):
+		return
 	if _tutorial_manager != null and _tutorial_manager.handle_input(event):
 		return
 
 
 func _process(_delta: float) -> void:
+	if not get_tree().paused:
+		_process_despawn_temperature_cooldowns(_delta)
+
 	if _moving_gate != null:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
 
@@ -438,6 +563,7 @@ func _ready() -> void:
 	_hud = HudScene.new()
 	add_child(_hud)
 	_hud.settings_closed.connect(func(): _set_pause_mode_enabled(false))
+	_hud.resume_pressed.connect(_on_pause_menu_resume_pressed)
 
 	await get_tree().process_frame
 	setup.collect_tiles()
@@ -448,6 +574,8 @@ func _ready() -> void:
 	var cpu_vertices := setup.build_cpu_vertices()
 	setup.configure_spawners(cpu_vertices)
 	_spawn_enemy_manager = setup.spawn_enemy_manager
+	if _spawn_enemy_manager != null and not _spawn_enemy_manager.level_completed.is_connected(_complete_level_with_victory):
+		_spawn_enemy_manager.level_completed.connect(_complete_level_with_victory)
 
 	setup.configure_core_gates(Callable(self, "_on_region_enemy_reached"), _get_cpu_hp())
 	_cpu_regions = setup.cpu_regions
@@ -467,5 +595,4 @@ func _ready() -> void:
 	_tutorial_manager.configure_flow()
 	AudioManager.play_level_beginning()
 	_start_enemy_spawning()
-	_start_level_timer()
 	AudioManager.play_music()

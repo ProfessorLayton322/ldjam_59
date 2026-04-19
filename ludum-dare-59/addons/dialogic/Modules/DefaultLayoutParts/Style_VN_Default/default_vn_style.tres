@@ -13,7 +13,7 @@
 
 [sub_resource type="Resource" id="Resource_3dixn"]
 script = ExtResource("2_3b8ue")
-overrides = {}
+overrides = {"global_font": "res://PixelifySans-Regular.otf"}
 
 [sub_resource type="Resource" id="Resource_gen8e"]
 script = ExtResource("2_3b8ue")

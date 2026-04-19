@@ -1,6 +1,8 @@
 class_name Enemy
 extends Node2D
 
+signal defeated(enemy: Enemy)
+
 const DebugTrace := preload("res://scripts/debug_trace.gd")
 
 @export var graph: Graph
@@ -32,6 +34,7 @@ func _ready() -> void:
 	_apply_balance_params()
 	AudioManager.play_enemy_spawn(_get_balance_id())
 	_ensure_icon()
+	_ensure_hp_label()
 	start_pathing()
 	DebugTrace.event("enemy", "ready:done", {"enemy": DebugTrace.enemy_state(self)})
 
@@ -60,11 +63,33 @@ func start_pathing() -> void:
 	_move_to_next_node()
 
 
+func _ensure_hp_label() -> void:
+	var label := get_node_or_null("HpLabel") as Label
+	if label == null:
+		label = Label.new()
+		label.name = "HpLabel"
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var icon_offset := _get_icon_offset()
+		label.size = Vector2(64, 64)
+		label.position = Vector2(-32.0 + icon_offset.x, -32.0 + icon_offset.y)
+		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_color_override("font_color", Color.BLACK)
+		label.add_theme_font_override("font", load("res://PixelifySans-Regular.otf"))
+		add_child(label)
+	label.text = str(hp)
+
+
+func _get_icon_offset() -> Vector2:
+	return Vector2.ZERO
+
+
 func _ensure_icon() -> void:
 	var icon := get_node_or_null("Icon") as Sprite2D
 	if icon == null:
 		icon = Sprite2D.new()
 		icon.name = "Icon"
+		icon.position = _get_icon_offset()
 		add_child(icon)
 
 	var params := BalanceManager.get_enemy_params(_get_balance_id())
@@ -246,6 +271,9 @@ func apply_damage(amount: int) -> void:
 		"amount": amount,
 	})
 	hp -= amount
+	var label := get_node_or_null("HpLabel") as Label
+	if label != null:
+		label.text = str(hp)
 	if hp <= 0:
 		play_death_sound()
 		DebugTrace.event("enemy_damage", "apply_damage:queue_free", {
@@ -254,6 +282,7 @@ func apply_damage(amount: int) -> void:
 		})
 		if _is_first_tutorial_crytter:
 			TutorialEvents.emit_first_crytter_despawned(self)
+		defeated.emit(self)
 		queue_free()
 	else:
 		play_damage_sound()

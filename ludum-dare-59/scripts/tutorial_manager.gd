@@ -63,6 +63,19 @@ func is_menu_settings_locked() -> bool:
 	return _should_lock_before_first_dialogue() or (step != Step.NONE and step != Step.DONE)
 
 
+func abort_for_victory() -> void:
+	_end_tutorial_dialogue()
+	if ui_overview_highlight_target != null:
+		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
+		ui_overview_highlight_target = null
+	TutorialEvents.stop_all_highlighters()
+	step = Step.DONE
+	TutorialEvents.reset_first_level_tutorial()
+	_set_pre_dialogue_input_locked(false)
+	if demo._sidebar != null and demo._sidebar.has_method("set_menu_settings_buttons_disabled"):
+		demo._sidebar.set_menu_settings_buttons_disabled(false)
+
+
 func _set_pre_dialogue_input_locked(locked: bool) -> void:
 	if demo._sidebar != null and demo._sidebar.has_method("set_player_controls_disabled"):
 		demo._sidebar.set_player_controls_disabled(locked)
@@ -166,7 +179,6 @@ func _on_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 		TutorialEvents.stop_highlighter(target_tile)
 	ballista_gate = _gate
 	step = Step.WAIT_FIRST_CRYTTER_DEATH
-	TutorialEvents.finish_first_level_tutorial()
 	_end_tutorial_dialogue()
 	demo._set_pause_mode_enabled(false)
 	apply_button_locks()
@@ -285,8 +297,8 @@ func _handle_ballista_remove_input(event: InputEvent) -> void:
 	var gate := Gate.get_gate(demo._graph, vertex_id)
 	if gate == null or gate != ballista_gate:
 		return
-	demo._delete_gate_at(vertex_id)
-	_complete_ballista_remove()
+	if demo._delete_gate_at(vertex_id):
+		_complete_ballista_remove()
 func _is_left_mouse_pressed(event: InputEvent) -> bool:
 	if not event is InputEventMouseButton:
 		return false
@@ -299,8 +311,8 @@ func _try_pickup_ballista(global_position: Vector2) -> void:
 	var vertex_id: int = demo._get_track_vertex_id_at_global_position(global_position)
 	if vertex_id != ballista_gate.vertex_id:
 		return
-	TutorialEvents.stop_highlighter(ballista_gate)
-	demo._pickup_gate_at(vertex_id)
+	if demo._pickup_gate_at(vertex_id):
+		TutorialEvents.stop_highlighter(ballista_gate)
 func _try_drop_ballista(global_position: Vector2) -> void:
 	var gate: Gate = demo._moving_gate
 	var target_vertex_id: int = demo._get_track_vertex_id_at_global_position(global_position)
@@ -534,6 +546,7 @@ func _on_tutorial_dialogue_ended() -> void:
 	TutorialEvents.stop_all_highlighters()
 	demo._set_pause_mode_enabled(false)
 	apply_button_locks()
+	TutorialEvents.finish_first_level_tutorial()
 func _set_ui_overview_highlight(index: int) -> void:
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
