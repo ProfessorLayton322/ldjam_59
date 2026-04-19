@@ -126,9 +126,9 @@ func stop_all_highlighters() -> void:
 		if tween is Tween:
 			(tween as Tween).kill()
 
-		var target := _highlight_targets.get(instance_id) as Node
-		if target != null and is_instance_valid(target) and _highlight_original_scales.has(instance_id):
-			target.set("scale", _highlight_original_scales[instance_id])
+		var raw_target = _highlight_targets.get(instance_id)
+		if raw_target != null and is_instance_valid(raw_target) and _highlight_original_scales.has(instance_id):
+			(raw_target as Node).set("scale", _highlight_original_scales[instance_id])
 
 	_highlight_tweens.clear()
 	_highlight_original_scales.clear()

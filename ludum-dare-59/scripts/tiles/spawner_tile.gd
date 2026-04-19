@@ -59,7 +59,24 @@ func _update_sprite_rotation() -> void:
 	if not is_inside_tree():
 		return
 	var sprite := get_node_or_null("StartSprite") as Sprite2D
-	if sprite == null or graph == null or node_id == -1:
+	if sprite == null or graph == null:
+		return
+
+	if spawn_parent is Node2D:
+		var my_pos := (spawn_parent as Node2D).to_local(global_position)
+		var best_vertex: GraphVertex
+		var best_dist := INF
+		for v: GraphVertex in graph.nodes:
+			var d := my_pos.distance_to(v.position)
+			if d < best_dist:
+				best_dist = d
+				best_vertex = v
+		if best_vertex != null and best_dist > 0.5:
+			var dir := (best_vertex.position - my_pos).normalized()
+			sprite.rotation = dir.angle() - PI / 2.0
+			return
+
+	if node_id == -1:
 		return
 	var vertex := graph.get_node_by_id(node_id)
 	if vertex == null or vertex.neighbour_ids.is_empty():

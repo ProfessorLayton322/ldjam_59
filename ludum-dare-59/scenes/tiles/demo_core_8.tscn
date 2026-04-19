@@ -10,4 +10,4 @@ node_id = 8
 [node name="CpuSprite" type="Sprite2D" parent="."]
 texture = ExtResource("3_cpu")
 region_enabled = true
-region_rect = Rect2(0, 0, 64, 64)
+region_rect = Rect2(64, 64, 64, 64)

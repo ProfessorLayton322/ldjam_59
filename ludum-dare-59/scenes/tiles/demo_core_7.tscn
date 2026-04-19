@@ -3,11 +3,11 @@
 [ext_resource type="Script" uid="uid://c6kxopkkarb7v" path="res://scripts/tiles/core_tile.gd" id="1_core"]
 [ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="3_cpu"]
 
-[node name="Core9" type="Node2D"]
+[node name="Core7" type="Node2D"]
 script = ExtResource("1_core")
-node_id = 9
+node_id = 7
 
 [node name="CpuSprite" type="Sprite2D" parent="."]
 texture = ExtResource("3_cpu")
 region_enabled = true
-region_rect = Rect2(128, 64, 64, 64)
+region_rect = Rect2(0, 64, 64, 64)

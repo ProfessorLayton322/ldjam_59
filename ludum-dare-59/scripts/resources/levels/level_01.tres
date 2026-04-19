@@ -8,6 +8,7 @@
 script = ExtResource("1_level_definition")
 title = "Level 1"
 board_scene = ExtResource("2_board")
+require_mutual_connections = false
 expected_spawner_count = 1
 duration_seconds = 45.0
 spawn_cfg = ExtResource("3_spawn_cfg")
