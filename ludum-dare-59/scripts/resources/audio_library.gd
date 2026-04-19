@@ -19,10 +19,13 @@ extends Resource
 @export_group("Enemies")
 @export var crytter_spawn_sounds: Array[AudioStream] = []
 @export var crytter_damage_sounds: Array[AudioStream] = []
+@export var crytter_death_sounds: Array[AudioStream] = []
 @export var raider_stunner_spawn_sounds: Array[AudioStream] = []
 @export var raider_stunner_damage_sounds: Array[AudioStream] = []
+@export var raider_stunner_death_sounds: Array[AudioStream] = []
 @export var brute_spawn_sounds: Array[AudioStream] = []
 @export var brute_damage_sounds: Array[AudioStream] = []
+@export var brute_death_sounds: Array[AudioStream] = []
 
 @export_group("CPU")
 @export var cpu_damage_sounds: Array[AudioStream] = []
@@ -88,5 +91,17 @@ func get_enemy_damage_sounds(enemy_id: String) -> Array[AudioStream]:
 			return raider_stunner_damage_sounds
 		"brute":
 			return brute_damage_sounds
+		_:
+			return []
+
+
+func get_enemy_death_sounds(enemy_id: String) -> Array[AudioStream]:
+	match enemy_id:
+		"crytter":
+			return crytter_death_sounds
+		"raider_stunner":
+			return raider_stunner_death_sounds
+		"brute":
+			return brute_death_sounds
 		_:
 			return []
