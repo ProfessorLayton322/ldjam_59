@@ -238,8 +238,8 @@ func apply_damage(amount: int) -> void:
 		"amount": amount,
 	})
 	hp -= amount
-	AudioManager.play_enemy_damage(_get_balance_id())
 	if hp <= 0:
+		play_death_sound()
 		DebugTrace.event("enemy_damage", "apply_damage:queue_free", {
 			"enemy": DebugTrace.enemy_state(self),
 			"amount": amount,
@@ -247,10 +247,20 @@ func apply_damage(amount: int) -> void:
 		if _is_first_tutorial_crytter:
 			TutorialEvents.emit_first_crytter_despawned(self)
 		queue_free()
+	else:
+		play_damage_sound()
 	DebugTrace.event("enemy_damage", "apply_damage:after", {
 		"enemy": DebugTrace.enemy_state(self),
 		"amount": amount,
 	})
+
+
+func play_damage_sound() -> void:
+	AudioManager.play_enemy_damage(_get_balance_id())
+
+
+func play_death_sound() -> void:
+	AudioManager.play_enemy_death(_get_balance_id())
 
 
 func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
