@@ -155,7 +155,7 @@ func _setup_sfx_bank() -> void:
 	_register_sfx_event(bank, SFX_PAUSE_ACTIVATED, library.pause_activated_sounds)
 	_register_sfx_event(bank, SFX_PAUSE_DEACTIVATED, library.pause_deactivated_sounds)
 	_register_sfx_event(bank, SFX_UI_INTERACTION, library.ui_interaction_sounds)
-	_register_sfx_event(bank, SFX_CPU_DAMAGE, library.cpu_damage_sounds, -30.0)
+	_register_sfx_event(bank, SFX_CPU_DAMAGE, library.cpu_damage_sounds)
 	_register_sfx_event(bank, SFX_CPU_DEATH, library.cpu_death_sounds)
 	_register_sfx_event(bank, SFX_NOT_ENOUGH_TEMPERATURE, library.not_enough_temperature_sounds)
 	_register_sfx_event(bank, SFX_INVALID_GATE_TILE, library.invalid_gate_tile_sounds)
