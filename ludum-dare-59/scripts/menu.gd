@@ -7,11 +7,13 @@ func _ready() -> void:
 
 
 func _on_start_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	LevelState.start_from_first_level()
 	get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
 
 
 func _on_settings_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	get_tree().change_scene_to_file("res://scenes/settings.tscn")
 
 

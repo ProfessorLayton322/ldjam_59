@@ -10,14 +10,17 @@ func _ready() -> void:
 
 
 func _on_fullhd_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	ResolutionManager.set_resolution(ResolutionManager.Resolution.FULL_HD)
 
 
 func _on_4k_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	ResolutionManager.set_resolution(ResolutionManager.Resolution.FOUR_K)
 
 
 func _on_back_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
