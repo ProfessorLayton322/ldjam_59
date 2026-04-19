@@ -9,6 +9,7 @@ extends Resource
 @export_group("Gates")
 @export var barricade_gate_spawn_sounds: Array[AudioStream] = []
 @export var barricade_gate_activation_sounds: Array[AudioStream] = []
+@export var barricade_gate_overpowered_despawn_sounds: Array[AudioStream] = []
 @export var ballista_gate_spawn_sounds: Array[AudioStream] = []
 @export var ballista_gate_activation_sounds: Array[AudioStream] = []
 @export var tar_gate_spawn_sounds: Array[AudioStream] = []
@@ -23,6 +24,7 @@ extends Resource
 @export var raider_stunner_spawn_sounds: Array[AudioStream] = []
 @export var raider_stunner_damage_sounds: Array[AudioStream] = []
 @export var raider_stunner_death_sounds: Array[AudioStream] = []
+@export var raider_stunner_gate_stun_sounds: Array[AudioStream] = []
 @export var brute_spawn_sounds: Array[AudioStream] = []
 @export var brute_damage_sounds: Array[AudioStream] = []
 @export var brute_death_sounds: Array[AudioStream] = []

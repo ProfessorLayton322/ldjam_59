@@ -4,15 +4,8 @@ extends RefCounted
 const PREFIX := "[LDDBG]"
 
 
-static func event(category: String, action: String, data: Dictionary = {}) -> void:
-	print("%s[%s][t=%d][f=%d] %s %s" % [
-		PREFIX,
-		category,
-		Time.get_ticks_msec(),
-		Engine.get_process_frames(),
-		action,
-		str(data),
-	])
+static func event(_category: String, _action: String, _data: Dictionary = {}) -> void:
+	pass
 
 
 static func gate_state(gate: Gate) -> Dictionary:

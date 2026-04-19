@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d11tila355eua"
-path="res://.godot/imported/tar_tower.svg-a1776681129f8549c56c4c2831808bf8.ctex"
+uid="uid://j3nxawajqd7j"
+path="res://.godot/imported/divider.jpg-dc921d58074175822fc8b8033e91ed42.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/gates/tar_tower.svg"
-dest_files=["res://.godot/imported/tar_tower.svg-a1776681129f8549c56c4c2831808bf8.ctex"]
+source_file="res://assets/textures/gates/divider.jpg"
+dest_files=["res://.godot/imported/divider.jpg-dc921d58074175822fc8b8033e91ed42.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

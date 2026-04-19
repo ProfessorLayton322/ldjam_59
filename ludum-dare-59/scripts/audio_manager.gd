@@ -13,6 +13,8 @@ const SFX_NOT_ENOUGH_TEMPERATURE := "not_enough_temperature"
 const SFX_INVALID_GATE_TILE := "invalid_gate_tile"
 const SFX_INVALID_GATE_MOVE := "invalid_gate_move"
 const SFX_GATE_DELETED := "gate_deleted"
+const SFX_BARRICADE_OVERPOWERED_DESPAWN := "barricade_overpowered_despawn"
+const SFX_RAIDER_STUNNER_GATE_STUN := "raider_stunner_gate_stun"
 const SFX_LEVEL_BEGINNING := "level_beginning"
 const SFX_LEVEL_VICTORY := "level_victory"
 
@@ -104,6 +106,14 @@ func play_gate_deleted() -> void:
 	play_sfx(SFX_GATE_DELETED)
 
 
+func play_barricade_overpowered_despawn() -> void:
+	play_sfx(SFX_BARRICADE_OVERPOWERED_DESPAWN)
+
+
+func play_raider_stunner_gate_stun() -> void:
+	play_sfx(SFX_RAIDER_STUNNER_GATE_STUN)
+
+
 func play_level_beginning() -> void:
 	play_sfx(SFX_LEVEL_BEGINNING)
 
@@ -151,6 +161,8 @@ func _setup_sfx_bank() -> void:
 	_register_sfx_event(bank, SFX_INVALID_GATE_TILE, library.invalid_gate_tile_sounds)
 	_register_sfx_event(bank, SFX_INVALID_GATE_MOVE, library.invalid_gate_move_sounds)
 	_register_sfx_event(bank, SFX_GATE_DELETED, library.gate_deleted_sounds)
+	_register_sfx_event(bank, SFX_BARRICADE_OVERPOWERED_DESPAWN, library.barricade_gate_overpowered_despawn_sounds)
+	_register_sfx_event(bank, SFX_RAIDER_STUNNER_GATE_STUN, library.raider_stunner_gate_stun_sounds)
 	_register_sfx_event(bank, SFX_LEVEL_BEGINNING, library.level_beginning_sounds)
 	_register_sfx_event(bank, SFX_LEVEL_VICTORY, library.level_victory_sounds)
 

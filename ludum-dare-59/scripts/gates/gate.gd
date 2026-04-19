@@ -154,6 +154,8 @@ func on_enter(enemy: Enemy) -> void:
 		})
 		_stall_enemy(enemy)
 		if not definition.indestructible and _stalled_enemy_power > _current_hp:
+			if definition.id == "barricade":
+				AudioManager.play_barricade_overpowered_despawn()
 			DebugTrace.event("gate", "on_enter:stalled_power_destroy", {
 				"gate": DebugTrace.gate_state(self),
 				"enemy": DebugTrace.enemy_state(enemy),

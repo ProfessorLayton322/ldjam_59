@@ -19,7 +19,6 @@ var spawn_enemy_manager: SpawnEnemyManager
 func instantiate_level_board() -> bool:
 	if level == null:
 		level_board = demo
-		print("Demo scene: using embedded level board from %s" % demo.scene_file_path)
 		return true
 
 	if level.board_scene == null:
@@ -29,7 +28,6 @@ func instantiate_level_board() -> bool:
 	level_board = level.board_scene.instantiate()
 	level_board.name = "LevelBoard"
 	demo.add_child(level_board)
-	print("Demo scene: loaded level '%s' from %s" % [level.title, level.board_scene.resource_path])
 	return true
 
 
@@ -47,7 +45,6 @@ func build_graph() -> void:
 		push_error("Demo scene: TileMap not found at %s in level %s" % [tilemap_path, level_title])
 		return
 
-	print("Demo scene: parsing graph from %s layer %d" % [tilemap.get_path(), tilemap_layer])
 	graph.build_from_level(tilemap, tilemap_layer, require_mutual_connections, true)
 	if graph.nodes.is_empty():
 		push_error("Demo scene: TileMap at %s produced an empty graph" % tilemap.get_path())
@@ -55,8 +52,6 @@ func build_graph() -> void:
 
 	for vertex: GraphVertex in graph.nodes:
 		vertex.position = demo.to_local(vertex.position)
-
-	print("Demo scene: parsed %d graph nodes" % graph.nodes.size())
 
 
 func collect_tiles() -> void:
@@ -70,21 +65,10 @@ func collect_tiles() -> void:
 			continue
 
 		_register_tile_for_node(tile)
-		var kind := "tile"
 		if tile is SpawnerTile:
-			kind = "spawner"
 			spawner_count += 1
 		elif tile is CoreTile:
-			kind = "cpu"
 			cpu_count += 1
-
-		print("Demo scene: found %s tile %s for node %d" % [kind, tile.get_path(), tile.node_id])
-
-	print("Demo scene: collected %d tile nodes with graph IDs (%d spawners, %d cpu)" % [
-		tiles_by_node_id.size(),
-		spawner_count,
-		cpu_count,
-	])
 	if level != null and level.expected_spawner_count >= 0 and spawner_count != level.expected_spawner_count:
 		push_warning("Demo scene: expected %d spawner tiles from TileMap, found %d" % [
 			level.expected_spawner_count,
@@ -100,7 +84,6 @@ func build_cpu_vertices() -> Array[CpuVertex]:
 		var cv := CpuVertex.new()
 		cv.node_id = int(node_id)
 		cpu_vertices.append(cv)
-		print("Demo scene: CPU target registered for node %d" % cv.node_id)
 
 	return cpu_vertices
 
@@ -125,7 +108,6 @@ func configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		spawner.graph = graph
 		spawner.cpu_vertices = cpu_vertices
 		spawn_enemy_manager.register_spawner(spawner)
-		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
 
 
 func configure_core_gates(enemy_reached_callback: Callable, cpu_hp: int) -> void:
@@ -176,7 +158,6 @@ func configure_core_gates(enemy_reached_callback: Callable, cpu_hp: int) -> void
 				var vertex := graph.get_node_by_id(node_id)
 				if vertex != null:
 					cpu_positions.append(vertex.position)
-			print("Demo scene: CoreGate registered at node %d (region %d)" % [node_id, region_index])
 
 		if cpu_positions.is_empty():
 			continue
@@ -283,12 +264,5 @@ func _assign_tile_node_id_from_graph(tile: BaseTile) -> void:
 	if best_vertex == null or best_distance > epsilon:
 		push_warning("Demo scene: could not match tile %s at %s to graph node" % [tile.get_path(), tile_position])
 		return
-
-	if tile.node_id != best_vertex.id:
-		print("Demo scene: tile %s node id %d -> %d from TileMap position" % [
-			tile.get_path(),
-			tile.node_id,
-			best_vertex.id,
-		])
 
 	tile.node_id = best_vertex.id
