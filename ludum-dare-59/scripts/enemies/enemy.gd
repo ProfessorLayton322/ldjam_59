@@ -225,14 +225,6 @@ func _enter_current_node() -> void:
 			"node_id": node_id,
 		})
 
-	if _is_first_tutorial_crytter and node_id == TutorialEvents.target_ballista_vertex_id:
-		DebugTrace.event("enemy_tutorial", "target_cell_reached_force_despawn", {
-			"enemy": DebugTrace.enemy_state(self),
-			"node_id": node_id,
-			"target_vertex_id": TutorialEvents.target_ballista_vertex_id,
-		})
-		TutorialEvents.emit_first_crytter_despawned(self)
-		queue_free()
 	DebugTrace.event("enemy_gate", "enter_current_node:done", {"enemy": DebugTrace.enemy_state(self), "node_id": node_id})
 
 
@@ -252,6 +244,8 @@ func apply_damage(amount: int) -> void:
 			"enemy": DebugTrace.enemy_state(self),
 			"amount": amount,
 		})
+		if _is_first_tutorial_crytter:
+			TutorialEvents.emit_first_crytter_despawned(self)
 		queue_free()
 	DebugTrace.event("enemy_damage", "apply_damage:after", {
 		"enemy": DebugTrace.enemy_state(self),
