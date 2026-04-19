@@ -169,12 +169,11 @@ func _complete_ballista_move() -> void:
 		TutorialEvents.stop_highlighter(ballista_gate)
 	if move_target_tile != null:
 		TutorialEvents.stop_highlighter(move_target_tile)
-	_end_tutorial_dialogue()
 	step = Step.REMOVE_BALLISTA
-	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_3_ID, TUTORIAL_DIALOGUE_3_PATH)
 	apply_button_locks()
 	if ballista_gate != null and is_instance_valid(ballista_gate):
 		TutorialEvents.start_highlighter(ballista_gate)
+	_replace_tutorial_dialogue(TUTORIAL_DIALOGUE_3_ID, TUTORIAL_DIALOGUE_3_PATH, Step.REMOVE_BALLISTA)
 func _complete_ballista_remove() -> void:
 	if ballista_gate != null and is_instance_valid(ballista_gate):
 		TutorialEvents.stop_highlighter(ballista_gate)
@@ -413,6 +412,16 @@ func _end_tutorial_dialogue() -> void:
 	elif dialog_layout != null and is_instance_valid(dialog_layout):
 		dialog_layout.queue_free()
 	dialog_layout = null
+
+func _replace_tutorial_dialogue(dialogue_id: String, dialogue_path: String, expected_step: int = Step.NONE) -> void:
+	var had_current_timeline := Dialogic.current_timeline != null
+	_end_tutorial_dialogue()
+	if had_current_timeline:
+		await Dialogic.timeline_ended
+	await demo.get_tree().process_frame
+	if expected_step != Step.NONE and step != expected_step:
+		return
+	_start_tutorial_dialogue(dialogue_id, dialogue_path)
 func _position_tutorial_dialogue() -> void:
 	if dialog_layout == null or not is_instance_valid(dialog_layout):
 		return
