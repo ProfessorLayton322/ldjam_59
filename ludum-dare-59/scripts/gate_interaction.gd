@@ -117,7 +117,7 @@ func pickup_gate_at(vertex_id: int) -> bool:
 	return true
 
 
-func drop_moving_gate(global_pos: Vector2) -> void:
+func drop_moving_gate(global_pos: Vector2) -> bool:
 	var gate := _moving_gate
 	DebugTrace.event("demo_gate", "drop_moving_gate:start", {
 		"gate": DebugTrace.gate_state(gate),
@@ -134,7 +134,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 		DebugTrace.event("demo_gate", "drop_moving_gate:stunned_returned_origin", {
 			"gate": DebugTrace.gate_state(gate),
 		})
-		return
+		return false
 
 	var target_vertex_id := get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
@@ -145,7 +145,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 			"gate": DebugTrace.gate_state(gate),
 			"target_vertex_id": target_vertex_id,
 		})
-		return
+		return false
 
 	var existing_gate := Gate.get_gate(graph, target_vertex_id)
 	if existing_gate != null:
@@ -157,7 +157,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 			"target_vertex_id": target_vertex_id,
 			"existing_gate": DebugTrace.gate_state(existing_gate),
 		})
-		return
+		return false
 
 	gate.vertex_id = target_vertex_id
 	_moving_gate_origin = -1
@@ -165,6 +165,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 		"gate": DebugTrace.gate_state(gate),
 		"target_vertex_id": target_vertex_id,
 	})
+	return true
 
 
 func cancel_moving_gate() -> void:

@@ -67,6 +67,14 @@ func _get_despawn_cooldown_timing() -> float:
 	return _get_balance_params().despawn_cooldown_timing
 
 
+func _get_moving_penalty() -> float:
+	return _get_balance_params().moving_penalty
+
+
+func _get_moving_penalty_cooldown() -> float:
+	return _get_balance_params().moving_penalty_cooldown
+
+
 func _center_camera_on_graph() -> void:
 	if _camera == null or _graph == null or _graph.nodes.is_empty():
 		return
@@ -163,16 +171,28 @@ func _can_place_gate(definition: Resource) -> bool:
 
 func _change_temperature(amount: float) -> void:
 	if amount < 0.0:
-		_start_despawn_temperature_cooldown(-amount)
+		_start_temperature_cooldown(-amount, _get_despawn_cooldown_timing())
 		return
 	_temperature = clampf(_temperature + amount, 0.0, float(_get_max_temperature()))
 	_update_temperature_meter()
 
 
-func _start_despawn_temperature_cooldown(amount: float) -> void:
+func _apply_moving_penalty() -> void:
+	var amount := _get_moving_penalty()
 	if amount <= 0.0:
 		return
-	var duration := _get_despawn_cooldown_timing()
+	var previous_temperature := _temperature
+	_temperature = clampf(_temperature + amount, 0.0, float(_get_max_temperature()))
+	var added_amount := _temperature - previous_temperature
+	if added_amount <= 0.0:
+		return
+	_update_temperature_meter()
+	_start_temperature_cooldown(added_amount, _get_moving_penalty_cooldown())
+
+
+func _start_temperature_cooldown(amount: float, duration: float) -> void:
+	if amount <= 0.0:
+		return
 	if duration <= 0.0:
 		_temperature = clampf(_temperature - amount, 0.0, float(_get_max_temperature()))
 		_update_temperature_meter()
@@ -331,7 +351,8 @@ func _pickup_gate_at(vertex_id: int) -> bool:
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
-	_gate_interaction.drop_moving_gate(global_pos)
+	if _gate_interaction.drop_moving_gate(global_pos):
+		_apply_moving_penalty()
 
 
 func _cancel_moving_gate() -> void:
