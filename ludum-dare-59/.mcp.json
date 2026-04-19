@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "godot-mcp": {
-      "command": "godot-mcp"
-    }
+	"godot-mcp": {
+	  "command": "godot-mcp"
+	}
   }
 }

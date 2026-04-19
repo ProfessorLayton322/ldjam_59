@@ -15,6 +15,11 @@ run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+manager/sound/max_polyphony=32
+manager/sound/pool_1D_size=64
+
 [autoload]
 
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
@@ -33,7 +38,8 @@ directories/dch_directory={}
 directories/dtl_directory={
 "tutorial_dialogue_1_1": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl",
 "tutorial_dialogue_1_2": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl",
-"tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
+"tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl",
+"tutorial_dialogue_1_4": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl"
 }
 layout/style_directory={}
 

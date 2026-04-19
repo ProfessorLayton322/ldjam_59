@@ -3,11 +3,14 @@ extends CanvasLayer
 
 signal settings_closed
 
+const WebFullscreen := preload("res://scripts/web_fullscreen.gd")
+
 var _game_over_panel: Panel
 var _victory_panel: Panel
 var _pause_overlay: ColorRect
 var _settings_panel: Panel
 var _pause_menu_panel: Panel
+var _fullscreen_button: Button
 
 var _settings_focusables: Array[Control] = []
 var _pause_focusables: Array[Control] = []
@@ -50,6 +53,7 @@ func is_settings_open() -> bool:
 
 func show_settings() -> void:
 	_settings_panel.visible = true
+	_update_fullscreen_button()
 	_focus_idx = 0
 	if not _settings_focusables.is_empty():
 		_settings_focusables[0].grab_focus()
@@ -227,6 +231,13 @@ func _build_settings_panel() -> void:
 	fourkbtn.pressed.connect(func(): ResolutionManager.set_resolution(ResolutionManager.Resolution.FOUR_K))
 	vbox.add_child(fourkbtn)
 
+	if WebFullscreen.is_available():
+		_fullscreen_button = Button.new()
+		_fullscreen_button.text = "Fullscreen"
+		_fullscreen_button.custom_minimum_size = Vector2(220, 40)
+		_fullscreen_button.pressed.connect(_on_fullscreen_pressed)
+		vbox.add_child(_fullscreen_button)
+
 	var vol_spacer := Control.new()
 	vol_spacer.custom_minimum_size = Vector2(0, 16)
 	vbox.add_child(vol_spacer)
@@ -270,6 +281,8 @@ func _build_settings_panel() -> void:
 	_settings_focusables.clear()
 	_settings_focusables.append(fullhd_btn)
 	_settings_focusables.append(fourkbtn)
+	if _fullscreen_button != null:
+		_settings_focusables.append(_fullscreen_button)
 	_settings_focusables.append_array(sliders)
 	_settings_focusables.append(back_btn)
 
@@ -282,6 +295,24 @@ func _build_settings_panel() -> void:
 
 	_update_res_buttons.call()
 	ResolutionManager.resolution_changed.connect(func(_r): _update_res_buttons.call())
+
+
+func _on_fullscreen_pressed() -> void:
+	AudioManager.play_ui_interaction()
+	WebFullscreen.toggle()
+	_update_fullscreen_button_deferred()
+
+
+func _update_fullscreen_button_deferred() -> void:
+	_update_fullscreen_button()
+	await get_tree().create_timer(0.25).timeout
+	_update_fullscreen_button()
+
+
+func _update_fullscreen_button() -> void:
+	if _fullscreen_button == null:
+		return
+	_fullscreen_button.text = "Exit Fullscreen" if WebFullscreen.is_fullscreen() else "Fullscreen"
 
 
 func _build_pause_menu_panel() -> void:
