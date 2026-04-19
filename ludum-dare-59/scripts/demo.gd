@@ -419,11 +419,7 @@ func _configure_core_gates() -> void:
 			center_x += p.x
 		center_x /= cpu_positions.size()
 
-		var bar := CpuHpBarScene.new()
-		bar.position = Vector2(center_x, top_y - 18)
-		add_child(bar)
-		bar.set_hp(_get_cpu_hp(), _get_cpu_hp())
-		_cpu_regions.append({"hp": _get_cpu_hp(), "bar": bar})
+		_cpu_regions.append({"hp": _get_cpu_hp(), "bar": null, "world_pos": Vector2(center_x, top_y)})
 
 
 func _start_trigger_timer() -> void:
@@ -475,14 +471,15 @@ func _create_gate_buttons() -> void:
 		button.custom_minimum_size = Vector2(64.0, 64.0)
 		button.anchor_left = 1.0
 		button.anchor_right = 1.0
-		button.offset_left = -80.0
+		button.offset_left = -92.0
 		button.offset_top = 16.0 + float(i) * 72.0
-		button.offset_right = -16.0
+		button.offset_right = -28.0
 		button.offset_bottom = button.offset_top + 64.0
 		button.pressed.connect(_on_gate_button_pressed.bind(definition, button))
 		root.add_child(button)
 		_gate_buttons[definition.id] = button
 		_add_key_hint(root, str(i + 1), button.offset_top)
+		_add_cost_hint(root, definition.power_cost, button.offset_top)
 
 	var pause_btn := Button.new()
 	pause_btn.name = "PauseButton"
@@ -493,9 +490,9 @@ func _create_gate_buttons() -> void:
 	pause_btn.custom_minimum_size = Vector2(64.0, 64.0)
 	pause_btn.anchor_left = 1.0
 	pause_btn.anchor_right = 1.0
-	pause_btn.offset_left = -80.0
+	pause_btn.offset_left = -92.0
 	pause_btn.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0
-	pause_btn.offset_right = -16.0
+	pause_btn.offset_right = -28.0
 	pause_btn.offset_bottom = pause_btn.offset_top + 64.0
 	pause_btn.pressed.connect(_on_pause_button_pressed)
 	root.add_child(pause_btn)
@@ -505,6 +502,7 @@ func _create_gate_buttons() -> void:
 	_create_temperature_meter(root)
 	_create_debug_victory_button(root)
 	_update_temperature_meter()
+	_create_cpu_hp_bars(ui_layer)
 
 
 func _start_level_timer() -> void:
@@ -533,15 +531,15 @@ func _create_debug_victory_button(root: Control) -> void:
 	button.custom_minimum_size = Vector2(64.0, 40.0)
 	button.anchor_left = 1.0
 	button.anchor_right = 1.0
-	button.offset_left = -80.0
+	button.offset_left = -92.0
 	button.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0 + 64.0 + 8.0 + 160.0 + 12.0
-	button.offset_right = -16.0
+	button.offset_right = -28.0
 	button.offset_bottom = button.offset_top + 40.0
 	button.pressed.connect(_complete_level_with_victory)
 	root.add_child(button)
 
 
-func _add_key_hint(root: Control, key_text: String, top_offset: float) -> void:
+func _add_key_hint(root: Control, key_text: String, top_offset: float, btn_left: float = -92.0) -> void:
 	var hint := Label.new()
 	hint.text = "[%s]" % key_text
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -552,13 +550,49 @@ func _add_key_hint(root: Control, key_text: String, top_offset: float) -> void:
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.anchor_left = 1.0
 	hint.anchor_right = 1.0
-	hint.offset_left = -80.0 - 36.0
-	hint.offset_right = -80.0
+	hint.offset_left = btn_left - 36.0
+	hint.offset_right = btn_left
 	hint.offset_top = top_offset + 26.0
 	hint.offset_bottom = top_offset + 44.0
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	root.add_child(hint)
+
+
+func _add_cost_hint(root: Control, cost: int, btn_top: float) -> void:
+	var label := Label.new()
+	label.text = "%d°" % cost
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.3, 1.0))
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_font_size_override("font_size", 13)
+	label.anchor_left = 1.0
+	label.anchor_right = 1.0
+	label.offset_left = -26.0
+	label.offset_right = -4.0
+	label.offset_top = btn_top + 22.0
+	label.offset_bottom = btn_top + 42.0
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	root.add_child(label)
+
+
+func _create_cpu_hp_bars(ui_layer: CanvasLayer) -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	const BAR_W := 250.0
+	const BAR_MARGIN := 20.0
+	var region_count := _cpu_regions.size()
+	var total_width := float(region_count) * BAR_W + float(region_count - 1) * BAR_MARGIN
+	var start_x := (viewport_size.x - total_width) / 2.0
+
+	for i in region_count:
+		var bar := CpuHpBarScene.new()
+		bar.position = Vector2(start_x + float(i) * (BAR_W + BAR_MARGIN) + BAR_W / 2.0, 28.0)
+		ui_layer.add_child(bar)
+		bar.set_hp(_cpu_regions[i]["hp"], _get_cpu_hp())
+		_cpu_regions[i]["bar"] = bar
 
 
 func _create_temperature_meter(root: Control) -> void:
@@ -567,8 +601,8 @@ func _create_temperature_meter(root: Control) -> void:
 	meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meter.anchor_left = 1.0
 	meter.anchor_right = 1.0
-	meter.offset_left = -56.0
-	meter.offset_right = -16.0
+	meter.offset_left = -68.0
+	meter.offset_right = -28.0
 	meter.offset_top = 16.0 + float(_get_gate_definitions().size()) * 72.0 + 64.0 + 8.0
 	meter.offset_bottom = meter.offset_top + 160.0
 
@@ -807,7 +841,7 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	var bar: Node2D = region["bar"] as Node2D
 	if bar != null:
 		bar.set_hp(region["hp"], _get_cpu_hp())
-		_spawn_damage_label(damage, bar.position)
+	_spawn_damage_label(damage, region["world_pos"])
 	if region["hp"] <= 0:
 		if not _level_finished:
 			AudioManager.play_sfx(AudioManager.SFX_CPU_DEATH)
