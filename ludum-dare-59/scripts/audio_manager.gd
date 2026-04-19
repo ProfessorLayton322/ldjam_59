@@ -19,6 +19,7 @@ const SFX_LEVEL_VICTORY := "level_victory"
 @export var library: AudioLibrary = DEFAULT_LIBRARY
 
 var _registered_sfx_events := {}
+var _sfx_polyphonic_players := {}
 var _music_track_names: Array[String] = []
 var _rng := RandomNumberGenerator.new()
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 		library = AudioLibrary.new()
 	_setup_sfx_bank()
 	_setup_music_bank()
+	_setup_sfx_polyphony()
 
 
 func get_library() -> AudioLibrary:
@@ -38,7 +40,12 @@ func get_library() -> AudioLibrary:
 func play_sfx(event_name: String) -> void:
 	if not _registered_sfx_events.has(event_name):
 		return
-	SoundManager.play(SFX_BANK_LABEL, event_name)
+
+	var player = _get_sfx_polyphonic_player(event_name)
+	if player == null:
+		return
+
+	player.trigger()
 
 
 func play_pause_activated() -> void:
@@ -116,6 +123,7 @@ func stop_music(fade_time: float = 1.0) -> void:
 
 func _setup_sfx_bank() -> void:
 	_registered_sfx_events.clear()
+	_sfx_polyphonic_players.clear()
 	var bank := SoundBank.new()
 	bank.name = "GameSFXBank"
 	bank.label = SFX_BANK_LABEL
@@ -143,6 +151,14 @@ func _setup_sfx_bank() -> void:
 		_register_sfx_event(bank, _enemy_event_name(params.id, "death"), library.get_enemy_death_sounds(params.id))
 
 	add_child(bank)
+
+
+func _setup_sfx_polyphony() -> void:
+	if not SoundManager.has_loaded:
+		await SoundManager.loaded
+
+	for event_name in _registered_sfx_events:
+		_get_sfx_polyphonic_player(event_name)
 
 
 func _setup_music_bank() -> void:
@@ -189,6 +205,25 @@ func _register_sfx_event(bank: SoundBank, event_name: String, streams: Array[Aud
 
 	bank.events.append(event)
 	_registered_sfx_events[event_name] = true
+
+
+func _get_sfx_polyphonic_player(event_name: String) -> Variant:
+	if _sfx_polyphonic_players.has(event_name):
+		var existing_player = _sfx_polyphonic_players[event_name]
+		if existing_player != null and is_instance_valid(existing_player) and not existing_player.is_null():
+			return existing_player
+		_sfx_polyphonic_players.erase(event_name)
+
+	if not SoundManager.has_loaded:
+		return null
+
+	var player = SoundManager.instance_poly(SFX_BANK_LABEL, event_name)
+	if player == null or player.is_null():
+		return null
+
+	SoundManager.release_on_exit(self, player, true)
+	_sfx_polyphonic_players[event_name] = player
+	return player
 
 
 func _gate_event_name(gate_id: String, action: String) -> String:
