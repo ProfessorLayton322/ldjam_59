@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioLibrary" load_steps=11 format=3 uid="uid://kgoq3optt248"]
+[gd_resource type="Resource" script_class="AudioLibrary" load_steps=13 format=3 uid="uid://kgoq3optt248"]
 
 [ext_resource type="AudioStream" uid="uid://l7jl4wxafo2h" path="res://assets/audio/sfx/pluck.wav" id="2_hempd"]
 [ext_resource type="AudioStream" uid="uid://bxditmfr5tlpl" path="res://assets/audio/sfx/destruction_bitcrushed_big.wav" id="3_k6brt"]
@@ -8,6 +8,8 @@
 [ext_resource type="AudioStream" uid="uid://wf07tl2blp15" path="res://assets/audio/sfx/ui/deny.wav" id="13_ndg4q"]
 [ext_resource type="AudioStream" uid="uid://du1fkgi2kgxxc" path="res://assets/audio/sfx/ui/confirm.wav" id="15_m1ukr"]
 [ext_resource type="AudioStream" uid="uid://cd1fx5wt0xwub" path="res://assets/audio/sfx/put_down_gate.wav" id="gate_place"]
+[ext_resource type="AudioStream" uid="uid://bdl7seng5todp" path="res://assets/audio/sfx/destruction_bitcrushed.wav" id="barricade_overpowered"]
+[ext_resource type="AudioStream" uid="uid://wdrltu5qttj6" path="res://assets/audio/sfx/zaps/Audio0.wav" id="stunner_stun"]
 [ext_resource type="AudioStream" uid="uid://m4f0vsngydhg" path="res://assets/audio/music/slow-moonlight-synthwave.wav" id="music0"]
 [ext_resource type="Script" uid="uid://cdkwejgngwgyo" path="res://scripts/resources/audio_library.gd" id="script"]
 
@@ -17,6 +19,7 @@ pause_activated_sounds = Array[AudioStream]([ExtResource("7_k6brt")])
 pause_deactivated_sounds = Array[AudioStream]([ExtResource("7_k6brt")])
 ui_interaction_sounds = Array[AudioStream]([ExtResource("15_m1ukr")])
 barricade_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
+barricade_gate_overpowered_despawn_sounds = Array[AudioStream]([ExtResource("barricade_overpowered")])
 ballista_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
 tar_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
 divider_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
@@ -24,6 +27,7 @@ crytter_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 crytter_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
 raider_stunner_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 raider_stunner_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
+raider_stunner_gate_stun_sounds = Array[AudioStream]([ExtResource("stunner_stun")])
 brute_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 brute_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
 cpu_death_sounds = Array[AudioStream]([ExtResource("3_k6brt")])
