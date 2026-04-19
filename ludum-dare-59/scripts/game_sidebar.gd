@@ -11,6 +11,7 @@ const CpuHpBarScene := preload("res://scripts/cpu_hp_bar.gd")
 var _root: Control
 var _gate_buttons: Dictionary = {}
 var _pause_button: Button
+var _temperature_meter: Panel
 var _temperature_fill: ColorRect
 var _temperature_label: Label
 
@@ -83,9 +84,23 @@ func get_pause_button() -> Button:
 	return _pause_button
 
 
+func get_temperature_meter() -> Panel:
+	return _temperature_meter
+
+
 func set_pause_button_state(pressed: bool) -> void:
 	if _pause_button != null:
 		_pause_button.set_pressed_no_signal(pressed)
+
+
+func set_player_controls_disabled(disabled: bool) -> void:
+	if _root == null:
+		return
+	for node: Node in _root.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button == null or button.name == "DebugVictoryButton":
+			continue
+		button.disabled = disabled
 
 
 func update_temperature(current: int, maximum: int) -> void:
@@ -190,6 +205,7 @@ func _build_temperature_meter(gate_count: int) -> void:
 	meter_style.corner_radius_bottom_left = 4
 	meter.add_theme_stylebox_override("panel", meter_style)
 	_root.add_child(meter)
+	_temperature_meter = meter
 
 	var fill := ColorRect.new()
 	fill.name = "Fill"
