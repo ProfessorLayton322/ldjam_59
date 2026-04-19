@@ -270,6 +270,12 @@ func _on_settings_button_pressed() -> void:
 		_hud.show_settings()
 
 
+func _on_pause_menu_resume_pressed() -> void:
+	if _hud != null:
+		_hud.hide_pause_menu()
+	_set_pause_mode_enabled(false)
+
+
 func _set_pause_mode_enabled(enabled: bool) -> void:
 	get_tree().paused = enabled
 	if enabled:
@@ -280,6 +286,31 @@ func _set_pause_mode_enabled(enabled: bool) -> void:
 		_sidebar.set_pause_button_state(enabled)
 	if _hud != null:
 		_hud.set_paused(enabled)
+
+
+func _is_win_button_input_event(event: InputEvent) -> bool:
+	if not event is InputEventMouseButton:
+		return false
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	return _sidebar != null and _sidebar.has_method("is_point_over_debug_victory_button") and _sidebar.is_point_over_debug_victory_button(mouse_event.position)
+
+
+func _despawn_level_objects() -> void:
+	_cancel_moving_gate()
+	for child in get_children():
+		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _spawn_enemy_manager or child == _level_timer:
+			continue
+		if child == get_node_or_null(trigger_timer_path):
+			continue
+		if child == _level_board or child == _gate_preview or child is Enemy or child is Gate or child is Label:
+			child.queue_free()
+	_tiles.clear()
+	_tiles_by_node_id.clear()
+	_cpu_node_ids.clear()
+	_cpu_regions.clear()
+	_gate_preview = null
 
 
 func _complete_level_with_victory() -> void:
@@ -295,6 +326,9 @@ func _complete_level_with_victory() -> void:
 	var trigger_timer := get_node_or_null(trigger_timer_path) as Timer
 	if trigger_timer != null:
 		trigger_timer.stop()
+	if _tutorial_manager != null and _tutorial_manager.has_method("abort_for_victory"):
+		_tutorial_manager.abort_for_victory()
+	_despawn_level_objects()
 
 	AudioManager.play_level_victory()
 	if _hud != null:
@@ -307,6 +341,8 @@ func _complete_level_with_victory() -> void:
 	AudioManager.stop_level_audio()
 	if LevelState.advance_to_next_level():
 		get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
+	elif _hud != null:
+		_hud.hide_victory()
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
@@ -378,6 +414,8 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_win_button_input_event(event):
+		return
 	if _tutorial_manager != null and _tutorial_manager.handle_unhandled_input(event):
 		return
 
@@ -458,6 +496,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _is_win_button_input_event(event):
+		return
 	if _tutorial_manager != null and _tutorial_manager.handle_input(event):
 		return
 
@@ -523,6 +563,7 @@ func _ready() -> void:
 	_hud = HudScene.new()
 	add_child(_hud)
 	_hud.settings_closed.connect(func(): _set_pause_mode_enabled(false))
+	_hud.resume_pressed.connect(_on_pause_menu_resume_pressed)
 
 	await get_tree().process_frame
 	setup.collect_tiles()

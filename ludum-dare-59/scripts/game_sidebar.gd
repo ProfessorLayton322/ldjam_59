@@ -13,6 +13,7 @@ var _gate_buttons: Dictionary = {}
 var _pause_button: Button
 var _menu_button: Button
 var _settings_button: Button
+var _debug_victory_button: Button
 var _temperature_meter: Panel
 var _temperature_fill: ColorRect
 var _temperature_label: Label
@@ -88,6 +89,18 @@ func get_pause_button() -> Button:
 
 func get_temperature_meter() -> Panel:
 	return _temperature_meter
+
+
+func get_debug_victory_button() -> Button:
+	return _debug_victory_button
+
+
+func is_point_over_debug_victory_button(global_position: Vector2) -> bool:
+	if _debug_victory_button == null or not is_instance_valid(_debug_victory_button):
+		return false
+	if _debug_victory_button.disabled or not _debug_victory_button.visible:
+		return false
+	return _debug_victory_button.get_global_rect().has_point(global_position)
 
 
 func set_pause_button_state(pressed: bool) -> void:
@@ -308,3 +321,4 @@ func _build_debug_victory_button(gate_count: int) -> void:
 	button.offset_bottom = button.offset_top + 40.0
 	button.pressed.connect(Callable(self, "_on_victory_debug_pressed"))
 	_root.add_child(button)
+	_debug_victory_button = button

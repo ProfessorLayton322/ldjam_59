@@ -2,6 +2,7 @@ class_name Hud
 extends CanvasLayer
 
 signal settings_closed
+signal resume_pressed
 
 const WebFullscreen := preload("res://scripts/web_fullscreen.gd")
 
@@ -74,8 +75,10 @@ func show_game_over() -> void:
 func show_victory() -> void:
 	_victory_panel.visible = true
 	_focus_idx = 0
-	if not _victory_focusables.is_empty():
-		_victory_focusables[0].grab_focus()
+
+
+func hide_victory() -> void:
+	_victory_panel.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -185,13 +188,7 @@ func _build_victory_panel() -> void:
 	spacer.custom_minimum_size = Vector2(0, 24)
 	vbox.add_child(spacer)
 
-	var menu_btn := Button.new()
-	menu_btn.text = "Return to Menu"
-	menu_btn.custom_minimum_size = Vector2(160, 40)
-	menu_btn.pressed.connect(_on_menu_pressed)
-	vbox.add_child(menu_btn)
-
-	_victory_focusables = [menu_btn]
+	_victory_focusables = []
 
 
 func _build_settings_panel() -> void:
@@ -362,8 +359,7 @@ func _build_pause_menu_panel() -> void:
 
 
 func _on_pause_menu_resume_pressed() -> void:
-	hide_pause_menu()
-	get_tree().paused = false
+	resume_pressed.emit()
 
 
 func _on_retry_pressed() -> void:

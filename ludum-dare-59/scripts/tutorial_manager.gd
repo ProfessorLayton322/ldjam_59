@@ -63,6 +63,19 @@ func is_menu_settings_locked() -> bool:
 	return _should_lock_before_first_dialogue() or (step != Step.NONE and step != Step.DONE)
 
 
+func abort_for_victory() -> void:
+	_end_tutorial_dialogue()
+	if ui_overview_highlight_target != null:
+		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
+		ui_overview_highlight_target = null
+	TutorialEvents.stop_all_highlighters()
+	step = Step.DONE
+	TutorialEvents.reset_first_level_tutorial()
+	_set_pre_dialogue_input_locked(false)
+	if demo._sidebar != null and demo._sidebar.has_method("set_menu_settings_buttons_disabled"):
+		demo._sidebar.set_menu_settings_buttons_disabled(false)
+
+
 func _set_pre_dialogue_input_locked(locked: bool) -> void:
 	if demo._sidebar != null and demo._sidebar.has_method("set_player_controls_disabled"):
 		demo._sidebar.set_player_controls_disabled(locked)
