@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="SpawnerCfg" load_steps=5 format=3 uid="uid://cqvhan4kpp86q"]
 
-[ext_resource type="Script" uid="uid://clgj1wvnh6mdh" path="res://scripts/resources/spawner_cfg.gd" id="1_spawner_cfg"]
+[ext_resource type="Script" path="res://scripts/resources/spawner_cfg.gd" id="1_spawner_cfg"]
 [ext_resource type="PackedScene" uid="uid://xuofjr8vxep7" path="res://scenes/enemies/crytter.tscn" id="2_crytter"]
 [ext_resource type="PackedScene" uid="uid://bmi3da2iyraj3" path="res://scenes/enemies/brute.tscn" id="4_brute"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/raider_stunner.tscn" id="5_raider_stunner"]
+[ext_resource type="PackedScene" uid="uid://bm8qik28jnre5" path="res://scenes/enemies/raider_stunner.tscn" id="5_raider_stunner"]
 
 [resource]
 script = ExtResource("1_spawner_cfg")
