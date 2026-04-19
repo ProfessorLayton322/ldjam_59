@@ -13,7 +13,6 @@ const DebugTrace := preload("res://scripts/debug_trace.gd")
 @export var hp: int = 10
 @export var can_stun_gate := false
 @export var gate_stun_duration := 3.0
-@export var damage_sound: AudioStream
 
 var path: Array[int] = []
 
@@ -31,6 +30,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	DebugTrace.event("enemy", "ready:start", {"enemy": DebugTrace.enemy_state(self)})
 	_apply_balance_params()
+	AudioManager.play_enemy_spawn(_get_balance_id())
 	_ensure_icon()
 	start_pathing()
 	DebugTrace.event("enemy", "ready:done", {"enemy": DebugTrace.enemy_state(self)})
@@ -253,12 +253,8 @@ func apply_damage(amount: int) -> void:
 	})
 
 
-func play_damage_sound():
-	var audio_player = AudioStreamPlayer2D.new()
-	audio_player.stream = damage_sound
-	get_parent().add_child(audio_player)
-	audio_player.finished.connect(audio_player.queue_free)
-	audio_player.play()
+func play_damage_sound() -> void:
+	AudioManager.play_enemy_damage(_get_balance_id())
 
 
 func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:

@@ -61,6 +61,7 @@ func place_gate(vertex_id: int, definition: Resource, can_place: bool) -> bool:
 			"vertex_id": vertex_id,
 			"definition_id": definition.id if definition != null else "",
 		})
+		AudioManager.play_not_enough_temperature()
 		gate_placement_blocked.emit()
 		return false
 
@@ -70,6 +71,7 @@ func place_gate(vertex_id: int, definition: Resource, can_place: bool) -> bool:
 			"vertex_id": vertex_id,
 			"existing_gate": DebugTrace.gate_state(existing_gate),
 		})
+		AudioManager.play_invalid_gate_tile()
 		return false
 
 	var tile := tiles_by_node_id.get(vertex_id) as BaseTile
@@ -78,6 +80,7 @@ func place_gate(vertex_id: int, definition: Resource, can_place: bool) -> bool:
 			"vertex_id": vertex_id,
 			"tile": DebugTrace.node_state(tile),
 		})
+		AudioManager.play_invalid_gate_tile()
 		return false
 
 	var gate := GATE_SCENE.instantiate() as Gate
@@ -118,6 +121,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 
 	var target_vertex_id := get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
+		AudioManager.play_invalid_gate_move()
 		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
 		DebugTrace.event("demo_gate", "drop_moving_gate:returned_origin", {
@@ -128,6 +132,7 @@ func drop_moving_gate(global_pos: Vector2) -> void:
 
 	var existing_gate := Gate.get_gate(graph, target_vertex_id)
 	if existing_gate != null:
+		AudioManager.play_invalid_gate_move()
 		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
 		DebugTrace.event("demo_gate", "drop_moving_gate:occupied_returned_origin", {
@@ -173,6 +178,7 @@ func delete_gate_at(vertex_id: int) -> void:
 		return
 	DebugTrace.event("demo_gate", "delete_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	temperature_changed.emit(-gate.get_power_cost())
+	AudioManager.play_gate_deleted()
 	gate.queue_free()
 	DebugTrace.event("demo_gate", "delete_gate:queued_free", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 

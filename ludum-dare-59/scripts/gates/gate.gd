@@ -101,7 +101,7 @@ func _ready() -> void:
 	_current_hp = _get_max_hp()
 	_update_icon()
 
-	AudioManager.play_sfx(AudioManager.SFX_GATE_PLACE)
+	AudioManager.play_gate_spawn(definition_id)
 	DebugTrace.event("gate", "ready:done", {"gate": DebugTrace.gate_state(self)})
 
 
@@ -144,6 +144,8 @@ func on_enter(enemy: Enemy) -> void:
 			"enemy": DebugTrace.enemy_state(enemy),
 		})
 		return
+
+	AudioManager.play_gate_activation(definition.id)
 
 	if definition.blocks_movement and enemy.hp >= 0:
 		DebugTrace.event("gate", "on_enter:blocking_stall_start", {
