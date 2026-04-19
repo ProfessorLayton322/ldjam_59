@@ -1004,9 +1004,7 @@ func _begin_tutorial_ballista_move() -> void:
 	_set_pause_mode_enabled(true)
 	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_2_ID, TUTORIAL_DIALOGUE_2_PATH)
 	_apply_tutorial_button_locks()
-	TutorialEvents.start_highlighter(_tutorial_ballista_gate)
-	if _tutorial_move_target_tile != null:
-		TutorialEvents.start_highlighter(_tutorial_move_target_tile)
+	_restart_tutorial_ballista_move_highlighters()
 
 
 func _complete_tutorial_ballista_move() -> void:
@@ -1113,32 +1111,73 @@ func _handle_tutorial_ballista_remove_input(event: InputEvent) -> void:
 
 
 func _try_pickup_tutorial_ballista(global_position: Vector2) -> void:
-	if _tutorial_ballista_gate == null or not is_instance_valid(_tutorial_ballista_gate):
+	_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+	if _tutorial_ballista_gate == null:
 		return
 
 	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
 	if vertex_id != _tutorial_ballista_gate.vertex_id:
 		return
 
+	TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
 	_pickup_gate_at(vertex_id)
 
 
 func _try_drop_tutorial_ballista(global_position: Vector2) -> void:
 	var gate := _moving_gate
-	var target_vertex_id := _get_track_vertex_id_at_global_position(global_position)
-	if target_vertex_id != _tutorial_move_target_vertex_id:
-		_cancel_moving_gate()
-		return
-
 	_drop_moving_gate(global_position)
 	if gate == null or not is_instance_valid(gate):
-		return
-
-	if gate.vertex_id != _tutorial_move_target_vertex_id:
+		_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+		_restart_tutorial_ballista_move_highlighters()
 		return
 
 	_tutorial_ballista_gate = gate
+	if gate.vertex_id != _tutorial_move_target_vertex_id:
+		_restart_tutorial_ballista_move_highlighters()
+		return
+
 	_complete_tutorial_ballista_move()
+
+
+func _get_current_tutorial_ballista_gate() -> Gate:
+	if _is_tutorial_ballista_gate(_moving_gate):
+		return _moving_gate
+
+	if _is_tutorial_ballista_gate(_tutorial_ballista_gate):
+		return _tutorial_ballista_gate
+
+	for vertex_id in [_tutorial_target_vertex_id, _tutorial_move_target_vertex_id]:
+		var gate := Gate.get_gate(_graph, vertex_id)
+		if _is_tutorial_ballista_gate(gate):
+			return gate
+
+	for child in get_children():
+		if _is_tutorial_ballista_gate(child):
+			return child as Gate
+
+	return null
+
+
+func _is_tutorial_ballista_gate(gate: Node) -> bool:
+	if gate == null or not is_instance_valid(gate) or gate.is_queued_for_deletion():
+		return false
+	if not (gate is Gate):
+		return false
+
+	var typed_gate := gate as Gate
+	return typed_gate.graph == _graph and typed_gate.definition_id == TUTORIAL_BALLISTA_ID
+
+
+func _restart_tutorial_ballista_move_highlighters() -> void:
+	if _tutorial_step != TutorialStep.MOVE_BALLISTA:
+		return
+
+	TutorialEvents.stop_all_highlighters()
+	_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+	if _tutorial_ballista_gate != null:
+		TutorialEvents.start_highlighter(_tutorial_ballista_gate)
+	if _tutorial_move_target_tile != null and is_instance_valid(_tutorial_move_target_tile):
+		TutorialEvents.start_highlighter(_tutorial_move_target_tile)
 
 
 func _find_wire_vertex_two_steps_right(vertex_id: int) -> int:
