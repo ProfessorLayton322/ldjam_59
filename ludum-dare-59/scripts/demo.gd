@@ -32,6 +32,8 @@ var _camera: Camera2D
 var _sidebar: Node
 var _gate_interaction: Node
 
+var _gate_preview: Sprite2D
+
 var _moving_gate: Gate:
 	get: return _gate_interaction.get_moving_gate() if _gate_interaction != null else null
 
@@ -121,6 +123,8 @@ func _create_gate_buttons() -> void:
 	_sidebar.gate_button_pressed.connect(_on_gate_button_pressed)
 	_sidebar.pause_toggled.connect(_on_pause_button_pressed)
 	_sidebar.victory_debug_requested.connect(_complete_level_with_victory)
+	_sidebar.menu_pressed.connect(_on_menu_button_pressed)
+	_sidebar.settings_pressed.connect(_on_settings_button_pressed)
 	for def: Resource in _get_gate_definitions():
 		_gate_buttons[def.id] = _sidebar.get_gate_button(def.id)
 	_pause_button = _sidebar.get_pause_button()
@@ -177,6 +181,19 @@ func _on_pause_button_pressed() -> void:
 	_set_pause_mode_enabled(_pause_button.button_pressed)
 
 
+func _on_menu_button_pressed() -> void:
+	if _hud != null:
+		get_tree().paused = true
+		_hud.set_paused(true)
+		_hud.show_pause_menu()
+
+
+func _on_settings_button_pressed() -> void:
+	if _hud != null:
+		_set_pause_mode_enabled(true)
+		_hud.show_settings()
+
+
 func _set_pause_mode_enabled(enabled: bool) -> void:
 	get_tree().paused = enabled
 	if enabled:
@@ -185,6 +202,8 @@ func _set_pause_mode_enabled(enabled: bool) -> void:
 		AudioManager.play_pause_deactivated()
 	if _sidebar != null:
 		_sidebar.set_pause_button_state(enabled)
+	if _hud != null:
+		_hud.set_paused(enabled)
 
 
 func _complete_level_with_victory() -> void:
@@ -277,25 +296,41 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		get_tree().paused = false
-		AudioManager.stop_music()
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		if _hud != null and _hud.is_pause_menu_open():
+			_hud.hide_pause_menu()
+			_set_pause_mode_enabled(false)
+			return
+		if _hud != null and _hud.is_settings_open():
+			_hud.hide_settings()
+			_set_pause_mode_enabled(false)
+			return
+		_on_settings_button_pressed()
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key := event as InputEventKey
+		var overlay_open: bool = _hud != null and (_hud.is_settings_open() or _hud.is_pause_menu_open())
 		match key.keycode:
+			KEY_Q:
+				if _hud != null and _hud.is_pause_menu_open():
+					_hud.hide_pause_menu()
+					_set_pause_mode_enabled(false)
+				elif not _hud.is_settings_open():
+					_on_menu_button_pressed()
+				return
 			KEY_SPACE:
-				_set_pause_mode_enabled(not get_tree().paused)
+				if not overlay_open:
+					_set_pause_mode_enabled(not get_tree().paused)
 				return
 			KEY_1, KEY_2, KEY_3, KEY_4:
-				var idx := key.keycode - KEY_1
-				if idx < _get_gate_definitions().size():
-					var def: Resource = _get_gate_definitions()[idx]
-					var btn := _gate_buttons.get(def.id) as Button
-					if btn != null and not btn.disabled:
-						btn.set_pressed_no_signal(not btn.button_pressed)
-						_on_gate_button_pressed(def, btn)
+				if not overlay_open:
+					var idx := key.keycode - KEY_1
+					if idx < _get_gate_definitions().size():
+						var def: Resource = _get_gate_definitions()[idx]
+						var btn := _gate_buttons.get(def.id) as Button
+						if btn != null and not btn.disabled:
+							btn.set_pressed_no_signal(not btn.button_pressed)
+							_on_gate_button_pressed(def, btn)
 				return
 
 	if not event is InputEventMouseButton:
@@ -333,8 +368,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _selected_gate_definition == null:
 		return
 
-	if _place_gate(vertex_id, _selected_gate_definition):
-		_set_gate_placement_enabled(false)
+	_place_gate(vertex_id, _selected_gate_definition)
 
 
 func _input(event: InputEvent) -> void:
@@ -345,6 +379,20 @@ func _input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if _moving_gate != null:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
+
+	if _gate_preview == null:
+		return
+	if _selected_gate_definition == null or _moving_gate != null:
+		_gate_preview.visible = false
+		return
+	var hover_vertex := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if hover_vertex == -1:
+		_gate_preview.visible = false
+		return
+	_gate_preview.texture = _selected_gate_definition.texture
+	var vertex := _graph.get_node_by_id(hover_vertex)
+	_gate_preview.position = vertex.position
+	_gate_preview.visible = true
 
 
 func _ready() -> void:
@@ -385,6 +433,7 @@ func _ready() -> void:
 
 	_hud = HudScene.new()
 	add_child(_hud)
+	_hud.settings_closed.connect(func(): _set_pause_mode_enabled(false))
 
 	await get_tree().process_frame
 	setup.collect_tiles()
@@ -402,6 +451,12 @@ func _ready() -> void:
 	_gate_interaction.graph = _graph
 	_gate_interaction.tiles_by_node_id = _tiles_by_node_id
 	_gate_interaction.gate_placement_radius = _get_gate_placement_radius()
+
+	_gate_preview = Sprite2D.new()
+	_gate_preview.modulate = Color(1.0, 1.0, 1.0, 0.5)
+	_gate_preview.z_index = 5
+	_gate_preview.visible = false
+	add_child(_gate_preview)
 
 	_start_trigger_timer()
 	_create_gate_buttons()

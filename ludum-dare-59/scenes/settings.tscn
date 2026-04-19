@@ -16,10 +16,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -120.0
-offset_top = -100.0
-offset_right = 120.0
-offset_bottom = 100.0
+offset_left = -180.0
+offset_top = -160.0
+offset_right = 180.0
+offset_bottom = 160.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -39,6 +39,58 @@ text = "1920x1080 (Full HD)"
 [node name="FourKButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "3840x2160 (4K)"
+
+[node name="VolumeLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Volume"
+
+[node name="MasterRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="MasterLabel" type="Label" parent="VBoxContainer/MasterRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
+text = "Master"
+
+[node name="MasterSlider" type="HSlider" parent="VBoxContainer/MasterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="MusicRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="VBoxContainer/MusicRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
+text = "Music"
+
+[node name="MusicSlider" type="HSlider" parent="VBoxContainer/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="SFXRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="SFXLabel" type="Label" parent="VBoxContainer/SFXRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
+text = "SFX"
+
+[node name="SFXSlider" type="HSlider" parent="VBoxContainer/SFXRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
 
 [node name="BackButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
