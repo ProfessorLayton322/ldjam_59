@@ -166,7 +166,6 @@ func _on_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 		TutorialEvents.stop_highlighter(target_tile)
 	ballista_gate = _gate
 	step = Step.WAIT_FIRST_CRYTTER_DEATH
-	TutorialEvents.finish_first_level_tutorial()
 	_end_tutorial_dialogue()
 	demo._set_pause_mode_enabled(false)
 	apply_button_locks()
@@ -534,6 +533,7 @@ func _on_tutorial_dialogue_ended() -> void:
 	TutorialEvents.stop_all_highlighters()
 	demo._set_pause_mode_enabled(false)
 	apply_button_locks()
+	TutorialEvents.finish_first_level_tutorial()
 func _set_ui_overview_highlight(index: int) -> void:
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)

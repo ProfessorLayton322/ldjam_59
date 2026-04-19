@@ -5,6 +5,7 @@ signal first_crytter_moved_two_tiles(enemy: Enemy)
 signal ballista_spawn_button_pressed
 signal target_ballista_placed(vertex_id: int, gate: Gate)
 signal first_crytter_despawned(enemy: Enemy)
+signal first_level_tutorial_finished
 
 var first_level_tutorial_active := false
 var first_crytter_spawned_emitted := false
@@ -13,6 +14,7 @@ var ballista_spawn_button_pressed_emitted := false
 var target_ballista_vertex_id := -1
 var target_ballista_placed_emitted := false
 var first_crytter_despawned_emitted := false
+var first_level_tutorial_finished_emitted := false
 
 var _highlight_tweens: Dictionary = {}
 var _highlight_original_scales: Dictionary = {}
@@ -27,6 +29,7 @@ func reset_first_level_tutorial() -> void:
 	target_ballista_vertex_id = -1
 	target_ballista_placed_emitted = false
 	first_crytter_despawned_emitted = false
+	first_level_tutorial_finished_emitted = false
 	stop_all_highlighters()
 
 
@@ -40,7 +43,12 @@ func should_run_first_level_tutorial() -> bool:
 
 
 func finish_first_level_tutorial() -> void:
+	if first_level_tutorial_finished_emitted:
+		return
+
+	first_level_tutorial_finished_emitted = true
 	first_level_tutorial_active = false
+	first_level_tutorial_finished.emit()
 
 
 func emit_first_crytter_spawned(enemy: Enemy, spawner_node_id: int) -> void:
