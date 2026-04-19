@@ -27,6 +27,7 @@ var _graph: Graph
 var _level_board: Node
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
+var _cpu_node_ids: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
 var _selected_gate_definition: Resource
 var _temperature := 0
@@ -278,16 +279,70 @@ func _center_camera_on_graph() -> void:
 
 func _build_cpu_vertices() -> Array[CpuVertex]:
 	var cpu_vertices: Array[CpuVertex] = []
-	for tile in _tiles_by_node_id.values():
-		if not (tile is CoreTile):
-			continue
+	_cpu_node_ids = _collect_cpu_node_ids()
 
+	for node_id in _cpu_node_ids:
 		var cv := CpuVertex.new()
-		cv.node_id = tile.node_id
+		cv.node_id = int(node_id)
 		cpu_vertices.append(cv)
-		print("Demo scene: CPU target registered for node %d from %s" % [tile.node_id, tile.get_path()])
+		print("Demo scene: CPU target registered for node %d" % cv.node_id)
 
 	return cpu_vertices
+
+
+func _collect_cpu_node_ids() -> Dictionary:
+	var cpu_node_ids: Dictionary = {}
+
+	for tile in _tiles_by_node_id.values():
+		if tile is CoreTile:
+			cpu_node_ids[tile.node_id] = true
+
+	var tilemap := _get_level_tilemap()
+	if tilemap == null or tilemap.tile_set == null:
+		return cpu_node_ids
+
+	var tilemap_layer := _get_level_tilemap_layer()
+	var used_rect := tilemap.get_used_rect()
+	if used_rect.size.x <= 0:
+		return cpu_node_ids
+
+	for cell in tilemap.get_used_cells(tilemap_layer):
+		var source_id := tilemap.get_cell_source_id(tilemap_layer, cell)
+		if not _is_cpu_tile_source(tilemap.tile_set, source_id):
+			continue
+
+		var node_id := (cell.y - used_rect.position.y) * used_rect.size.x + (cell.x - used_rect.position.x)
+		if _graph != null and _graph.get_node_by_id(node_id) != null:
+			cpu_node_ids[node_id] = true
+
+	return cpu_node_ids
+
+
+func _get_level_tilemap() -> TileMap:
+	if _level_board == null:
+		return null
+
+	var tilemap_path := ^"TileMap" if level == null else level.tilemap_path
+	return _level_board.get_node_or_null(tilemap_path) as TileMap
+
+
+func _get_level_tilemap_layer() -> int:
+	return 0 if level == null else level.tilemap_layer
+
+
+func _is_cpu_tile_source(tile_set: TileSet, source_id: int) -> bool:
+	if tile_set == null or source_id < 0 or not tile_set.has_source(source_id):
+		return false
+
+	var source := tile_set.get_source(source_id)
+	if String(source.resource_name).strip_edges().to_lower() == "cpu":
+		return true
+
+	if source is TileSetAtlasSource:
+		var atlas_source := source as TileSetAtlasSource
+		return atlas_source.texture != null and atlas_source.texture.resource_path.get_file().to_lower() == "cpu.svg"
+
+	return false
 
 
 func _collect_tiles() -> void:
@@ -406,10 +461,7 @@ func _start_enemy_spawning() -> void:
 
 
 func _configure_core_gates() -> void:
-	var core_node_ids: Dictionary = {}
-	for tile in _tiles_by_node_id.values():
-		if tile is CoreTile:
-			core_node_ids[tile.node_id] = true
+	var core_node_ids := _cpu_node_ids
 
 	var core_positions: Dictionary = {}
 	for node_id in core_node_ids:
@@ -446,15 +498,18 @@ func _configure_core_gates() -> void:
 		var cpu_positions: Array[Vector2] = []
 
 		for node_id in region_ids:
-			var tile: BaseTile = _tiles_by_node_id.get(node_id) as BaseTile
-			if tile == null:
-				continue
 			var gate := CoreGate.new()
 			add_child(gate)
 			gate.graph = _graph
 			gate.vertex_id = node_id
 			gate.enemy_reached.connect(_on_region_enemy_reached.bind(region_index))
-			cpu_positions.append(to_local(tile.global_position))
+			var tile: BaseTile = _tiles_by_node_id.get(node_id) as BaseTile
+			if tile != null:
+				cpu_positions.append(to_local(tile.global_position))
+			elif _graph != null:
+				var vertex := _graph.get_node_by_id(node_id)
+				if vertex != null:
+					cpu_positions.append(vertex.position)
 			print("Demo scene: CoreGate registered at node %d (region %d)" % [node_id, region_index])
 
 		if cpu_positions.is_empty():
@@ -847,11 +902,6 @@ func _on_tutorial_first_crytter_spawned(_enemy: Enemy, spawner_node_id: int) -> 
 	_tutorial_target_vertex_id = _find_tutorial_target_vertex_id(spawner_node_id)
 	TutorialEvents.target_ballista_vertex_id = _tutorial_target_vertex_id
 	_tutorial_target_tile = _tiles_by_node_id.get(_tutorial_target_vertex_id) as BaseTile
-	var tutorial_endpoint_id := _find_tutorial_endpoint_beyond_target(spawner_node_id, _tutorial_target_vertex_id)
-	if tutorial_endpoint_id != -1:
-		_set_spawner_cpu_target(spawner_node_id, tutorial_endpoint_id)
-		if _enemy != null:
-			_set_enemy_cpu_target(_enemy, tutorial_endpoint_id, true)
 	DebugTrace.event("tutorial", "first_crytter_spawned", {
 		"enemy": DebugTrace.enemy_state(_enemy),
 		"spawner_node_id": spawner_node_id,
