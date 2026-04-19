@@ -1,15 +1,11 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" uid="uid://c6kxopkkarb7v" path="res://scripts/tiles/core_tile.gd" id="1_core"]
-[ext_resource type="Texture2D" uid="uid://cw10n4prubm64" path="res://assets/textures/tracks/pcb_empty.svg" id="2_bg"]
 [ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="3_cpu"]
 
 [node name="Core13" type="Node2D"]
 script = ExtResource("1_core")
 node_id = 13
-
-[node name="Background" type="Sprite2D" parent="."]
-texture = ExtResource("2_bg")
 
 [node name="CpuSprite" type="Sprite2D" parent="."]
 texture = ExtResource("3_cpu")

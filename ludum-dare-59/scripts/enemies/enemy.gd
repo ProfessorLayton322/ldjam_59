@@ -67,7 +67,11 @@ func _ensure_icon() -> void:
 		icon.name = "Icon"
 		add_child(icon)
 
-	icon.texture = load("res://assets/textures/enemies/circle_enemy.svg")
+	var params := BalanceManager.get_enemy_params(_get_balance_id())
+	if params != null and params.texture != null:
+		icon.texture = params.texture
+	else:
+		icon.texture = load("res://assets/textures/enemies/circle_crytter.svg")
 
 
 func _calculate_path() -> Array[int]:
