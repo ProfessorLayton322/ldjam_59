@@ -20,7 +20,8 @@ var _tiles_by_node_id: Dictionary = {}
 var _cpu_node_ids: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
 var _selected_gate_definition: Resource
-var _temperature := 0
+var _temperature: float = 0.0
+var _despawn_temperature_cooldowns: Array[Dictionary] = []
 var _gate_buttons: Dictionary = {}
 var _pause_button: Button
 var _hud: Node
@@ -60,6 +61,10 @@ func _get_trigger_interval() -> float:
 
 func _get_gate_placement_radius() -> float:
 	return _get_balance_params().gate_placement_radius
+
+
+func _get_despawn_cooldown_timing() -> float:
+	return _get_balance_params().despawn_cooldown_timing
 
 
 func _center_camera_on_graph() -> void:
@@ -156,8 +161,54 @@ func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
 
-func _change_temperature(amount: int) -> void:
-	_temperature = clampi(_temperature + amount, 0, _get_max_temperature())
+func _change_temperature(amount: float) -> void:
+	if amount < 0.0:
+		_start_despawn_temperature_cooldown(-amount)
+		return
+	_temperature = clampf(_temperature + amount, 0.0, float(_get_max_temperature()))
+	_update_temperature_meter()
+
+
+func _start_despawn_temperature_cooldown(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var duration := _get_despawn_cooldown_timing()
+	if duration <= 0.0:
+		_temperature = clampf(_temperature - amount, 0.0, float(_get_max_temperature()))
+		_update_temperature_meter()
+		return
+	_despawn_temperature_cooldowns.append({
+		"remaining_amount": amount,
+		"remaining_time": duration,
+	})
+
+
+func _process_despawn_temperature_cooldowns(delta: float) -> void:
+	if _despawn_temperature_cooldowns.is_empty():
+		return
+
+	var total_decrease := 0.0
+	var active_cooldowns: Array[Dictionary] = []
+	for cooldown: Dictionary in _despawn_temperature_cooldowns:
+		var remaining_amount := float(cooldown["remaining_amount"])
+		var remaining_time := float(cooldown["remaining_time"])
+		if remaining_amount <= 0.0 or remaining_time <= 0.0:
+			continue
+
+		var elapsed := minf(delta, remaining_time)
+		var decrease := remaining_amount if elapsed >= remaining_time else remaining_amount * elapsed / remaining_time
+		total_decrease += decrease
+		remaining_amount -= decrease
+		remaining_time -= elapsed
+
+		if remaining_amount > 0.0 and remaining_time > 0.0:
+			active_cooldowns.append({
+				"remaining_amount": remaining_amount,
+				"remaining_time": remaining_time,
+			})
+
+	_despawn_temperature_cooldowns = active_cooldowns
+	_temperature = clampf(_temperature - total_decrease, 0.0, float(_get_max_temperature()))
 	_update_temperature_meter()
 
 
@@ -381,6 +432,9 @@ func _input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	if not get_tree().paused:
+		_process_despawn_temperature_cooldowns(_delta)
+
 	if _moving_gate != null:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
 

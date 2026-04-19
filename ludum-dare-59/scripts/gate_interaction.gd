@@ -1,6 +1,6 @@
 extends Node
 
-signal temperature_changed(amount: int)
+signal temperature_changed(amount: float)
 signal gate_placement_blocked
 
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")

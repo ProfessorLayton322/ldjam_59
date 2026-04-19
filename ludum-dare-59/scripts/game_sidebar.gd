@@ -112,13 +112,13 @@ func set_menu_settings_buttons_disabled(disabled: bool) -> void:
 		_settings_button.disabled = disabled
 
 
-func update_temperature(current: int, maximum: int) -> void:
+func update_temperature(current: float, maximum: int) -> void:
 	if _temperature_fill != null:
-		var ratio := float(current) / float(maximum)
+		var ratio := 0.0 if maximum <= 0 else clampf(current / float(maximum), 0.0, 1.0)
 		_temperature_fill.anchor_top = 1.0 - ratio
 		_temperature_fill.offset_top = 0.0
 	if _temperature_label != null:
-		_temperature_label.text = "%d/%d" % [current, maximum]
+		_temperature_label.text = "%.1f/%d" % [current, maximum]
 
 
 func _on_gate_button_pressed(definition: Resource, button: Button) -> void:

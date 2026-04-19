@@ -6,6 +6,7 @@ extends Resource
 @export var cpu_hp := 20
 @export var trigger_interval := 1.0
 @export var gate_placement_radius := 32.0
+@export var despawn_cooldown_timing := 3.0
 
 @export_group("Gates")
 @export var gate_definitions: Array[GateDefinition] = []
