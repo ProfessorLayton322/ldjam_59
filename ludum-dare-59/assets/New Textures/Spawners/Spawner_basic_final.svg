@@ -1,4 +1,12 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="21.125" y="40.4375" width="17.2188" height="2.71875" transform="rotate(180 21.125 40.4375)" fill="#D9D9D9"/>
+<rect x="21.125" y="31.375" width="17.2188" height="2.71875" transform="rotate(180 21.125 31.375)" fill="#D9D9D9"/>
+<rect x="21.125" y="35.9062" width="17.2188" height="2.71875" transform="rotate(180 21.125 35.9062)" fill="#D9D9D9"/>
+<rect x="60.2188" y="40.4375" width="17.2188" height="2.71875" transform="rotate(180 60.2188 40.4375)" fill="#D9D9D9"/>
+<rect x="60.2188" y="35.9062" width="17.2188" height="2.71875" transform="rotate(180 60.2188 35.9062)" fill="#D9D9D9"/>
+<rect x="26" y="61.2188" width="17.2188" height="2.71875" transform="rotate(-90 26 61.2188)" fill="#D9D9D9"/>
+<rect x="35.0625" y="61.2188" width="17.2188" height="2.71875" transform="rotate(-90 35.0625 61.2188)" fill="#D9D9D9"/>
+<rect x="30.5312" y="61.2188" width="17.2188" height="2.71875" transform="rotate(-90 30.5312 61.2188)" fill="#D9D9D9"/>
 <path d="M32.2709 1.2476e-06L46 17L18 17L32.2709 1.2476e-06Z" fill="#F5F5F5"/>
 <rect x="60.2188" y="31.375" width="17.2188" height="2.71875" transform="rotate(180 60.2188 31.375)" fill="#D9D9D9"/>
 <path d="M32.1403 6L39.25 14.1562L24.75 14.1562L32.1403 6Z" fill="#F5F5F5"/>
