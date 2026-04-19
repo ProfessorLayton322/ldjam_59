@@ -23,14 +23,14 @@ manager/sound/pool_1D_size=64
 [autoload]
 
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
-BalanceManager="*res://scripts/balance_manager.gd"
-LevelState="*res://scripts/level_state.gd"
 ResolutionManager="*res://scripts/resolution_manager.gd"
-TutorialEvents="*res://scripts/tutorial_events.gd"
-Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
+LevelState="*res://scripts/level_state.gd"
+BalanceManager="*res://scripts/balance_manager.gd"
 SoundManager="*res://addons/resonate/sound_manager/sound_manager.gd"
 MusicManager="*res://addons/resonate/music_manager/music_manager.gd"
 AudioManager="*res://scripts/audio_manager.gd"
+TutorialEvents="*res://scripts/tutorial_events.gd"
+Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 
 [dialogic]
 
@@ -63,3 +63,5 @@ port_override=6550
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
+environment/default_clear_color=Color(0, 0, 0, 1)

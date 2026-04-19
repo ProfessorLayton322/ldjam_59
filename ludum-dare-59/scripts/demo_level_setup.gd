@@ -121,9 +121,9 @@ func configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 			continue
 
 		var spawner := tile as SpawnerTile
+		spawner.spawn_parent = demo
 		spawner.graph = graph
 		spawner.cpu_vertices = cpu_vertices
-		spawner.spawn_parent = demo
 		spawn_enemy_manager.register_spawner(spawner)
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
 
@@ -279,7 +279,8 @@ func _assign_tile_node_id_from_graph(tile: BaseTile) -> void:
 		best_vertex = vertex
 		best_distance = distance
 
-	if best_vertex == null or best_distance > POSITION_MATCH_EPSILON:
+	var epsilon := 80.0 if tile is SpawnerTile else POSITION_MATCH_EPSILON
+	if best_vertex == null or best_distance > epsilon:
 		push_warning("Demo scene: could not match tile %s at %s to graph node" % [tile.get_path(), tile_position])
 		return
 

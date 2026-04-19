@@ -8,3 +8,4 @@ extends Resource
 @export var can_stun_gate := false
 @export var gate_stun_duration := 3.0
 @export var modulate := Color.WHITE
+@export var texture: Texture2D

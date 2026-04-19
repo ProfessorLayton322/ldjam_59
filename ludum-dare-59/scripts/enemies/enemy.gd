@@ -67,7 +67,11 @@ func _ensure_icon() -> void:
 		icon.name = "Icon"
 		add_child(icon)
 
-	icon.texture = load("res://assets/textures/enemies/circle_enemy.svg")
+	var params := BalanceManager.get_enemy_params(_get_balance_id())
+	if params != null and params.texture != null:
+		icon.texture = params.texture
+	else:
+		icon.texture = load("res://assets/textures/enemies/circle_crytter.svg")
 
 
 func _calculate_path() -> Array[int]:
@@ -165,6 +169,10 @@ func _move_to_next_node() -> void:
 		"target_position": _get_node_position(next_node_index),
 		"duration": duration,
 	})
+	var dir := _get_node_position(next_node_index) - position
+	var icon := get_node_or_null("Icon") as Node2D
+	if icon != null and dir != Vector2.ZERO:
+		icon.rotation = dir.angle()
 	_active_tween = create_tween()
 	_active_tween.tween_property(self, "position", _get_node_position(next_node_index), duration)
 	_active_tween.finished.connect(_on_move_finished.bind(next_node_index), CONNECT_ONE_SHOT)
