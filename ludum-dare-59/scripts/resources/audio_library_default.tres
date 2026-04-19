@@ -1,46 +1,44 @@
-[gd_resource type="Resource" script_class="AudioLibrary" load_steps=14 format=3 uid="uid://cvk82etn2fgwc"]
+[gd_resource type="Resource" script_class="AudioLibrary" load_steps=12 format=3 uid="uid://kgoq3optt248"]
 
+[ext_resource type="AudioStream" uid="uid://dl13x30i0232c" path="res://assets/audio/sfx/ui/pilik.wav" id="7_k6brt"]
+[ext_resource type="AudioStream" uid="uid://wf07tl2blp15" path="res://assets/audio/sfx/ui/deny.wav" id="13_ndg4q"]
+[ext_resource type="AudioStream" uid="uid://du1fkgi2kgxxc" path="res://assets/audio/sfx/ui/confirm.wav" id="15_m1ukr"]
 [ext_resource type="AudioStream" uid="uid://bdl7seng5todp" path="res://assets/audio/sfx/destruction_bitcrushed.wav" id="destruction"]
 [ext_resource type="AudioStream" uid="uid://cd1fx5wt0xwub" path="res://assets/audio/sfx/put_down_gate.wav" id="gate_place"]
 [ext_resource type="AudioStream" uid="uid://dnvfyowebhdss" path="res://assets/audio/sfx/lasergun_shot.wav" id="laser"]
 [ext_resource type="AudioStream" uid="uid://m4f0vsngydhg" path="res://assets/audio/music/slow-moonlight-synthwave.wav" id="music0"]
 [ext_resource type="AudioStream" uid="uid://rj11gdapujnq" path="res://assets/audio/sfx/hurting_the_robot.wav" id="robot_hit"]
 [ext_resource type="Script" uid="uid://cdkwejgngwgyo" path="res://scripts/resources/audio_library.gd" id="script"]
-[ext_resource type="AudioStream" uid="uid://wdrltu5qttj6" path="res://assets/audio/sfx/zaps/Audio0.wav" id="zap0"]
-[ext_resource type="AudioStream" uid="uid://b2d0vax0x2xdw" path="res://assets/audio/sfx/zaps/Audio 1.wav" id="zap1"]
-[ext_resource type="AudioStream" uid="uid://cjrcg0dhteac6" path="res://assets/audio/sfx/zaps/Audio 2.wav" id="zap2"]
-[ext_resource type="AudioStream" uid="uid://0tbd136k4ldj" path="res://assets/audio/sfx/zaps/Audio 3.wav" id="zap3"]
-[ext_resource type="AudioStream" uid="uid://0o3cyl2qjf42" path="res://assets/audio/sfx/zaps/Audio 4.wav" id="zap4"]
-[ext_resource type="AudioStream" uid="uid://bcbj1nnxoqn3e" path="res://assets/audio/sfx/zaps/Audio 5.wav" id="zap5"]
-[ext_resource type="AudioStream" uid="uid://ycor01ghgx2f" path="res://assets/audio/sfx/zaps/Audio 6.wav" id="zap6"]
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_xr81a"]
+random_pitch = 6.0
+streams_count = 1
+stream_0/stream = ExtResource("robot_hit")
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_ndg4q"]
+random_pitch = 5.0
+streams_count = 1
+stream_0/stream = ExtResource("laser")
 
 [resource]
 script = ExtResource("script")
-pause_activated_sounds = Array[AudioStream]([ExtResource("gate_place")])
-pause_deactivated_sounds = Array[AudioStream]([ExtResource("gate_place")])
-ui_interaction_sounds = Array[AudioStream]([ExtResource("gate_place")])
+pause_activated_sounds = Array[AudioStream]([ExtResource("7_k6brt")])
+pause_deactivated_sounds = Array[AudioStream]([ExtResource("7_k6brt")])
+ui_interaction_sounds = Array[AudioStream]([ExtResource("15_m1ukr")])
 barricade_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-barricade_gate_activation_sounds = Array[AudioStream]([ExtResource("destruction")])
 ballista_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-ballista_gate_activation_sounds = Array[AudioStream]([ExtResource("laser")])
 tar_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-tar_gate_activation_sounds = Array[AudioStream]([ExtResource("zap0"), ExtResource("zap1"), ExtResource("zap2"), ExtResource("zap3"), ExtResource("zap4"), ExtResource("zap5"), ExtResource("zap6")])
 divider_gate_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-divider_gate_activation_sounds = Array[AudioStream]([ExtResource("zap0"), ExtResource("zap1"), ExtResource("zap2"), ExtResource("zap3"), ExtResource("zap4"), ExtResource("zap5"), ExtResource("zap6")])
-crytter_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-crytter_damage_sounds = Array[AudioStream]([ExtResource("robot_hit")])
-crytter_death_sounds = Array[AudioStream]([ExtResource("destruction")])
-raider_stunner_spawn_sounds = Array[AudioStream]([ExtResource("gate_place")])
-raider_stunner_damage_sounds = Array[AudioStream]([ExtResource("robot_hit")])
-raider_stunner_death_sounds = Array[AudioStream]([ExtResource("destruction")])
-brute_spawn_sounds = Array[AudioStream]([ExtResource("laser")])
-brute_damage_sounds = Array[AudioStream]([ExtResource("robot_hit")])
-brute_death_sounds = Array[AudioStream]([ExtResource("destruction")])
-cpu_damage_sounds = Array[AudioStream]([ExtResource("zap0"), ExtResource("zap1"), ExtResource("zap2"), ExtResource("zap3"), ExtResource("zap4"), ExtResource("zap5"), ExtResource("zap6")])
+crytter_spawn_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_ndg4q")])
+crytter_damage_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_xr81a")])
+raider_stunner_spawn_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_xr81a")])
+raider_stunner_damage_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_xr81a")])
+brute_spawn_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_xr81a")])
+brute_damage_sounds = Array[AudioStream]([SubResource("AudioStreamRandomizer_xr81a")])
 cpu_death_sounds = Array[AudioStream]([ExtResource("destruction")])
-not_enough_temperature_sounds = Array[AudioStream]([ExtResource("robot_hit")])
-invalid_gate_tile_sounds = Array[AudioStream]([ExtResource("robot_hit")])
-invalid_gate_move_sounds = Array[AudioStream]([ExtResource("robot_hit")])
+not_enough_temperature_sounds = Array[AudioStream]([ExtResource("13_ndg4q")])
+invalid_gate_tile_sounds = Array[AudioStream]([ExtResource("13_ndg4q")])
+invalid_gate_move_sounds = Array[AudioStream]([ExtResource("13_ndg4q")])
 gate_deleted_sounds = Array[AudioStream]([ExtResource("destruction")])
 level_beginning_sounds = Array[AudioStream]([ExtResource("gate_place")])
 level_victory_sounds = Array[AudioStream]([ExtResource("destruction")])
