@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=29 format=3 uid="uid://pu83ri6cy2bm"]
 
 [ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="1_none"]
 [ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="2_w"]
@@ -62,18 +62,18 @@ texture_region_size = Vector2i(64, 64)
 0:1/0 = 0
 1:1/0 = 0
 
-[sub_resource type="TileSet" id="TileSet_demo_level"]
+[sub_resource type="TileSet" id="TileSet_level_01"]
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetScenesCollectionSource_tracks")
 sources/1 = SubResource("TileSetScenesCollectionSource_gameplay")
 sources/2 = SubResource("TileSetAtlasSource_cpu")
 
-[node name="DemoLevelBoard" type="Node2D"]
+[node name="Level01Board" type="Node2D"]
 
 [node name="TileMap" type="TileMap" parent="."]
-position = Vector2(100, 100)
-tile_set = SubResource("TileSet_demo_level")
+position = Vector2(448, 352)
+tile_set = SubResource("TileSet_level_01")
 format = 2
-layer_0/tile_data = PackedInt32Array(0, 0, 393216, 1, 0, 983040, 2, 0, 983040, 3, 0, 458752, 4, 0, 327680, 65536, 0, 917504, 65537, 0, 983040, 65538, 0, 983040, 65539, 0, 983040, 65540, 0, 851968, 131072, 0, 655360, 131073, 0, 720896, 131074, 0, 720896, 131075, 0, 720896, 131076, 0, 589824, -65535, 0, 196608, -65534, 0, 327680, 393225, 1, 393216, 327683, 1, 327680, 65545, 1, 262144, 65542, 1, 196608, 65543, 1, 262144, 131078, 1, 327680, 131079, 1, 393216, 327684, 1, 196608, 327685, 1, 196608, 327686, 1, 196608, 327687, 1, 196608, 327688, 1, 196608, 327689, 1, 196608)
-layer_1/name = "Layer1"
-layer_1/tile_data = PackedInt32Array(0, 1, 0, 131072, 1, 65536, 65539, 1, 196608, 65540, 1, 262144, 131075, 1, 327680, 131076, 1, 393216, -65535, 1, 131072)
+layer_0/tile_data = PackedInt32Array(0, 0, 131072, 1, 0, 196608, 2, 0, 196608, 3, 0, 196608, 4, 0, 65536, 7, 2, 0, 65543, 2, 1, 8, 65538, 0, 65544, 65538, 1, 5, 0, 65536, 6, 0, 65536)
+layer_1/name = "Gameplay"
+layer_1/tile_data = PackedInt32Array(0, 1, 131072, 4, 1, 196608)

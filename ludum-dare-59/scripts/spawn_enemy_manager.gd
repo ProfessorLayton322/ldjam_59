@@ -1,7 +1,7 @@
 class_name SpawnEnemyManager
 extends Node
 
-@export var cfg: SpawnerCfg = preload("res://scripts/resources/spawner_cfg_default.tres")
+@export var cfg: SpawnerCfg
 
 var _spawners: Array[SpawnerTile] = []
 var _timer: Timer
@@ -10,6 +10,8 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
+	if cfg == null:
+		cfg = BalanceManager.get_params().default_spawner_cfg
 	_ensure_timer()
 
 

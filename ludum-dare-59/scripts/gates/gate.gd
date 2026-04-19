@@ -5,11 +5,15 @@ signal destroyed(gate: Gate)
 
 static var _gates_by_graph_vertex: Dictionary = {}
 
-@export var definition: Resource:
+@export var definition: GateDefinition:
 	set(value):
 		definition = value
+		if definition != null:
+			definition_id = definition.id
 		_current_hp = _get_max_hp()
 		_update_icon()
+
+@export var definition_id := ""
 
 @export var graph: Graph:
 	set(value):
@@ -37,6 +41,8 @@ var _current_hp := 1
 var _stalled_enemies: Array[Enemy] = []
 var _stalled_enemy_power := 0
 var _is_destroying := false
+var _stunned_until_msec := 0
+var _stun_generation := 0
 
 
 static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
@@ -53,6 +59,7 @@ static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
 
 
 func _ready() -> void:
+	_load_definition_from_balance()
 	_update_position_from_vertex()
 	_current_hp = _get_max_hp()
 	_update_icon()
@@ -71,7 +78,14 @@ func on_enter(enemy: Enemy) -> void:
 	if definition == null or enemy == null:
 		return
 
-	if definition.blocks_movement:
+	var stun_duration := enemy.consume_gate_stun(self)
+	if stun_duration > 0.0:
+		apply_stun(stun_duration)
+
+	if is_stunned():
+		return
+
+	if definition.blocks_movement and enemy.hp >= 0:
 		_stall_enemy(enemy)
 		if not definition.indestructible and _stalled_enemy_power > _current_hp:
 			_destroy_gate()
@@ -83,12 +97,52 @@ func on_enter(enemy: Enemy) -> void:
 		if enemy.is_queued_for_deletion():
 			return
 
+	if definition.halve_hp_round_up:
+		var target_hp := ceili(float(enemy.hp) / 2.0)
+		var damage_amount := enemy.hp - target_hp
+		if damage_amount > 0:
+			enemy.apply_damage(damage_amount)
+			_spawn_damage_label(damage_amount, enemy.position)
+			if enemy.is_queued_for_deletion():
+				return
+
 	if definition.slow_extra_seconds_per_tile > 0.0 and definition.slow_duration > 0.0:
 		enemy.apply_slow(definition.slow_extra_seconds_per_tile, definition.slow_duration)
 
 
+func apply_stun(duration: float) -> void:
+	if duration <= 0.0:
+		return
+
+	_stunned_until_msec = max(_stunned_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
+	_stun_generation += 1
+	var generation := _stun_generation
+	_release_stalled_enemies()
+	_update_stun_visual()
+
+	await get_tree().create_timer(duration, false).timeout
+	if generation != _stun_generation:
+		return
+
+	if Time.get_ticks_msec() >= _stunned_until_msec:
+		_stunned_until_msec = 0
+		_update_stun_visual()
+
+
+func is_stunned() -> bool:
+	if _stunned_until_msec <= 0:
+		return false
+
+	if Time.get_ticks_msec() <= _stunned_until_msec:
+		return true
+
+	_stunned_until_msec = 0
+	_update_stun_visual()
+	return false
+
+
 func blocks_movement() -> bool:
-	return definition != null and definition.blocks_movement
+	return definition != null and definition.blocks_movement and not is_stunned()
 
 
 func get_power_cost() -> int:
@@ -96,6 +150,18 @@ func get_power_cost() -> int:
 		return 0
 
 	return definition.power_cost
+
+
+func _load_definition_from_balance() -> void:
+	var id := definition_id
+	if id.is_empty() and definition != null:
+		id = definition.id
+	if id.is_empty():
+		return
+
+	var balanced_definition := BalanceManager.get_gate_definition(id)
+	if balanced_definition != null:
+		definition = balanced_definition
 
 
 func _register_gate() -> void:
@@ -204,3 +270,18 @@ func _update_icon() -> void:
 
 	if definition != null:
 		sprite.texture = definition.texture
+	_update_stun_visual()
+
+
+func _update_stun_visual() -> void:
+	if not is_inside_tree():
+		return
+
+	var sprite := get_node_or_null("Sprite2D") as Sprite2D
+	if sprite == null:
+		return
+
+	if _stunned_until_msec > 0 and Time.get_ticks_msec() <= _stunned_until_msec:
+		sprite.modulate = Color(0.5, 0.5, 0.55, 0.65)
+	else:
+		sprite.modulate = Color.WHITE

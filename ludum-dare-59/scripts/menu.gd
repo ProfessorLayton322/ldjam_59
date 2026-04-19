@@ -7,7 +7,8 @@ func _ready() -> void:
 
 
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/level_selection.tscn")
+	LevelState.start_from_first_level()
+	get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
 
 
 func _on_settings_pressed() -> void:

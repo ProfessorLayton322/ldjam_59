@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GateDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/gate_definition.gd" id="1_gate_definition"]
+[ext_resource type="Texture2D" path="res://assets/textures/gates/divider_gate.svg" id="2_texture"]
+
+[resource]
+script = ExtResource("1_gate_definition")
+id = "divider"
+display_name = "Divider Gate"
+texture = ExtResource("2_texture")
+power_cost = 8
+max_hp = 999999
+indestructible = true
+blocks_movement = false
+damage_power = 0
+halve_hp_round_up = true
+slow_extra_seconds_per_tile = 0.0
+slow_duration = 0.0

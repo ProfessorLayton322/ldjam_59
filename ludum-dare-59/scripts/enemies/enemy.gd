@@ -4,9 +4,13 @@ extends Node2D
 @export var graph: Graph
 @export var cpu_vertices: Array[CpuVertex] = []
 @export var current_node_index: int = -1
+@export var balance_id := "enemy"
 @export var move_duration: float = 3.0
 @export var damage: int = 1
+@export var max_hp: int = 10
 @export var hp: int = 10
+@export var can_stun_gate := false
+@export var gate_stun_duration := 3.0
 
 var path: Array[int] = []
 
@@ -20,6 +24,7 @@ var _movement_interrupted := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	_apply_balance_params()
 	_ensure_icon()
 	start_pathing()
 
@@ -182,6 +187,15 @@ func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
 	_slow_until_msec = max(_slow_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
 
 
+func consume_gate_stun(gate: Gate) -> float:
+	if not can_stun_gate:
+		return 0.0
+
+	can_stun_gate = false
+	_on_gate_stun_consumed(gate)
+	return gate_stun_duration
+
+
 func stall_at_gate(gate: Gate) -> void:
 	_stalled_gate = gate
 	_movement_interrupted = true
@@ -198,10 +212,32 @@ func release_from_gate(gate: Gate) -> void:
 	start_pathing()
 
 
+func _on_gate_stun_consumed(_gate: Gate) -> void:
+	pass
+
+
+func _get_balance_id() -> String:
+	return balance_id
+
+
+func _apply_balance_params() -> void:
+	var params := BalanceManager.get_enemy_params(_get_balance_id())
+	if params == null:
+		return
+
+	balance_id = params.id
+	damage = params.damage
+	max_hp = params.max_hp
+	hp = max_hp
+	move_duration = params.move_duration
+	can_stun_gate = params.can_stun_gate
+	gate_stun_duration = params.gate_stun_duration
+	modulate = params.modulate
+
+
 func _get_current_move_duration() -> float:
 	if Time.get_ticks_msec() <= _slow_until_msec:
 		return move_duration + _slow_extra_seconds_per_tile
 
 	_slow_extra_seconds_per_tile = 0.0
 	return move_duration
-
