@@ -6,6 +6,7 @@ signal ballista_spawn_button_pressed
 signal target_ballista_placed(vertex_id: int, gate: Gate)
 signal first_crytter_despawned(enemy: Enemy)
 signal first_level_tutorial_finished
+signal tutorial_enemy_spawned(enemy: Enemy, enemy_type: int, spawner_node_id: int)
 
 var first_level_tutorial_active := false
 var first_crytter_spawned_emitted := false
@@ -84,6 +85,10 @@ func emit_first_crytter_despawned(enemy: Enemy) -> void:
 	first_crytter_despawned_emitted = true
 	first_level_tutorial_active = false
 	first_crytter_despawned.emit(enemy)
+
+
+func emit_tutorial_enemy_spawned(enemy: Enemy, enemy_type: int, spawner_node_id: int) -> void:
+	tutorial_enemy_spawned.emit(enemy, enemy_type, spawner_node_id)
 
 
 func start_highlighter(target: Node) -> void:

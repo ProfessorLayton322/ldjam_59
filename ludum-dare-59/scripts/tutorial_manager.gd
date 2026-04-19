@@ -9,6 +9,8 @@ const TUTORIAL_DIALOGUE_3_ID := "tutorial_dialogue_1_3"
 const TUTORIAL_DIALOGUE_3_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
 const TUTORIAL_DIALOGUE_4_ID := "tutorial_dialogue_1_4"
 const TUTORIAL_DIALOGUE_4_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl"
+const TUTORIAL_DIALOGUE_5_ID := "tutorial_dialogue_1_5"
+const TUTORIAL_DIALOGUE_5_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_5.dtl"
 const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
 const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
 const TUTORIAL_BALLISTA_ID := "ballista"
@@ -21,6 +23,8 @@ enum Step {
 	MOVE_BALLISTA,
 	REMOVE_BALLISTA,
 	UI_OVERVIEW,
+	WAIT_RAIDER_SPAWN,
+	RAIDER_DIALOGUE,
 	DONE,
 }
 var demo
@@ -33,7 +37,9 @@ var ballista_gate: Gate
 var ballista_button: Button
 var dialog_manual_advance_was_enabled := true
 var dialog_layout: Node
+var remove_ballista_dialogue_started := false
 var ui_overview_highlight_target: Node
+var raider_highlight_target: Enemy
 var ui_overview_next_highlight_index := 0
 func _init(p_demo: Node) -> void:
 	demo = p_demo
@@ -53,6 +59,8 @@ func configure_flow() -> void:
 		TutorialEvents.target_ballista_placed.connect(_on_target_ballista_placed)
 	if not TutorialEvents.first_crytter_despawned.is_connected(_on_first_crytter_despawned):
 		TutorialEvents.first_crytter_despawned.connect(_on_first_crytter_despawned)
+	if not TutorialEvents.tutorial_enemy_spawned.is_connected(_on_tutorial_enemy_spawned):
+		TutorialEvents.tutorial_enemy_spawned.connect(_on_tutorial_enemy_spawned)
 	ballista_button = demo._gate_buttons.get(TUTORIAL_BALLISTA_ID) as Button
 	apply_button_locks()
 func _should_lock_before_first_dialogue() -> bool:
@@ -60,7 +68,7 @@ func _should_lock_before_first_dialogue() -> bool:
 
 
 func is_menu_settings_locked() -> bool:
-	return _should_lock_before_first_dialogue() or (step != Step.NONE and step != Step.DONE)
+	return _should_lock_before_first_dialogue() or (step != Step.NONE and step != Step.DONE and step != Step.WAIT_RAIDER_SPAWN)
 
 
 func abort_for_victory() -> void:
@@ -68,12 +76,21 @@ func abort_for_victory() -> void:
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
 		ui_overview_highlight_target = null
+	if raider_highlight_target != null:
+		TutorialEvents.stop_highlighter(raider_highlight_target)
+		raider_highlight_target = null
 	TutorialEvents.stop_all_highlighters()
 	step = Step.DONE
 	TutorialEvents.reset_first_level_tutorial()
 	_set_pre_dialogue_input_locked(false)
 	if demo._sidebar != null and demo._sidebar.has_method("set_menu_settings_buttons_disabled"):
 		demo._sidebar.set_menu_settings_buttons_disabled(false)
+
+
+func should_block_manual_gate_delete(vertex_id: int) -> bool:
+	if not _is_protected_tutorial_ballista(vertex_id):
+		return false
+	return step != Step.REMOVE_BALLISTA or not remove_ballista_dialogue_started
 
 
 func _set_pre_dialogue_input_locked(locked: bool) -> void:
@@ -107,6 +124,11 @@ func handle_input(event: InputEvent) -> bool:
 	if step == Step.UI_OVERVIEW:
 		if _is_left_mouse_pressed(event):
 			_advance_ui_overview_dialogue()
+		demo.get_viewport().set_input_as_handled()
+		return true
+	if step == Step.RAIDER_DIALOGUE:
+		if _is_left_mouse_pressed(event):
+			_advance_tutorial_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.SELECT_BALLISTA:
@@ -178,6 +200,7 @@ func _on_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 	if target_tile != null:
 		TutorialEvents.stop_highlighter(target_tile)
 	ballista_gate = _gate
+	remove_ballista_dialogue_started = false
 	step = Step.WAIT_FIRST_CRYTTER_DEATH
 	_end_tutorial_dialogue()
 	demo._set_pause_mode_enabled(false)
@@ -219,6 +242,7 @@ func _complete_ballista_move() -> void:
 	apply_button_locks()
 	if ballista_gate != null and is_instance_valid(ballista_gate):
 		TutorialEvents.start_highlighter(ballista_gate)
+	remove_ballista_dialogue_started = false
 	_replace_tutorial_dialogue(TUTORIAL_DIALOGUE_3_ID, TUTORIAL_DIALOGUE_3_PATH, Step.REMOVE_BALLISTA)
 func _complete_ballista_remove() -> void:
 	if ballista_gate != null and is_instance_valid(ballista_gate):
@@ -228,6 +252,48 @@ func _complete_ballista_remove() -> void:
 	demo._set_pause_mode_enabled(true)
 	apply_button_locks()
 	_replace_tutorial_dialogue(TUTORIAL_DIALOGUE_4_ID, TUTORIAL_DIALOGUE_4_PATH, Step.UI_OVERVIEW)
+func _begin_raider_spawn_tutorial() -> void:
+	step = Step.WAIT_RAIDER_SPAWN
+	demo._set_pause_mode_enabled(false)
+	apply_button_locks()
+	TutorialEvents.finish_first_level_tutorial()
+	var raider_found := EnemiesSpawnConfig.ensure_next_enemy_type(EnemiesSpawnConfig.STUNNER)
+	DebugTrace.event("tutorial", "begin_raider_spawn_tutorial", {"raider_found": raider_found})
+	if not raider_found:
+		step = Step.DONE
+		apply_button_locks()
+
+
+func _on_tutorial_enemy_spawned(enemy: Enemy, enemy_type: int, spawner_node_id: int) -> void:
+	if step != Step.WAIT_RAIDER_SPAWN or enemy_type != EnemiesSpawnConfig.STUNNER:
+		return
+	DebugTrace.event("tutorial", "raider_spawned", {
+		"enemy": DebugTrace.enemy_state(enemy),
+		"spawner_node_id": spawner_node_id,
+	})
+	_start_raider_dialogue(enemy)
+
+
+func _start_raider_dialogue(enemy: Enemy) -> void:
+	step = Step.RAIDER_DIALOGUE
+	raider_highlight_target = enemy
+	demo._set_pause_mode_enabled(true)
+	apply_button_locks()
+	if raider_highlight_target != null and is_instance_valid(raider_highlight_target):
+		TutorialEvents.start_highlighter(raider_highlight_target)
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_5_ID, TUTORIAL_DIALOGUE_5_PATH, true)
+
+
+func _finish_raider_dialogue() -> void:
+	if raider_highlight_target != null:
+		TutorialEvents.stop_highlighter(raider_highlight_target)
+		raider_highlight_target = null
+	step = Step.DONE
+	TutorialEvents.stop_all_highlighters()
+	demo._set_pause_mode_enabled(false)
+	apply_button_locks()
+
+
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if _should_lock_before_first_dialogue():
 		demo.get_viewport().set_input_as_handled()
@@ -235,6 +301,11 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 	if step == Step.UI_OVERVIEW:
 		if _is_left_mouse_pressed(event):
 			_advance_ui_overview_dialogue()
+		demo.get_viewport().set_input_as_handled()
+		return true
+	if step == Step.RAIDER_DIALOGUE:
+		if _is_left_mouse_pressed(event):
+			_advance_tutorial_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.SELECT_BALLISTA:
@@ -286,6 +357,8 @@ func _handle_ballista_move_input(event: InputEvent) -> void:
 	if demo._moving_gate != null:
 		_try_drop_ballista(demo.get_global_mouse_position())
 func _handle_ballista_remove_input(event: InputEvent) -> void:
+	if not remove_ballista_dialogue_started:
+		return
 	if not event is InputEventMouseButton:
 		return
 	var mouse_event := event as InputEventMouseButton
@@ -356,6 +429,13 @@ func _is_ballista_gate(gate: Node) -> bool:
 		return false
 	var typed_gate := gate as Gate
 	return typed_gate.graph == demo._graph and typed_gate.definition_id == TUTORIAL_BALLISTA_ID
+func _is_protected_tutorial_ballista(vertex_id: int) -> bool:
+	if step == Step.NONE or step == Step.SELECT_BALLISTA or step == Step.PLACE_BALLISTA or step == Step.DONE:
+		return false
+	var gate := Gate.get_gate(demo._graph, vertex_id)
+	if gate != null and _is_ballista_gate(gate):
+		return gate == ballista_gate or vertex_id == target_vertex_id or vertex_id == move_target_vertex_id
+	return false
 func _restart_ballista_move_highlighters() -> void:
 	if step != Step.MOVE_BALLISTA:
 		return
@@ -431,7 +511,7 @@ func apply_button_locks() -> void:
 	if _should_lock_before_first_dialogue():
 		_set_pre_dialogue_input_locked(true)
 		return
-	if step == Step.UI_OVERVIEW:
+	if step == Step.UI_OVERVIEW or step == Step.RAIDER_DIALOGUE:
 		_set_pre_dialogue_input_locked(true)
 		return
 	_set_pre_dialogue_input_locked(false)
@@ -483,6 +563,8 @@ func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String, manual
 		_disconnect_ui_overview_dialogue_signals()
 		push_error("Tutorial dialogue failed to start: %s" % timeline)
 		return
+	if dialogue_id == TUTORIAL_DIALOGUE_3_ID:
+		remove_ballista_dialogue_started = true
 	dialog_layout.process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("_position_tutorial_dialogue")
 	if dialogue_id == TUTORIAL_DIALOGUE_4_ID and ui_overview_next_highlight_index == 0:
@@ -537,16 +619,16 @@ func _on_tutorial_dialogue_ended() -> void:
 	_disconnect_ui_overview_dialogue_signals()
 	dialog_layout = null
 	Dialogic.Inputs.manual_advance.system_enabled = dialog_manual_advance_was_enabled
+	if step == Step.RAIDER_DIALOGUE:
+		_finish_raider_dialogue()
+		return
 	if step != Step.UI_OVERVIEW:
 		return
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
 		ui_overview_highlight_target = null
-	step = Step.DONE
 	TutorialEvents.stop_all_highlighters()
-	demo._set_pause_mode_enabled(false)
-	apply_button_locks()
-	TutorialEvents.finish_first_level_tutorial()
+	_begin_raider_spawn_tutorial()
 func _set_ui_overview_highlight(index: int) -> void:
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
