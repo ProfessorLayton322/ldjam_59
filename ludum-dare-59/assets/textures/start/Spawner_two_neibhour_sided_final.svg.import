@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dssgg2ggicvre"
-path="res://.godot/imported/Spawner_two_neibhour_sided_final.svg-fb96b3e06bc9d37cdbf48f124beadb36.ctex"
+path="res://.godot/imported/Spawner_two_neibhour_sided_final.svg-a56dfd28b5e4b85d84a402cf68a3ec22.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/New Textures/Spawners/Spawner_two_neibhour_sided_final.svg"
-dest_files=["res://.godot/imported/Spawner_two_neibhour_sided_final.svg-fb96b3e06bc9d37cdbf48f124beadb36.ctex"]
+source_file="res://assets/textures/start/Spawner_two_neibhour_sided_final.svg"
+dest_files=["res://.godot/imported/Spawner_two_neibhour_sided_final.svg-a56dfd28b5e4b85d84a402cf68a3ec22.ctex"]
 
 [params]
 

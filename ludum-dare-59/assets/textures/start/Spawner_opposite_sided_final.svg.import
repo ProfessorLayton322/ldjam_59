@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cp4s12sdv0tgf"
-path="res://.godot/imported/Spawner_four-sided_final.svg-ee0665a38dbe95906c2a63da1f3216ef.ctex"
+uid="uid://q58qs8idvovq"
+path="res://.godot/imported/Spawner_opposite_sided_final.svg-3a28c0eacb3998befda65179b3d3135d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/New Textures/Spawners/Spawner_four-sided_final.svg"
-dest_files=["res://.godot/imported/Spawner_four-sided_final.svg-ee0665a38dbe95906c2a63da1f3216ef.ctex"]
+source_file="res://assets/textures/start/Spawner_opposite_sided_final.svg"
+dest_files=["res://.godot/imported/Spawner_opposite_sided_final.svg-3a28c0eacb3998befda65179b3d3135d.ctex"]
 
 [params]
 
