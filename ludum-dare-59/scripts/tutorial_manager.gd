@@ -66,6 +66,9 @@ func handle_gate_button_pressed(definition: Resource, button: Button) -> bool:
 	return false
 func handle_input(event: InputEvent) -> bool:
 	if step == Step.SELECT_BALLISTA:
+		if _try_select_ballista_from_key(event):
+			demo.get_viewport().set_input_as_handled()
+			return true
 		if event is InputEventMouseButton:
 			var tutorial_mouse := event as InputEventMouseButton
 			if tutorial_mouse.button_index == MOUSE_BUTTON_LEFT:
@@ -185,10 +188,7 @@ func _complete_ballista_remove() -> void:
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if step == Step.SELECT_BALLISTA:
 		if event is InputEventKey and event.pressed and not event.echo:
-			var key := event as InputEventKey
-			if key.keycode == KEY_2 and ballista_button != null:
-				ballista_button.set_pressed_no_signal(true)
-				demo._on_gate_button_pressed(BalanceManager.get_gate_definition(TUTORIAL_BALLISTA_ID), ballista_button)
+			_try_select_ballista_from_key(event)
 			demo.get_viewport().set_input_as_handled()
 			return true
 		if event is InputEventMouseButton:
@@ -213,6 +213,15 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 		return true
 	_try_place_ballista(demo.get_global_mouse_position())
 	demo.get_viewport().set_input_as_handled()
+	return true
+func _try_select_ballista_from_key(event: InputEvent) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var key := event as InputEventKey
+	if not key.pressed or key.echo or key.keycode != KEY_2 or ballista_button == null:
+		return false
+	ballista_button.set_pressed_no_signal(true)
+	demo._on_gate_button_pressed(BalanceManager.get_gate_definition(TUTORIAL_BALLISTA_ID), ballista_button)
 	return true
 func _handle_ballista_move_input(event: InputEvent) -> void:
 	if not event is InputEventMouseButton:
