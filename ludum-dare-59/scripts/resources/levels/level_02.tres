@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=4 format=3 uid="uid://dk46jknqvl7gk"]
 
-[ext_resource type="Script" path="res://scripts/resources/level_definition.gd" id="1_level_definition"]
-[ext_resource type="PackedScene" path="res://scenes/levels/level_02_board.tscn" id="2_board"]
-[ext_resource type="Resource" path="res://scripts/resources/spawner_cfg_default.tres" id="3_spawn_cfg"]
+[ext_resource type="Script" uid="uid://8vlmcpkh4pct" path="res://scripts/resources/level_definition.gd" id="1_level_definition"]
+[ext_resource type="PackedScene" uid="uid://dnks4x2juduj8" path="res://scenes/levels/level_02_board.tscn" id="2_board"]
+[ext_resource type="Resource" uid="uid://cqvhan4kpp86q" path="res://scripts/resources/spawner_cfg_default.tres" id="3_spawn_cfg"]
 
 [resource]
 script = ExtResource("1_level_definition")
