@@ -32,6 +32,8 @@ var _camera: Camera2D
 var _sidebar: Node
 var _gate_interaction: Node
 
+var _gate_preview: Sprite2D
+
 var _moving_gate: Gate:
 	get: return _gate_interaction.get_moving_gate() if _gate_interaction != null else null
 
@@ -185,6 +187,8 @@ func _set_pause_mode_enabled(enabled: bool) -> void:
 		AudioManager.play_pause_deactivated()
 	if _sidebar != null:
 		_sidebar.set_pause_button_state(enabled)
+	if _hud != null:
+		_hud.set_paused(enabled)
 
 
 func _complete_level_with_victory() -> void:
@@ -333,8 +337,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _selected_gate_definition == null:
 		return
 
-	if _place_gate(vertex_id, _selected_gate_definition):
-		_set_gate_placement_enabled(false)
+	_place_gate(vertex_id, _selected_gate_definition)
 
 
 func _input(event: InputEvent) -> void:
@@ -345,6 +348,20 @@ func _input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if _moving_gate != null:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
+
+	if _gate_preview == null:
+		return
+	if _selected_gate_definition == null or _moving_gate != null:
+		_gate_preview.visible = false
+		return
+	var hover_vertex := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if hover_vertex == -1:
+		_gate_preview.visible = false
+		return
+	_gate_preview.texture = _selected_gate_definition.texture
+	var vertex := _graph.get_node_by_id(hover_vertex)
+	_gate_preview.position = vertex.position
+	_gate_preview.visible = true
 
 
 func _ready() -> void:
@@ -402,6 +419,12 @@ func _ready() -> void:
 	_gate_interaction.graph = _graph
 	_gate_interaction.tiles_by_node_id = _tiles_by_node_id
 	_gate_interaction.gate_placement_radius = _get_gate_placement_radius()
+
+	_gate_preview = Sprite2D.new()
+	_gate_preview.modulate = Color(1.0, 1.0, 1.0, 0.5)
+	_gate_preview.z_index = 5
+	_gate_preview.visible = false
+	add_child(_gate_preview)
 
 	_start_trigger_timer()
 	_create_gate_buttons()

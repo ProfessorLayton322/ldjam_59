@@ -3,11 +3,17 @@ extends CanvasLayer
 
 var _game_over_panel: Panel
 var _victory_panel: Panel
+var _pause_overlay: ColorRect
 
 
 func _ready() -> void:
+	_build_pause_overlay()
 	_build_game_over_panel()
 	_build_victory_panel()
+
+
+func set_paused(paused: bool) -> void:
+	_pause_overlay.visible = paused
 
 
 func show_game_over() -> void:
@@ -16,6 +22,15 @@ func show_game_over() -> void:
 
 func show_victory() -> void:
 	_victory_panel.visible = true
+
+
+func _build_pause_overlay() -> void:
+	_pause_overlay = ColorRect.new()
+	_pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_overlay.color = Color(0.0, 0.2, 0.8, 0.25)
+	_pause_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_overlay.visible = false
+	add_child(_pause_overlay)
 
 
 func _build_game_over_panel() -> void:
