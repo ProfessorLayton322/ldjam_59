@@ -69,6 +69,10 @@ func play_enemy_damage(enemy_id: String) -> void:
 	play_sfx(_enemy_event_name(enemy_id, "damage"))
 
 
+func play_enemy_death(enemy_id: String) -> void:
+	play_sfx(_enemy_event_name(enemy_id, "death"))
+
+
 func play_cpu_damage() -> void:
 	play_sfx(SFX_CPU_DAMAGE)
 
@@ -136,6 +140,7 @@ func _setup_sfx_bank() -> void:
 	for params: EnemyParams in BalanceManager.get_params().enemy_params:
 		_register_sfx_event(bank, _enemy_event_name(params.id, "spawn"), library.get_enemy_spawn_sounds(params.id))
 		_register_sfx_event(bank, _enemy_event_name(params.id, "damage"), library.get_enemy_damage_sounds(params.id))
+		_register_sfx_event(bank, _enemy_event_name(params.id, "death"), library.get_enemy_death_sounds(params.id))
 
 	add_child(bank)
 
