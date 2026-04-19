@@ -121,6 +121,19 @@ func stop_music(fade_time: float = 1.0) -> void:
 		MusicManager.stop(fade_time)
 
 
+func stop_sfx() -> void:
+	for event_name in _sfx_polyphonic_players.keys():
+		var player = _sfx_polyphonic_players[event_name]
+		if player != null and is_instance_valid(player) and not player.is_null():
+			player.release(false)
+	_sfx_polyphonic_players.clear()
+
+
+func stop_level_audio() -> void:
+	stop_sfx()
+	stop_music(0.0)
+
+
 func _setup_sfx_bank() -> void:
 	_registered_sfx_events.clear()
 	_sfx_polyphonic_players.clear()

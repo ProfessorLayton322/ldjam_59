@@ -8,6 +8,7 @@ const GameCameraScene := preload("res://scripts/game_camera.gd")
 const GameSidebarScene := preload("res://scripts/game_sidebar.gd")
 const GateInteractionScene := preload("res://scripts/gate_interaction.gd")
 const DemoLevelSetupScene := preload("res://scripts/demo_level_setup.gd")
+const VICTORY_POPUP_SECONDS := 3.0
 
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
@@ -291,12 +292,21 @@ func _complete_level_with_victory() -> void:
 		_spawn_enemy_manager.stop()
 	if _level_timer != null:
 		_level_timer.stop()
+	var trigger_timer := get_node_or_null(trigger_timer_path) as Timer
+	if trigger_timer != null:
+		trigger_timer.stop()
 
 	AudioManager.play_level_victory()
-	if LevelState.advance_to_next_level():
-		get_tree().call_deferred("change_scene_to_file", "res://scenes/ld_gameplay.tscn")
-	else:
+	if _hud != null:
 		_hud.show_victory()
+
+	await get_tree().create_timer(VICTORY_POPUP_SECONDS).timeout
+	if not is_inside_tree():
+		return
+
+	AudioManager.stop_level_audio()
+	if LevelState.advance_to_next_level():
+		get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
@@ -523,6 +533,8 @@ func _ready() -> void:
 	var cpu_vertices := setup.build_cpu_vertices()
 	setup.configure_spawners(cpu_vertices)
 	_spawn_enemy_manager = setup.spawn_enemy_manager
+	if _spawn_enemy_manager != null and not _spawn_enemy_manager.level_completed.is_connected(_complete_level_with_victory):
+		_spawn_enemy_manager.level_completed.connect(_complete_level_with_victory)
 
 	setup.configure_core_gates(Callable(self, "_on_region_enemy_reached"), _get_cpu_hp())
 	_cpu_regions = setup.cpu_regions
@@ -542,5 +554,4 @@ func _ready() -> void:
 	_tutorial_manager.configure_flow()
 	AudioManager.play_level_beginning()
 	_start_enemy_spawning()
-	_start_level_timer()
 	AudioManager.play_music()
