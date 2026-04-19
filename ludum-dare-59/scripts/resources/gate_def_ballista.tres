@@ -1,14 +1,17 @@
-[gd_resource type="Resource" script_class="GateDefinition" load_steps=3 format=3 uid="uid://cxffaivsjlgn6"]
+[gd_resource type="Resource" script_class="GateDefinition" load_steps=3 format=3]
 
-[ext_resource type="Script" uid="uid://dc2ke2b6entve" path="res://scripts/resources/gate_definition.gd" id="1_gate_definition"]
-[ext_resource type="Texture2D" uid="uid://bokh3uqiy7gle" path="res://assets/textures/gates/ballista_gate.svg" id="2_texture"]
+[ext_resource type="Script" path="res://scripts/resources/gate_definition.gd" id="1_gate_definition"]
+[ext_resource type="Texture2D" path="res://assets/textures/gates/ballista_gate.svg" id="2_texture"]
 
 [resource]
 script = ExtResource("1_gate_definition")
 id = "ballista"
-display_name = "Resistor"
+display_name = "Ballista Gate"
 texture = ExtResource("2_texture")
 power_cost = 8
 max_hp = 999999
 indestructible = true
+blocks_movement = false
 damage_power = 5
+slow_extra_seconds_per_tile = 0.0
+slow_duration = 0.0
