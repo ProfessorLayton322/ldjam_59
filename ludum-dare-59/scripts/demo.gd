@@ -15,7 +15,6 @@ enum TutorialStep {
 	NONE,
 	SELECT_BALLISTA,
 	PLACE_BALLISTA,
-	WAIT_CRYTTER_DESPAWN,
 	DONE,
 }
 
@@ -848,6 +847,11 @@ func _on_tutorial_first_crytter_spawned(_enemy: Enemy, spawner_node_id: int) -> 
 	_tutorial_target_vertex_id = _find_tutorial_target_vertex_id(spawner_node_id)
 	TutorialEvents.target_ballista_vertex_id = _tutorial_target_vertex_id
 	_tutorial_target_tile = _tiles_by_node_id.get(_tutorial_target_vertex_id) as BaseTile
+	var tutorial_endpoint_id := _find_tutorial_endpoint_beyond_target(spawner_node_id, _tutorial_target_vertex_id)
+	if tutorial_endpoint_id != -1:
+		_set_spawner_cpu_target(spawner_node_id, tutorial_endpoint_id)
+		if _enemy != null:
+			_set_enemy_cpu_target(_enemy, tutorial_endpoint_id, true)
 	DebugTrace.event("tutorial", "first_crytter_spawned", {
 		"enemy": DebugTrace.enemy_state(_enemy),
 		"spawner_node_id": spawner_node_id,
@@ -891,7 +895,8 @@ func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 	if _tutorial_target_tile != null:
 		TutorialEvents.stop_highlighter(_tutorial_target_tile)
 
-	_tutorial_step = TutorialStep.WAIT_CRYTTER_DESPAWN
+	_tutorial_step = TutorialStep.DONE
+	TutorialEvents.finish_first_level_tutorial()
 	_end_tutorial_dialogue()
 	_set_pause_mode_enabled(false)
 	_apply_tutorial_button_locks()
@@ -1130,6 +1135,89 @@ func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
 		"best_distance": best_distance,
 	})
 	return best_vertex_id
+
+func _find_tutorial_endpoint_beyond_target(spawner_node_id: int, target_vertex_id: int) -> int:
+	if _graph == null or _graph.get_node_by_id(spawner_node_id) == null or _graph.get_node_by_id(target_vertex_id) == null:
+		return -1
+
+	var queue: Array[int] = [spawner_node_id]
+	var visited := {spawner_node_id: 0}
+	var came_from := {}
+
+	while not queue.is_empty():
+		var node_id: int = queue.pop_front()
+		var vertex := _graph.get_node_by_id(node_id)
+		if vertex == null:
+			continue
+
+		for neighbour_id in vertex.neighbour_ids:
+			if visited.has(neighbour_id):
+				continue
+
+			visited[neighbour_id] = int(visited[node_id]) + 1
+			came_from[neighbour_id] = node_id
+			queue.append(neighbour_id)
+
+	var best_node_id := -1
+	var best_distance := -1
+	for node_id_variant in visited.keys():
+		var node_id := int(node_id_variant)
+		if node_id == target_vertex_id:
+			continue
+		if not _path_from_spawner_contains_target(came_from, spawner_node_id, node_id, target_vertex_id):
+			continue
+
+		var distance := int(visited[node_id])
+		if distance > best_distance:
+			best_node_id = node_id
+			best_distance = distance
+
+	DebugTrace.event("tutorial", "endpoint_beyond_target", {
+		"spawner_node_id": spawner_node_id,
+		"target_vertex_id": target_vertex_id,
+		"endpoint_id": best_node_id,
+		"distance": best_distance,
+	})
+	return best_node_id
+
+
+func _path_from_spawner_contains_target(came_from: Dictionary, spawner_node_id: int, candidate_node_id: int, target_vertex_id: int) -> bool:
+	var node_id := candidate_node_id
+	while node_id != spawner_node_id:
+		if node_id == target_vertex_id:
+			return true
+		if not came_from.has(node_id):
+			return false
+
+		node_id = int(came_from[node_id])
+
+	return spawner_node_id == target_vertex_id
+
+
+func _set_spawner_cpu_target(spawner_node_id: int, target_node_id: int) -> void:
+	var spawner := _tiles_by_node_id.get(spawner_node_id) as SpawnerTile
+	if spawner == null:
+		return
+
+	var cpu := CpuVertex.new()
+	cpu.node_id = target_node_id
+	var targets: Array[CpuVertex] = []
+	targets.append(cpu)
+	spawner.cpu_vertices = targets
+
+
+func _set_enemy_cpu_target(enemy: Enemy, target_node_id: int, restart_pathing: bool) -> void:
+	if enemy == null or not is_instance_valid(enemy):
+		return
+
+	var cpu := CpuVertex.new()
+	cpu.node_id = target_node_id
+	var targets: Array[CpuVertex] = []
+	targets.append(cpu)
+	enemy.cpu_vertices = targets
+	if restart_pathing:
+		enemy.start_pathing()
+
 
 func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()

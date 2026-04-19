@@ -119,6 +119,8 @@ func _start_first_level_tutorial_spawn() -> void:
 	else:
 		DebugTrace.event("spawn_manager", "tutorial_spawn:no_enemy_after_trigger", {"spawner": DebugTrace.node_state(spawner)})
 
+	if not TutorialEvents.target_ballista_placed.is_connected(_on_tutorial_target_ballista_placed):
+		TutorialEvents.target_ballista_placed.connect(_on_tutorial_target_ballista_placed)
 	if not TutorialEvents.first_crytter_despawned.is_connected(_on_tutorial_first_crytter_despawned):
 		TutorialEvents.first_crytter_despawned.connect(_on_tutorial_first_crytter_despawned)
 
@@ -172,14 +174,23 @@ func _find_farthest_reachable_node_id(graph: Graph, start_node_id: int) -> int:
 
 	return farthest_node_id
 
+func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
+	DebugTrace.event("spawn_manager", "tutorial_target_ballista_placed", {"vertex_id": _vertex_id, "gate": DebugTrace.gate_state(_gate)})
+	_start_regular_spawn_timer_after_tutorial("target_ballista_placed")
+
+
 func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
 	DebugTrace.event("spawn_manager", "tutorial_first_crytter_despawned", {"enemy": DebugTrace.enemy_state(_enemy)})
+	_start_regular_spawn_timer_after_tutorial("first_crytter_despawned")
+
+
+func _start_regular_spawn_timer_after_tutorial(reason: String) -> void:
 	if _timer == null:
 		return
 
 	_timer.wait_time = _get_tick()
 	_timer.start()
-	DebugTrace.event("spawn_manager", "tutorial_first_crytter_despawned:timer_started", {"tick": _get_tick()})
+	DebugTrace.event("spawn_manager", "tutorial_timer_started", {"tick": _get_tick(), "reason": reason})
 
 
 func _prune_spawners() -> void:

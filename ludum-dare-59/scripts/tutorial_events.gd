@@ -38,6 +38,10 @@ func should_run_first_level_tutorial() -> bool:
 	return first_level_tutorial_active and not first_crytter_despawned_emitted
 
 
+func finish_first_level_tutorial() -> void:
+	first_level_tutorial_active = false
+
+
 func emit_first_crytter_spawned(enemy: Enemy, spawner_node_id: int) -> void:
 	first_crytter_spawned_emitted = true
 	first_crytter_spawned.emit(enemy, spawner_node_id)
