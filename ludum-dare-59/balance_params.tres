@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BalanceParams" load_steps=12 format=3 uid="uid://3qxn6kw7v1p"]
+[gd_resource type="Resource" script_class="BalanceParams" load_steps=15 format=3 uid="uid://3qxn6kw7v1p"]
 
 [ext_resource type="Script" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
 [ext_resource type="Script" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
@@ -8,13 +8,16 @@
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_tar.tres" id="5_tar"]
 [ext_resource type="Resource" uid="uid://cqvhan4kpp86q" path="res://scripts/resources/spawner_cfg_default.tres" id="6_spawner_cfg"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_divider.tres" id="7_divider"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemies/enemy_crytter.svg" id="8_crytter_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemies/enemy_raider.svg" id="9_raider_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemies/enemy_brut.svg" id="10_brute_tex"]
 
 [sub_resource type="Resource" id="EnemyParams_crytter"]
 script = ExtResource("2_enemy_params")
 id = "crytter"
 max_hp = 5
 move_duration = 0.7
-modulate = Color(0.4, 1, 0.4, 1)
+texture = ExtResource("8_crytter_tex")
 
 [sub_resource type="Resource" id="EnemyParams_raider_stunner"]
 script = ExtResource("2_enemy_params")
@@ -23,14 +26,14 @@ damage = 2
 max_hp = 8
 move_duration = 1.0
 can_stun_gate = true
-modulate = Color(0.95, 0.85, 0.2, 1)
+texture = ExtResource("9_raider_tex")
 
 [sub_resource type="Resource" id="EnemyParams_brute"]
 script = ExtResource("2_enemy_params")
 id = "brute"
 damage = 4
 move_duration = 1.5
-modulate = Color(1, 0.3, 0.3, 1)
+texture = ExtResource("10_brute_tex")
 
 [resource]
 script = ExtResource("1_balance_params")

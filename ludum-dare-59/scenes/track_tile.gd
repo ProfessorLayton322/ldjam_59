@@ -58,15 +58,16 @@ func _update_track() -> void:
 			tex = TRACKS + "track_straight_h.svg"
 		0b0110:
 			tex = TRACKS + "track_corner_ne.svg"
+			rot = 90.0
 		0b0101:
 			tex = TRACKS + "track_corner_ne.svg"
-			rot = 90.0
+			rot = 180.0
 		0b1001:
 			tex = TRACKS + "track_corner_ne.svg"
-			rot = 180.0
+			rot = 270.0
 		0b1010:
 			tex = TRACKS + "track_corner_ne.svg"
-			rot = 270.0
+			rot = 0.0
 		0b1011:
 			tex = TRACKS + "track_t_junction.svg"
 			rot = 180.0

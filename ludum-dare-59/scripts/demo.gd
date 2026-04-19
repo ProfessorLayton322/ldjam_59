@@ -437,9 +437,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		match key.keycode:
 			KEY_Q:
 				if _hud != null and _hud.is_pause_menu_open():
-					_hud.hide_pause_menu()
-					_set_pause_mode_enabled(false)
-				elif not _hud.is_settings_open():
+					get_tree().paused = false
+					get_tree().change_scene_to_file("res://scenes/menu.tscn")
+				elif not (_hud != null and _hud.is_settings_open()):
 					_on_menu_button_pressed()
 				return
 			KEY_SPACE:

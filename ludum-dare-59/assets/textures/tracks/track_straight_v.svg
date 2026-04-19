@@ -1,14 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">  <!-- Copper trace vertical -->
-  <rect x="22" y="0" width="20" height="64" fill="#b8860b"/>
-  <rect x="24" y="0" width="16" height="64" fill="#d4a017"/>
-  <!-- Trace edge highlight -->
-  <rect x="23" y="0" width="2" height="64" fill="#e8c040" opacity="0.5"/>
-  <!-- Via pads -->
-  <circle cx="32" cy="2" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
-  <circle cx="32" cy="62" r="4" fill="#c8a020" stroke="#e8d060" stroke-width="1"/>
-  <!-- Grid dots -->
-  <circle cx="16" cy="16" r="1" fill="#2a6a2a" opacity="0.5"/>
-  <circle cx="48" cy="16" r="1" fill="#2a6a2a" opacity="0.5"/>
-  <circle cx="16" cy="48" r="1" fill="#2a6a2a" opacity="0.5"/>
-  <circle cx="48" cy="48" r="1" fill="#2a6a2a" opacity="0.5"/>
+<svg width="32" height="64" viewBox="0 0 32 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="32" height="64" transform="matrix(1 0 0 -1 0 64)" fill="#4C4C4C"/>
 </svg>
