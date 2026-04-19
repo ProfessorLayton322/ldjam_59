@@ -1,6 +1,8 @@
 class_name Enemy
 extends Node2D
 
+signal defeated(enemy: Enemy)
+
 const DebugTrace := preload("res://scripts/debug_trace.gd")
 
 @export var graph: Graph
@@ -254,6 +256,7 @@ func apply_damage(amount: int) -> void:
 		})
 		if _is_first_tutorial_crytter:
 			TutorialEvents.emit_first_crytter_despawned(self)
+		defeated.emit(self)
 		queue_free()
 	else:
 		play_damage_sound()

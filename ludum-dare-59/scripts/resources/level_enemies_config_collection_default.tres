@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LevelEnemiesConfigCollection" load_steps=5 format=3 uid="uid://4fv4ofvdn8rr"]
+
+[ext_resource type="Script" path="res://scripts/resources/level_enemies_config_collection.gd" id="1_collection"]
+[ext_resource type="Script" path="res://scripts/resources/level_enemies_config.gd" id="2_config"]
+
+[sub_resource type="Resource" id="LevelEnemiesConfig_dummy"]
+script = ExtResource("2_config")
+stunner_amount = 1
+brute_amount = 1
+spawn_interval = 3.0
+
+[sub_resource type="Resource" id="Resource_oairb"]
+script = ExtResource("2_config")
+crytter_amount = 3
+stunner_amount = 3
+brute_amount = 3
+spawn_interval = 3.0
+metadata/_custom_type_script = "uid://byckk2c4bdp2l"
+
+[resource]
+script = ExtResource("1_collection")
+levels = Array[ExtResource("2_config")]([SubResource("LevelEnemiesConfig_dummy"), SubResource("Resource_oairb")])

@@ -1,6 +1,8 @@
 class_name SpawnEnemyManager
 extends Node
 
+signal level_completed
+
 const DebugTrace := preload("res://scripts/debug_trace.gd")
 
 const TUTORIAL_CRYTTER_SCENE := preload("res://scenes/enemies/crytter.tscn")
@@ -10,6 +12,11 @@ const TUTORIAL_CRYTTER_SCENE := preload("res://scenes/enemies/crytter.tscn")
 var _spawners: Array[SpawnerTile] = []
 var _timer: Timer
 var _rng := RandomNumberGenerator.new()
+var _active_enemy_ids := {}
+var _defeated_enemy_ids := {}
+var _spawned_enemy_count := 0
+var _spawning_complete := false
+var _level_completed_emitted := false
 
 
 func _ready() -> void:
@@ -42,6 +49,7 @@ func clear_spawners() -> void:
 
 
 func start() -> void:
+	_reset_completion_tracking()
 	_ensure_timer()
 	DebugTrace.event("spawn_manager", "start", {
 		"tutorial": TutorialEvents.should_run_first_level_tutorial(),
@@ -52,8 +60,7 @@ func start() -> void:
 		_start_first_level_tutorial_spawn()
 		return
 
-	_timer.wait_time = _get_tick()
-	_timer.start()
+	_start_regular_spawn_timer("level_start")
 
 
 func stop() -> void:
@@ -75,24 +82,47 @@ func _ensure_timer() -> void:
 	_timer.one_shot = false
 	_timer.autostart = false
 	_timer.wait_time = _get_tick()
-	if not _timer.timeout.is_connected(_spawn_from_random_spawner):
-		_timer.timeout.connect(_spawn_from_random_spawner)
+	if not _timer.timeout.is_connected(_spawn_next_batch):
+		_timer.timeout.connect(_spawn_next_batch)
 
 
-func _spawn_from_random_spawner() -> void:
+func _spawn_next_batch() -> void:
 	_prune_spawners()
 	if _spawners.is_empty():
-		DebugTrace.event("spawn_manager", "spawn_random:no_spawners", {})
+		DebugTrace.event("spawn_manager", "spawn_batch:no_spawners", {})
 		return
 
-	var spawner := _spawners[_rng.randi_range(0, _spawners.size() - 1)]
-	if cfg != null and not cfg.enemy_scenes.is_empty():
-		spawner.enemy_scene = cfg.enemy_scenes[_rng.randi_range(0, cfg.enemy_scenes.size() - 1)]
-	DebugTrace.event("spawn_manager", "spawn_random:selected", {
+	var enemy_types := EnemiesSpawnConfig.take_next_enemy_types()
+	if enemy_types.is_empty():
+		_mark_spawning_complete("empty_batch")
+		DebugTrace.event("spawn_manager", "spawn_batch:no_enemies_left", {})
+		return
+
+	var available_spawners := _spawners.duplicate()
+	for enemy_type in enemy_types:
+		if available_spawners.is_empty():
+			available_spawners = _spawners.duplicate()
+		_spawn_enemy_type(enemy_type, available_spawners)
+
+	if not EnemiesSpawnConfig.has_enemies_left():
+		_mark_spawning_complete("all_configured_enemies_spawned")
+
+
+func _spawn_enemy_type(enemy_type: int, available_spawners: Array) -> void:
+	var spawner_index := _rng.randi_range(0, available_spawners.size() - 1)
+	var spawner := available_spawners[spawner_index] as SpawnerTile
+	available_spawners.remove_at(spawner_index)
+	if spawner == null:
+		return
+
+	spawner.enemy_scene = EnemiesSpawnConfig.get_enemy_scene(enemy_type)
+	DebugTrace.event("spawn_manager", "spawn_batch:selected", {
 		"spawner": DebugTrace.node_state(spawner),
+		"enemy_type": enemy_type,
 		"enemy_scene": spawner.enemy_scene.resource_path if spawner.enemy_scene != null else "",
 	})
 	spawner.OnTrigger(self)
+	_track_spawned_enemy(spawner.last_spawned_enemy)
 
 
 func _start_first_level_tutorial_spawn() -> void:
@@ -107,6 +137,7 @@ func _start_first_level_tutorial_spawn() -> void:
 	_ensure_tutorial_spawner_target(spawner)
 	spawner.enemy_scene = TUTORIAL_CRYTTER_SCENE
 	spawner.OnTrigger(self)
+	_track_spawned_enemy(spawner.last_spawned_enemy)
 	var enemy := spawner.last_spawned_enemy
 	if enemy != null:
 		enemy.mark_as_first_tutorial_crytter()
@@ -119,10 +150,8 @@ func _start_first_level_tutorial_spawn() -> void:
 	else:
 		DebugTrace.event("spawn_manager", "tutorial_spawn:no_enemy_after_trigger", {"spawner": DebugTrace.node_state(spawner)})
 
-	if not TutorialEvents.target_ballista_placed.is_connected(_on_tutorial_target_ballista_placed):
-		TutorialEvents.target_ballista_placed.connect(_on_tutorial_target_ballista_placed)
-	if not TutorialEvents.first_crytter_despawned.is_connected(_on_tutorial_first_crytter_despawned):
-		TutorialEvents.first_crytter_despawned.connect(_on_tutorial_first_crytter_despawned)
+	if not TutorialEvents.first_level_tutorial_finished.is_connected(_on_first_level_tutorial_finished):
+		TutorialEvents.first_level_tutorial_finished.connect(_on_first_level_tutorial_finished)
 
 
 func _ensure_tutorial_spawner_target(spawner: SpawnerTile) -> void:
@@ -174,23 +203,108 @@ func _find_farthest_reachable_node_id(graph: Graph, start_node_id: int) -> int:
 
 	return farthest_node_id
 
-func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
-	DebugTrace.event("spawn_manager", "tutorial_target_ballista_placed", {"vertex_id": _vertex_id, "gate": DebugTrace.gate_state(_gate)})
-	_start_regular_spawn_timer_after_tutorial("target_ballista_placed")
+
+func _on_first_level_tutorial_finished() -> void:
+	DebugTrace.event("spawn_manager", "first_level_tutorial_finished", {})
+	_start_regular_spawn_timer("first_level_tutorial_finished")
 
 
-func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
-	DebugTrace.event("spawn_manager", "tutorial_first_crytter_despawned", {"enemy": DebugTrace.enemy_state(_enemy)})
-	_start_regular_spawn_timer_after_tutorial("first_crytter_despawned")
-
-
-func _start_regular_spawn_timer_after_tutorial(reason: String) -> void:
+func _start_regular_spawn_timer(reason: String) -> void:
 	if _timer == null:
+		return
+
+	EnemiesSpawnConfig.prepare_for_current_level()
+	if not EnemiesSpawnConfig.has_enemies_left():
+		_mark_spawning_complete("all_configured_enemies_spawned")
+		DebugTrace.event("spawn_manager", "regular_timer_not_started:no_enemies", {"reason": reason})
 		return
 
 	_timer.wait_time = _get_tick()
 	_timer.start()
-	DebugTrace.event("spawn_manager", "tutorial_timer_started", {"tick": _get_tick(), "reason": reason})
+	DebugTrace.event("spawn_manager", "regular_timer_started", {"tick": _get_tick(), "reason": reason})
+
+
+func _reset_completion_tracking() -> void:
+	_active_enemy_ids.clear()
+	_defeated_enemy_ids.clear()
+	_spawned_enemy_count = 0
+	_spawning_complete = false
+	_level_completed_emitted = false
+
+
+func _track_spawned_enemy(enemy: Enemy) -> void:
+	if enemy == null:
+		return
+
+	var enemy_id := enemy.get_instance_id()
+	if _active_enemy_ids.has(enemy_id):
+		return
+
+	_active_enemy_ids[enemy_id] = true
+	_spawned_enemy_count += 1
+	if not enemy.defeated.is_connected(_on_enemy_defeated):
+		enemy.defeated.connect(_on_enemy_defeated)
+	enemy.tree_exited.connect(_on_enemy_tree_exited.bind(enemy_id), CONNECT_ONE_SHOT)
+	DebugTrace.event("spawn_manager", "track_enemy", {
+		"enemy": DebugTrace.enemy_state(enemy),
+		"active_count": _active_enemy_ids.size(),
+		"spawned_count": _spawned_enemy_count,
+	})
+
+
+func _on_enemy_defeated(enemy: Enemy) -> void:
+	if enemy == null:
+		return
+
+	var enemy_id := enemy.get_instance_id()
+	_defeated_enemy_ids[enemy_id] = true
+	DebugTrace.event("spawn_manager", "enemy_defeated", {
+		"enemy": DebugTrace.enemy_state(enemy),
+		"defeated_count": _defeated_enemy_ids.size(),
+		"spawned_count": _spawned_enemy_count,
+	})
+
+
+func _on_enemy_tree_exited(enemy_id: int) -> void:
+	_active_enemy_ids.erase(enemy_id)
+	DebugTrace.event("spawn_manager", "enemy_exited", {
+		"enemy_id": enemy_id,
+		"active_count": _active_enemy_ids.size(),
+		"defeated_count": _defeated_enemy_ids.size(),
+		"spawned_count": _spawned_enemy_count,
+	})
+	_check_level_completed()
+
+
+func _mark_spawning_complete(reason: String) -> void:
+	if _timer != null:
+		_timer.stop()
+	_spawning_complete = true
+	DebugTrace.event("spawn_manager", "spawning_complete", {
+		"reason": reason,
+		"active_count": _active_enemy_ids.size(),
+		"defeated_count": _defeated_enemy_ids.size(),
+		"spawned_count": _spawned_enemy_count,
+	})
+	_check_level_completed()
+
+
+func _check_level_completed() -> void:
+	if _level_completed_emitted:
+		return
+	if not _spawning_complete:
+		return
+	if not _active_enemy_ids.is_empty():
+		return
+	if _defeated_enemy_ids.size() != _spawned_enemy_count:
+		return
+
+	_level_completed_emitted = true
+	DebugTrace.event("spawn_manager", "level_completed", {
+		"spawned_count": _spawned_enemy_count,
+		"defeated_count": _defeated_enemy_ids.size(),
+	})
+	level_completed.emit()
 
 
 func _prune_spawners() -> void:
@@ -201,7 +315,4 @@ func _prune_spawners() -> void:
 
 
 func _get_tick() -> float:
-	if cfg == null:
-		return 1.0
-
-	return maxf(cfg.tick, 0.01)
+	return EnemiesSpawnConfig.get_spawn_interval()

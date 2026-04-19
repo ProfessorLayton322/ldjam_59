@@ -13,6 +13,7 @@ var _gate_buttons: Dictionary = {}
 var _pause_button: Button
 var _menu_button: Button
 var _settings_button: Button
+var _debug_victory_button: Button
 var _temperature_meter: Panel
 var _temperature_fill: ColorRect
 var _temperature_label: Label
@@ -90,6 +91,18 @@ func get_temperature_meter() -> Panel:
 	return _temperature_meter
 
 
+func get_debug_victory_button() -> Button:
+	return _debug_victory_button
+
+
+func is_point_over_debug_victory_button(global_position: Vector2) -> bool:
+	if _debug_victory_button == null or not is_instance_valid(_debug_victory_button):
+		return false
+	if _debug_victory_button.disabled or not _debug_victory_button.visible:
+		return false
+	return _debug_victory_button.get_global_rect().has_point(global_position)
+
+
 func set_pause_button_state(pressed: bool) -> void:
 	if _pause_button != null:
 		_pause_button.set_pressed_no_signal(pressed)
@@ -112,13 +125,13 @@ func set_menu_settings_buttons_disabled(disabled: bool) -> void:
 		_settings_button.disabled = disabled
 
 
-func update_temperature(current: int, maximum: int) -> void:
+func update_temperature(current: float, maximum: int) -> void:
 	if _temperature_fill != null:
-		var ratio := float(current) / float(maximum)
+		var ratio := 0.0 if maximum <= 0 else clampf(current / float(maximum), 0.0, 1.0)
 		_temperature_fill.anchor_top = 1.0 - ratio
 		_temperature_fill.offset_top = 0.0
 	if _temperature_label != null:
-		_temperature_label.text = "%d/%d" % [current, maximum]
+		_temperature_label.text = "%.1f/%d" % [current, maximum]
 
 
 func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
@@ -308,3 +321,4 @@ func _build_debug_victory_button(gate_count: int) -> void:
 	button.offset_bottom = button.offset_top + 40.0
 	button.pressed.connect(Callable(self, "_on_victory_debug_pressed"))
 	_root.add_child(button)
+	_debug_victory_button = button
