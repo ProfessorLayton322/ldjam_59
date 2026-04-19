@@ -1125,6 +1125,18 @@ func _try_pickup_tutorial_ballista(global_position: Vector2) -> void:
 
 func _try_drop_tutorial_ballista(global_position: Vector2) -> void:
 	var gate := _moving_gate
+	var target_vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if target_vertex_id != _tutorial_move_target_vertex_id:
+		_cancel_moving_gate()
+		_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+		_restart_tutorial_ballista_move_highlighters()
+		DebugTrace.event("tutorial", "try_drop_ballista:wrong_target_returned", {
+			"target_vertex_id": target_vertex_id,
+			"required_vertex_id": _tutorial_move_target_vertex_id,
+			"gate": DebugTrace.gate_state(_tutorial_ballista_gate),
+		})
+		return
+
 	_drop_moving_gate(global_position)
 	if gate == null or not is_instance_valid(gate):
 		_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
@@ -1563,7 +1575,7 @@ func _drop_moving_gate(global_pos: Vector2) -> void:
 
 	var target_vertex_id := _get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
-		gate.vertex_id = _moving_gate_origin
+		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
 		DebugTrace.event("demo_gate", "drop_moving_gate:returned_origin", {
 			"gate": DebugTrace.gate_state(gate),
@@ -1573,7 +1585,7 @@ func _drop_moving_gate(global_pos: Vector2) -> void:
 
 	var existing_gate := Gate.get_gate(_graph, target_vertex_id)
 	if existing_gate != null:
-		gate.vertex_id = _moving_gate_origin
+		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
 		DebugTrace.event("demo_gate", "drop_moving_gate:occupied_returned_origin", {
 			"gate": DebugTrace.gate_state(gate),
@@ -1599,11 +1611,20 @@ func _cancel_moving_gate() -> void:
 		"origin": _moving_gate_origin,
 	})
 	_moving_gate.modulate = Color.WHITE
-	_moving_gate.vertex_id = _moving_gate_origin
+	_snap_gate_to_vertex(_moving_gate, _moving_gate_origin)
 	_moving_gate = null
 	_moving_gate_origin = -1
 	DebugTrace.event("demo_gate", "cancel_moving_gate:done", {})
 
+
+func _snap_gate_to_vertex(gate: Gate, vertex_id: int) -> void:
+	if gate == null or vertex_id < 0:
+		return
+
+	gate.vertex_id = vertex_id
+	var vertex := _graph.get_node_by_id(vertex_id) if _graph != null else null
+	if vertex != null:
+		gate.position = vertex.position
 
 func _delete_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)

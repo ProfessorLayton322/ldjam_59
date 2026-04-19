@@ -16,6 +16,7 @@ var first_crytter_despawned_emitted := false
 
 var _highlight_tweens: Dictionary = {}
 var _highlight_original_scales: Dictionary = {}
+var _highlight_targets: Dictionary = {}
 
 
 func reset_first_level_tutorial() -> void:
@@ -81,15 +82,17 @@ func start_highlighter(target: Node) -> void:
 	if target == null or not is_instance_valid(target):
 		return
 
-	stop_highlighter(target)
+	var instance_id := target.get_instance_id()
+	if _highlight_tweens.has(instance_id):
+		return
 
 	if target is Control:
 		var control := target as Control
 		control.pivot_offset = control.size * 0.5
 
-	var instance_id := target.get_instance_id()
 	var original_scale: Vector2 = target.get("scale")
 	_highlight_original_scales[instance_id] = original_scale
+	_highlight_targets[instance_id] = target
 
 	var tween := target.create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
@@ -114,12 +117,19 @@ func stop_highlighter(target: Node) -> void:
 		target.set("scale", _highlight_original_scales[instance_id])
 
 	_highlight_original_scales.erase(instance_id)
+	_highlight_targets.erase(instance_id)
 
 
 func stop_all_highlighters() -> void:
-	for tween in _highlight_tweens.values():
+	for instance_id in _highlight_tweens.keys():
+		var tween := _highlight_tweens[instance_id] as Tween
 		if tween is Tween:
 			(tween as Tween).kill()
 
+		var target := _highlight_targets.get(instance_id) as Node
+		if target != null and is_instance_valid(target) and _highlight_original_scales.has(instance_id):
+			target.set("scale", _highlight_original_scales[instance_id])
+
 	_highlight_tweens.clear()
 	_highlight_original_scales.clear()
+	_highlight_targets.clear()
