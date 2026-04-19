@@ -31,7 +31,9 @@ Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 
 directories/dch_directory={}
 directories/dtl_directory={
-"tutorial_dialogue_1_1": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
+"tutorial_dialogue_1_1": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl",
+"tutorial_dialogue_1_2": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl",
+"tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
 }
 layout/style_directory={}
 

@@ -4,8 +4,12 @@ extends Node2D
 const DebugTrace := preload("res://scripts/debug_trace.gd")
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
 const POSITION_MATCH_EPSILON := 1.0
-const TUTORIAL_DIALOGUE_ID := "tutorial_dialogue_1_1"
-const TUTORIAL_DIALOGUE_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
+const TUTORIAL_DIALOGUE_1_ID := "tutorial_dialogue_1_1"
+const TUTORIAL_DIALOGUE_1_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
+const TUTORIAL_DIALOGUE_2_ID := "tutorial_dialogue_1_2"
+const TUTORIAL_DIALOGUE_2_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl"
+const TUTORIAL_DIALOGUE_3_ID := "tutorial_dialogue_1_3"
+const TUTORIAL_DIALOGUE_3_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
 const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
 const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
 const GAME_UI_CANVAS_LAYER := 10
@@ -15,6 +19,9 @@ enum TutorialStep {
 	NONE,
 	SELECT_BALLISTA,
 	PLACE_BALLISTA,
+	WAIT_FIRST_CRYTTER_DEATH,
+	MOVE_BALLISTA,
+	REMOVE_BALLISTA,
 	DONE,
 }
 
@@ -51,6 +58,9 @@ var _level_finished := false
 var _tutorial_step := TutorialStep.NONE
 var _tutorial_target_vertex_id := -1
 var _tutorial_target_tile: BaseTile
+var _tutorial_move_target_vertex_id := -1
+var _tutorial_move_target_tile: BaseTile
+var _tutorial_ballista_gate: Gate
 var _tutorial_ballista_button: Button
 var _tutorial_dialog_manual_advance_was_enabled := true
 var _tutorial_dialog_layout: Node
@@ -157,6 +167,16 @@ func _input(event: InputEvent) -> void:
 					_try_place_tutorial_ballista(get_global_mouse_position())
 				get_viewport().set_input_as_handled()
 				return
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.MOVE_BALLISTA:
+		_handle_tutorial_ballista_move_input(event)
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.REMOVE_BALLISTA:
+		_handle_tutorial_ballista_remove_input(event)
 		get_viewport().set_input_as_handled()
 		return
 
@@ -920,7 +940,7 @@ func _on_tutorial_first_crytter_moved_two_tiles(_enemy: Enemy) -> void:
 
 	_tutorial_step = TutorialStep.SELECT_BALLISTA
 	_set_pause_mode_enabled(true)
-	_start_tutorial_dialogue()
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_1_ID, TUTORIAL_DIALOGUE_1_PATH)
 	_apply_tutorial_button_locks()
 	if _tutorial_ballista_button != null:
 		TutorialEvents.start_highlighter(_tutorial_ballista_button)
@@ -945,7 +965,8 @@ func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 	if _tutorial_target_tile != null:
 		TutorialEvents.stop_highlighter(_tutorial_target_tile)
 
-	_tutorial_step = TutorialStep.DONE
+	_tutorial_ballista_gate = _gate
+	_tutorial_step = TutorialStep.WAIT_FIRST_CRYTTER_DEATH
 	TutorialEvents.finish_first_level_tutorial()
 	_end_tutorial_dialogue()
 	_set_pause_mode_enabled(false)
@@ -954,8 +975,61 @@ func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 
 func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
 	DebugTrace.event("tutorial", "first_crytter_despawned", {"enemy": DebugTrace.enemy_state(_enemy)})
+	if _tutorial_step == TutorialStep.WAIT_FIRST_CRYTTER_DEATH:
+		_begin_tutorial_ballista_move()
+
+
+func _begin_tutorial_ballista_move() -> void:
+	if _tutorial_ballista_gate == null or not is_instance_valid(_tutorial_ballista_gate):
+		_tutorial_ballista_gate = Gate.get_gate(_graph, _tutorial_target_vertex_id)
+	if _tutorial_ballista_gate == null:
+		DebugTrace.event("tutorial", "begin_ballista_move:missing_gate", {"vertex_id": _tutorial_target_vertex_id})
+		_tutorial_step = TutorialStep.DONE
+		_apply_tutorial_button_locks()
+		return
+
+	_tutorial_move_target_vertex_id = _find_wire_vertex_two_steps_right(_tutorial_ballista_gate.vertex_id)
+	_tutorial_move_target_tile = _tiles_by_node_id.get(_tutorial_move_target_vertex_id) as BaseTile
+	DebugTrace.event("tutorial", "begin_ballista_move", {
+		"gate": DebugTrace.gate_state(_tutorial_ballista_gate),
+		"target_vertex_id": _tutorial_move_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_move_target_tile),
+	})
+	if _tutorial_move_target_vertex_id == -1:
+		_tutorial_step = TutorialStep.DONE
+		_apply_tutorial_button_locks()
+		return
+
+	_tutorial_step = TutorialStep.MOVE_BALLISTA
+	_set_pause_mode_enabled(true)
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_2_ID, TUTORIAL_DIALOGUE_2_PATH)
+	_apply_tutorial_button_locks()
+	TutorialEvents.start_highlighter(_tutorial_ballista_gate)
+	if _tutorial_move_target_tile != null:
+		TutorialEvents.start_highlighter(_tutorial_move_target_tile)
+
+
+func _complete_tutorial_ballista_move() -> void:
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
+	if _tutorial_move_target_tile != null:
+		TutorialEvents.stop_highlighter(_tutorial_move_target_tile)
+
+	_end_tutorial_dialogue()
+	_tutorial_step = TutorialStep.REMOVE_BALLISTA
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_3_ID, TUTORIAL_DIALOGUE_3_PATH)
+	_apply_tutorial_button_locks()
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.start_highlighter(_tutorial_ballista_gate)
+
+
+func _complete_tutorial_ballista_remove() -> void:
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
+	_end_tutorial_dialogue()
 	_tutorial_step = TutorialStep.DONE
 	TutorialEvents.stop_all_highlighters()
+	_set_pause_mode_enabled(false)
 	_apply_tutorial_button_locks()
 
 
@@ -973,6 +1047,10 @@ func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
 			get_viewport().set_input_as_handled()
 			return true
 
+		get_viewport().set_input_as_handled()
+		return true
+
+	if _tutorial_step == TutorialStep.MOVE_BALLISTA or _tutorial_step == TutorialStep.REMOVE_BALLISTA:
 		get_viewport().set_input_as_handled()
 		return true
 
@@ -996,6 +1074,93 @@ func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
 
 	get_viewport().set_input_as_handled()
 	return true
+
+
+func _handle_tutorial_ballista_move_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+
+	if mouse_event.pressed:
+		_try_pickup_tutorial_ballista(get_global_mouse_position())
+		return
+
+	if _moving_gate != null:
+		_try_drop_tutorial_ballista(get_global_mouse_position())
+
+
+func _handle_tutorial_ballista_remove_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_RIGHT or not mouse_event.pressed:
+		return
+
+	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if vertex_id != _tutorial_move_target_vertex_id:
+		return
+
+	var gate := Gate.get_gate(_graph, vertex_id)
+	if gate == null or gate != _tutorial_ballista_gate:
+		return
+
+	_delete_gate_at(vertex_id)
+	_complete_tutorial_ballista_remove()
+
+
+func _try_pickup_tutorial_ballista(global_position: Vector2) -> void:
+	if _tutorial_ballista_gate == null or not is_instance_valid(_tutorial_ballista_gate):
+		return
+
+	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if vertex_id != _tutorial_ballista_gate.vertex_id:
+		return
+
+	_pickup_gate_at(vertex_id)
+
+
+func _try_drop_tutorial_ballista(global_position: Vector2) -> void:
+	var gate := _moving_gate
+	var target_vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if target_vertex_id != _tutorial_move_target_vertex_id:
+		_cancel_moving_gate()
+		return
+
+	_drop_moving_gate(global_position)
+	if gate == null or not is_instance_valid(gate):
+		return
+
+	if gate.vertex_id != _tutorial_move_target_vertex_id:
+		return
+
+	_tutorial_ballista_gate = gate
+	_complete_tutorial_ballista_move()
+
+
+func _find_wire_vertex_two_steps_right(vertex_id: int) -> int:
+	var source := _graph.get_node_by_id(vertex_id)
+	if source == null:
+		return -1
+
+	var target_position := source.position + Vector2(256.0, 0.0)
+	var best_vertex_id := -1
+	var best_distance := INF
+	for vertex: GraphVertex in _graph.nodes:
+		if not (_tiles_by_node_id.get(vertex.id) is WireTile):
+			continue
+
+		var distance := target_position.distance_to(vertex.position)
+		if distance >= best_distance:
+			continue
+
+		best_vertex_id = vertex.id
+		best_distance = distance
+
+	return best_vertex_id
 
 
 func _try_place_tutorial_ballista(global_position: Vector2) -> bool:
@@ -1067,6 +1232,15 @@ func _apply_tutorial_button_locks() -> void:
 
 		if _pause_button != null:
 			_pause_button.disabled = true
+	elif _tutorial_step == TutorialStep.MOVE_BALLISTA or _tutorial_step == TutorialStep.REMOVE_BALLISTA:
+		_set_gate_placement_enabled(false)
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button != null:
+				button.disabled = true
+
+		if _pause_button != null:
+			_pause_button.disabled = true
 	else:
 		for gate_definition: Resource in _get_gate_definitions():
 			var button := _gate_buttons.get(gate_definition.id) as Button
@@ -1078,7 +1252,7 @@ func _apply_tutorial_button_locks() -> void:
 			_pause_button.disabled = false
 
 
-func _start_tutorial_dialogue() -> void:
+func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String) -> void:
 	if _tutorial_dialog_layout != null and is_instance_valid(_tutorial_dialog_layout):
 		return
 
@@ -1086,9 +1260,9 @@ func _start_tutorial_dialogue() -> void:
 	Dialogic.Inputs.manual_advance.system_enabled = false
 	Dialogic.process_mode = Node.PROCESS_MODE_ALWAYS
 
-	var timeline: String = TUTORIAL_DIALOGUE_ID
+	var timeline: String = dialogue_id
 	if not Dialogic.timeline_exists(timeline):
-		timeline = TUTORIAL_DIALOGUE_PATH
+		timeline = dialogue_path
 
 	_tutorial_dialog_layout = Dialogic.start(timeline)
 	if _tutorial_dialog_layout == null:
