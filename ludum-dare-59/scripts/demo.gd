@@ -1,8 +1,30 @@
 class_name DemoScene
 extends Node2D
 
+const DebugTrace := preload("res://scripts/debug_trace.gd")
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
 const POSITION_MATCH_EPSILON := 1.0
+const TUTORIAL_DIALOGUE_1_ID := "tutorial_dialogue_1_1"
+const TUTORIAL_DIALOGUE_1_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl"
+const TUTORIAL_DIALOGUE_2_ID := "tutorial_dialogue_1_2"
+const TUTORIAL_DIALOGUE_2_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl"
+const TUTORIAL_DIALOGUE_3_ID := "tutorial_dialogue_1_3"
+const TUTORIAL_DIALOGUE_3_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
+const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
+const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
+const GAME_UI_CANVAS_LAYER := 10
+const TUTORIAL_BALLISTA_ID := "ballista"
+
+enum TutorialStep {
+	NONE,
+	SELECT_BALLISTA,
+	PLACE_BALLISTA,
+	WAIT_FIRST_CRYTTER_DEATH,
+	MOVE_BALLISTA,
+	REMOVE_BALLISTA,
+	DONE,
+}
+
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
@@ -12,6 +34,7 @@ var _graph: Graph
 var _level_board: Node
 var _tiles: Array[BaseTile] = []
 var _tiles_by_node_id: Dictionary = {}
+var _cpu_node_ids: Dictionary = {}
 var _spawn_enemy_manager: SpawnEnemyManager
 var _selected_gate_definition: Resource
 var _temperature := 0
@@ -32,6 +55,15 @@ var _hud: Node
 var _cpu_regions: Array[Dictionary] = []
 var _level_timer: Timer
 var _level_finished := false
+var _tutorial_step := TutorialStep.NONE
+var _tutorial_target_vertex_id := -1
+var _tutorial_target_tile: BaseTile
+var _tutorial_move_target_vertex_id := -1
+var _tutorial_move_target_tile: BaseTile
+var _tutorial_ballista_gate: Gate
+var _tutorial_ballista_button: Button
+var _tutorial_dialog_manual_advance_was_enabled := true
+var _tutorial_dialog_layout: Node
 
 
 func _get_balance_params() -> BalanceParams:
@@ -59,6 +91,9 @@ func _get_gate_placement_radius() -> float:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _handle_tutorial_unhandled_input(event):
+		return
+
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
 		AudioManager.stop_music()
@@ -116,6 +151,35 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if event is InputEventMouseButton:
+			var tutorial_mouse := event as InputEventMouseButton
+			if tutorial_mouse.button_index == MOUSE_BUTTON_LEFT:
+				return
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		if event is InputEventMouseButton:
+			var tutorial_mouse := event as InputEventMouseButton
+			if tutorial_mouse.button_index == MOUSE_BUTTON_LEFT:
+				if tutorial_mouse.pressed:
+					_try_place_tutorial_ballista(get_global_mouse_position())
+				get_viewport().set_input_as_handled()
+				return
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.MOVE_BALLISTA:
+		_handle_tutorial_ballista_move_input(event)
+		get_viewport().set_input_as_handled()
+		return
+
+	if _tutorial_step == TutorialStep.REMOVE_BALLISTA:
+		_handle_tutorial_ballista_remove_input(event)
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_MIDDLE:
@@ -150,6 +214,7 @@ func _ready() -> void:
 		level = LevelState.selected_level
 	elif LevelState.get_current_level() != null:
 		level = LevelState.get_current_level()
+	_setup_tutorial_state()
 
 	_camera = Camera2D.new()
 	_camera.name = "Camera"
@@ -172,6 +237,8 @@ func _ready() -> void:
 	_configure_core_gates()
 	_start_trigger_timer()
 	_create_gate_buttons()
+	_configure_tutorial_flow()
+	_start_enemy_spawning()
 	_start_level_timer()
 	AudioManager.play_music()
 
@@ -232,16 +299,70 @@ func _center_camera_on_graph() -> void:
 
 func _build_cpu_vertices() -> Array[CpuVertex]:
 	var cpu_vertices: Array[CpuVertex] = []
-	for tile in _tiles_by_node_id.values():
-		if not (tile is CoreTile):
-			continue
+	_cpu_node_ids = _collect_cpu_node_ids()
 
+	for node_id in _cpu_node_ids:
 		var cv := CpuVertex.new()
-		cv.node_id = tile.node_id
+		cv.node_id = int(node_id)
 		cpu_vertices.append(cv)
-		print("Demo scene: CPU target registered for node %d from %s" % [tile.node_id, tile.get_path()])
+		print("Demo scene: CPU target registered for node %d" % cv.node_id)
 
 	return cpu_vertices
+
+
+func _collect_cpu_node_ids() -> Dictionary:
+	var cpu_node_ids: Dictionary = {}
+
+	for tile in _tiles_by_node_id.values():
+		if tile is CoreTile:
+			cpu_node_ids[tile.node_id] = true
+
+	var tilemap := _get_level_tilemap()
+	if tilemap == null or tilemap.tile_set == null:
+		return cpu_node_ids
+
+	var tilemap_layer := _get_level_tilemap_layer()
+	var used_rect := tilemap.get_used_rect()
+	if used_rect.size.x <= 0:
+		return cpu_node_ids
+
+	for cell in tilemap.get_used_cells(tilemap_layer):
+		var source_id := tilemap.get_cell_source_id(tilemap_layer, cell)
+		if not _is_cpu_tile_source(tilemap.tile_set, source_id):
+			continue
+
+		var node_id := (cell.y - used_rect.position.y) * used_rect.size.x + (cell.x - used_rect.position.x)
+		if _graph != null and _graph.get_node_by_id(node_id) != null:
+			cpu_node_ids[node_id] = true
+
+	return cpu_node_ids
+
+
+func _get_level_tilemap() -> TileMap:
+	if _level_board == null:
+		return null
+
+	var tilemap_path := ^"TileMap" if level == null else level.tilemap_path
+	return _level_board.get_node_or_null(tilemap_path) as TileMap
+
+
+func _get_level_tilemap_layer() -> int:
+	return 0 if level == null else level.tilemap_layer
+
+
+func _is_cpu_tile_source(tile_set: TileSet, source_id: int) -> bool:
+	if tile_set == null or source_id < 0 or not tile_set.has_source(source_id):
+		return false
+
+	var source := tile_set.get_source(source_id)
+	if String(source.resource_name).strip_edges().to_lower() == "cpu":
+		return true
+
+	if source is TileSetAtlasSource:
+		var atlas_source := source as TileSetAtlasSource
+		return atlas_source.texture != null and atlas_source.texture.resource_path.get_file().to_lower() == "cpu.svg"
+
+	return false
 
 
 func _collect_tiles() -> void:
@@ -353,14 +474,14 @@ func _configure_spawners(cpu_vertices: Array[CpuVertex]) -> void:
 		_spawn_enemy_manager.register_spawner(spawner)
 		print("Demo scene: wired spawner %s on node %d" % [spawner.get_path(), spawner.node_id])
 
-	_spawn_enemy_manager.start()
+
+func _start_enemy_spawning() -> void:
+	if _spawn_enemy_manager != null:
+		_spawn_enemy_manager.start()
 
 
 func _configure_core_gates() -> void:
-	var core_node_ids: Dictionary = {}
-	for tile in _tiles_by_node_id.values():
-		if tile is CoreTile:
-			core_node_ids[tile.node_id] = true
+	var core_node_ids := _cpu_node_ids
 
 	var core_positions: Dictionary = {}
 	for node_id in core_node_ids:
@@ -397,15 +518,18 @@ func _configure_core_gates() -> void:
 		var cpu_positions: Array[Vector2] = []
 
 		for node_id in region_ids:
-			var tile: BaseTile = _tiles_by_node_id.get(node_id) as BaseTile
-			if tile == null:
-				continue
 			var gate := CoreGate.new()
 			add_child(gate)
 			gate.graph = _graph
 			gate.vertex_id = node_id
 			gate.enemy_reached.connect(_on_region_enemy_reached.bind(region_index))
-			cpu_positions.append(to_local(tile.global_position))
+			var tile: BaseTile = _tiles_by_node_id.get(node_id) as BaseTile
+			if tile != null:
+				cpu_positions.append(to_local(tile.global_position))
+			elif _graph != null:
+				var vertex := _graph.get_node_by_id(node_id)
+				if vertex != null:
+					cpu_positions.append(vertex.position)
 			print("Demo scene: CoreGate registered at node %d (region %d)" % [node_id, region_index])
 
 		if cpu_positions.is_empty():
@@ -450,11 +574,13 @@ func _trigger_tiles() -> void:
 func _create_gate_buttons() -> void:
 	var ui_layer := CanvasLayer.new()
 	ui_layer.name = "UI"
+	ui_layer.layer = GAME_UI_CANVAS_LAYER
 	ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(ui_layer)
 
 	var root := Control.new()
 	root.name = "Root"
+	root.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_layer.add_child(root)
@@ -463,6 +589,7 @@ func _create_gate_buttons() -> void:
 		var definition: Resource = _get_gate_definitions()[i]
 		var button := Button.new()
 		button.name = "%sButton" % definition.id.capitalize().replace(" ", "")
+		button.process_mode = Node.PROCESS_MODE_ALWAYS
 		button.icon = definition.texture
 		button.expand_icon = true
 		button.toggle_mode = true
@@ -483,6 +610,7 @@ func _create_gate_buttons() -> void:
 
 	var pause_btn := Button.new()
 	pause_btn.name = "PauseButton"
+	pause_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_btn.text = "II"
 	pause_btn.toggle_mode = true
 	pause_btn.focus_mode = Control.FOCUS_NONE
@@ -525,6 +653,7 @@ func _create_debug_victory_button(root: Control) -> void:
 
 	var button := Button.new()
 	button.name = "DebugVictoryButton"
+	button.process_mode = Node.PROCESS_MODE_ALWAYS
 	button.text = "Win"
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = "Debug: finish this level with victory"
@@ -650,6 +779,22 @@ func _create_temperature_meter(root: Control) -> void:
 
 
 func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if definition == null or definition.id != TUTORIAL_BALLISTA_ID:
+			button.set_pressed_no_signal(false)
+			return
+
+		TutorialEvents.stop_highlighter(button)
+		TutorialEvents.emit_ballista_spawn_button_pressed()
+		_set_gate_placement_enabled(true, definition)
+		_begin_tutorial_ballista_placement()
+		return
+
+	if _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		if definition == null or definition.id != TUTORIAL_BALLISTA_ID:
+			button.set_pressed_no_signal(false)
+			return
+
 	if button.button_pressed:
 		_set_gate_placement_enabled(true, definition)
 	else:
@@ -703,15 +848,35 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 
 func _place_gate(vertex_id: int, definition: Resource) -> bool:
+	DebugTrace.event("demo_gate", "place_gate:start", {
+		"vertex_id": vertex_id,
+		"definition_id": definition.id if definition != null else "",
+		"temperature": _temperature,
+		"max_temperature": _get_max_temperature(),
+	})
 	if not _can_place_gate(definition):
+		DebugTrace.event("demo_gate", "place_gate:cannot_place", {
+			"vertex_id": vertex_id,
+			"definition_id": definition.id if definition != null else "",
+			"temperature": _temperature,
+		})
 		_set_gate_placement_enabled(false)
 		return false
 
-	if Gate.get_gate(_graph, vertex_id) != null:
+	var existing_gate := Gate.get_gate(_graph, vertex_id)
+	if existing_gate != null:
+		DebugTrace.event("demo_gate", "place_gate:occupied", {
+			"vertex_id": vertex_id,
+			"existing_gate": DebugTrace.gate_state(existing_gate),
+		})
 		return false
 
 	var tile := _tiles_by_node_id.get(vertex_id) as BaseTile
 	if not (tile is WireTile):
+		DebugTrace.event("demo_gate", "place_gate:not_wire_tile", {
+			"vertex_id": vertex_id,
+			"tile": DebugTrace.node_state(tile),
+		})
 		return false
 
 	var gate := GATE_SCENE.instantiate() as Gate
@@ -721,7 +886,612 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 	gate.destroyed.connect(_on_gate_destroyed)
 	add_child(gate)
 	_change_temperature(definition.power_cost)
+	DebugTrace.event("demo_gate", "place_gate:done", {
+		"vertex_id": vertex_id,
+		"gate": DebugTrace.gate_state(gate),
+		"temperature": _temperature,
+	})
 	return true
+
+
+func _setup_tutorial_state() -> void:
+	if LevelState.current_level_index == 0:
+		TutorialEvents.start_first_level_tutorial()
+	else:
+		TutorialEvents.reset_first_level_tutorial()
+
+
+func _configure_tutorial_flow() -> void:
+	if not TutorialEvents.first_level_tutorial_active:
+		return
+
+	if not TutorialEvents.first_crytter_spawned.is_connected(_on_tutorial_first_crytter_spawned):
+		TutorialEvents.first_crytter_spawned.connect(_on_tutorial_first_crytter_spawned)
+	if not TutorialEvents.first_crytter_moved_two_tiles.is_connected(_on_tutorial_first_crytter_moved_two_tiles):
+		TutorialEvents.first_crytter_moved_two_tiles.connect(_on_tutorial_first_crytter_moved_two_tiles)
+	if not TutorialEvents.target_ballista_placed.is_connected(_on_tutorial_target_ballista_placed):
+		TutorialEvents.target_ballista_placed.connect(_on_tutorial_target_ballista_placed)
+	if not TutorialEvents.first_crytter_despawned.is_connected(_on_tutorial_first_crytter_despawned):
+		TutorialEvents.first_crytter_despawned.connect(_on_tutorial_first_crytter_despawned)
+
+	_tutorial_ballista_button = _gate_buttons.get(TUTORIAL_BALLISTA_ID) as Button
+	_apply_tutorial_button_locks()
+
+
+func _on_tutorial_first_crytter_spawned(_enemy: Enemy, spawner_node_id: int) -> void:
+	_tutorial_target_vertex_id = _find_tutorial_target_vertex_id(spawner_node_id)
+	TutorialEvents.target_ballista_vertex_id = _tutorial_target_vertex_id
+	_tutorial_target_tile = _tiles_by_node_id.get(_tutorial_target_vertex_id) as BaseTile
+	DebugTrace.event("tutorial", "first_crytter_spawned", {
+		"enemy": DebugTrace.enemy_state(_enemy),
+		"spawner_node_id": spawner_node_id,
+		"target_vertex_id": _tutorial_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_target_tile),
+	})
+
+
+func _on_tutorial_first_crytter_moved_two_tiles(_enemy: Enemy) -> void:
+	DebugTrace.event("tutorial", "first_crytter_moved_two_tiles", {
+		"enemy": DebugTrace.enemy_state(_enemy),
+		"current_step": _tutorial_step,
+	})
+	if _tutorial_step != TutorialStep.NONE:
+		return
+
+	_tutorial_step = TutorialStep.SELECT_BALLISTA
+	_set_pause_mode_enabled(true)
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_1_ID, TUTORIAL_DIALOGUE_1_PATH)
+	_apply_tutorial_button_locks()
+	if _tutorial_ballista_button != null:
+		TutorialEvents.start_highlighter(_tutorial_ballista_button)
+
+
+func _begin_tutorial_ballista_placement() -> void:
+	DebugTrace.event("tutorial", "begin_ballista_placement", {
+		"target_vertex_id": _tutorial_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_target_tile),
+	})
+	_tutorial_step = TutorialStep.PLACE_BALLISTA
+	_apply_tutorial_button_locks()
+	if _tutorial_target_tile != null:
+		TutorialEvents.start_highlighter(_tutorial_target_tile)
+
+
+func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
+	DebugTrace.event("tutorial", "target_ballista_placed", {
+		"vertex_id": _vertex_id,
+		"gate": DebugTrace.gate_state(_gate),
+	})
+	if _tutorial_target_tile != null:
+		TutorialEvents.stop_highlighter(_tutorial_target_tile)
+
+	_tutorial_ballista_gate = _gate
+	_tutorial_step = TutorialStep.WAIT_FIRST_CRYTTER_DEATH
+	TutorialEvents.finish_first_level_tutorial()
+	_end_tutorial_dialogue()
+	_set_pause_mode_enabled(false)
+	_apply_tutorial_button_locks()
+
+
+func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
+	DebugTrace.event("tutorial", "first_crytter_despawned", {"enemy": DebugTrace.enemy_state(_enemy)})
+	if _tutorial_step == TutorialStep.WAIT_FIRST_CRYTTER_DEATH:
+		_begin_tutorial_ballista_move()
+
+
+func _begin_tutorial_ballista_move() -> void:
+	if _tutorial_ballista_gate == null or not is_instance_valid(_tutorial_ballista_gate):
+		_tutorial_ballista_gate = Gate.get_gate(_graph, _tutorial_target_vertex_id)
+	if _tutorial_ballista_gate == null:
+		DebugTrace.event("tutorial", "begin_ballista_move:missing_gate", {"vertex_id": _tutorial_target_vertex_id})
+		_tutorial_step = TutorialStep.DONE
+		_apply_tutorial_button_locks()
+		return
+
+	_tutorial_move_target_vertex_id = _find_wire_vertex_two_steps_right(_tutorial_ballista_gate.vertex_id)
+	_tutorial_move_target_tile = _tiles_by_node_id.get(_tutorial_move_target_vertex_id) as BaseTile
+	DebugTrace.event("tutorial", "begin_ballista_move", {
+		"gate": DebugTrace.gate_state(_tutorial_ballista_gate),
+		"target_vertex_id": _tutorial_move_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_move_target_tile),
+	})
+	if _tutorial_move_target_vertex_id == -1:
+		_tutorial_step = TutorialStep.DONE
+		_apply_tutorial_button_locks()
+		return
+
+	_tutorial_step = TutorialStep.MOVE_BALLISTA
+	_set_pause_mode_enabled(true)
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_2_ID, TUTORIAL_DIALOGUE_2_PATH)
+	_apply_tutorial_button_locks()
+	_restart_tutorial_ballista_move_highlighters()
+
+
+func _complete_tutorial_ballista_move() -> void:
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
+	if _tutorial_move_target_tile != null:
+		TutorialEvents.stop_highlighter(_tutorial_move_target_tile)
+
+	_end_tutorial_dialogue()
+	_tutorial_step = TutorialStep.REMOVE_BALLISTA
+	_start_tutorial_dialogue(TUTORIAL_DIALOGUE_3_ID, TUTORIAL_DIALOGUE_3_PATH)
+	_apply_tutorial_button_locks()
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.start_highlighter(_tutorial_ballista_gate)
+
+
+func _complete_tutorial_ballista_remove() -> void:
+	if _tutorial_ballista_gate != null and is_instance_valid(_tutorial_ballista_gate):
+		TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
+	_end_tutorial_dialogue()
+	_tutorial_step = TutorialStep.DONE
+	TutorialEvents.stop_all_highlighters()
+	_set_pause_mode_enabled(false)
+	_apply_tutorial_button_locks()
+
+
+func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA:
+		if event is InputEventKey and event.pressed and not event.echo:
+			var key := event as InputEventKey
+			if key.keycode == KEY_2 and _tutorial_ballista_button != null:
+				_tutorial_ballista_button.set_pressed_no_signal(true)
+				_on_gate_button_pressed(BalanceManager.get_gate_definition(TUTORIAL_BALLISTA_ID), _tutorial_ballista_button)
+			get_viewport().set_input_as_handled()
+			return true
+
+		if event is InputEventMouseButton:
+			get_viewport().set_input_as_handled()
+			return true
+
+		get_viewport().set_input_as_handled()
+		return true
+
+	if _tutorial_step == TutorialStep.MOVE_BALLISTA or _tutorial_step == TutorialStep.REMOVE_BALLISTA:
+		get_viewport().set_input_as_handled()
+		return true
+
+	if _tutorial_step != TutorialStep.PLACE_BALLISTA:
+		return false
+
+	if not event is InputEventMouseButton:
+		get_viewport().set_input_as_handled()
+		return true
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()
+		return true
+
+	if not mouse_event.pressed:
+		get_viewport().set_input_as_handled()
+		return true
+
+	_try_place_tutorial_ballista(get_global_mouse_position())
+
+	get_viewport().set_input_as_handled()
+	return true
+
+
+func _handle_tutorial_ballista_move_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+
+	if mouse_event.pressed:
+		_try_pickup_tutorial_ballista(get_global_mouse_position())
+		return
+
+	if _moving_gate != null:
+		_try_drop_tutorial_ballista(get_global_mouse_position())
+
+
+func _handle_tutorial_ballista_remove_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_RIGHT or not mouse_event.pressed:
+		return
+
+	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
+	if vertex_id != _tutorial_move_target_vertex_id:
+		return
+
+	var gate := Gate.get_gate(_graph, vertex_id)
+	if gate == null or gate != _tutorial_ballista_gate:
+		return
+
+	_delete_gate_at(vertex_id)
+	_complete_tutorial_ballista_remove()
+
+
+func _try_pickup_tutorial_ballista(global_position: Vector2) -> void:
+	_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+	if _tutorial_ballista_gate == null:
+		return
+
+	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if vertex_id != _tutorial_ballista_gate.vertex_id:
+		return
+
+	TutorialEvents.stop_highlighter(_tutorial_ballista_gate)
+	_pickup_gate_at(vertex_id)
+
+
+func _try_drop_tutorial_ballista(global_position: Vector2) -> void:
+	var gate := _moving_gate
+	var target_vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if target_vertex_id != _tutorial_move_target_vertex_id:
+		_cancel_moving_gate()
+		_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+		_restart_tutorial_ballista_move_highlighters()
+		DebugTrace.event("tutorial", "try_drop_ballista:wrong_target_returned", {
+			"target_vertex_id": target_vertex_id,
+			"required_vertex_id": _tutorial_move_target_vertex_id,
+			"gate": DebugTrace.gate_state(_tutorial_ballista_gate),
+		})
+		return
+
+	_drop_moving_gate(global_position)
+	if gate == null or not is_instance_valid(gate):
+		_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+		_restart_tutorial_ballista_move_highlighters()
+		return
+
+	_tutorial_ballista_gate = gate
+	if gate.vertex_id != _tutorial_move_target_vertex_id:
+		_restart_tutorial_ballista_move_highlighters()
+		return
+
+	_complete_tutorial_ballista_move()
+
+
+func _get_current_tutorial_ballista_gate() -> Gate:
+	if _is_tutorial_ballista_gate(_moving_gate):
+		return _moving_gate
+
+	if _is_tutorial_ballista_gate(_tutorial_ballista_gate):
+		return _tutorial_ballista_gate
+
+	for vertex_id in [_tutorial_target_vertex_id, _tutorial_move_target_vertex_id]:
+		var gate := Gate.get_gate(_graph, vertex_id)
+		if _is_tutorial_ballista_gate(gate):
+			return gate
+
+	for child in get_children():
+		if _is_tutorial_ballista_gate(child):
+			return child as Gate
+
+	return null
+
+
+func _is_tutorial_ballista_gate(gate: Node) -> bool:
+	if gate == null or not is_instance_valid(gate) or gate.is_queued_for_deletion():
+		return false
+	if not (gate is Gate):
+		return false
+
+	var typed_gate := gate as Gate
+	return typed_gate.graph == _graph and typed_gate.definition_id == TUTORIAL_BALLISTA_ID
+
+
+func _restart_tutorial_ballista_move_highlighters() -> void:
+	if _tutorial_step != TutorialStep.MOVE_BALLISTA:
+		return
+
+	TutorialEvents.stop_all_highlighters()
+	_tutorial_ballista_gate = _get_current_tutorial_ballista_gate()
+	if _tutorial_ballista_gate != null:
+		TutorialEvents.start_highlighter(_tutorial_ballista_gate)
+	if _tutorial_move_target_tile != null and is_instance_valid(_tutorial_move_target_tile):
+		TutorialEvents.start_highlighter(_tutorial_move_target_tile)
+
+
+func _find_wire_vertex_two_steps_right(vertex_id: int) -> int:
+	var source := _graph.get_node_by_id(vertex_id)
+	if source == null:
+		return -1
+
+	var target_position := source.position + Vector2(256.0, 0.0)
+	var best_vertex_id := -1
+	var best_distance := INF
+	for vertex: GraphVertex in _graph.nodes:
+		if not (_tiles_by_node_id.get(vertex.id) is WireTile):
+			continue
+
+		var distance := target_position.distance_to(vertex.position)
+		if distance >= best_distance:
+			continue
+
+		best_vertex_id = vertex.id
+		best_distance = distance
+
+	return best_vertex_id
+
+
+func _try_place_tutorial_ballista(global_position: Vector2) -> bool:
+	DebugTrace.event("tutorial", "try_place_ballista:start", {
+		"global_position": global_position,
+		"selected_definition_id": _selected_gate_definition.id if _selected_gate_definition != null else "",
+		"target_vertex_id": _tutorial_target_vertex_id,
+	})
+	if _selected_gate_definition == null or _selected_gate_definition.id != TUTORIAL_BALLISTA_ID:
+		DebugTrace.event("tutorial", "try_place_ballista:no_selected_ballista", {})
+		return false
+
+	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
+	if vertex_id != _tutorial_target_vertex_id:
+		if not _is_global_position_on_tutorial_target(global_position):
+			DebugTrace.event("tutorial", "try_place_ballista:not_target", {
+				"computed_vertex_id": vertex_id,
+				"target_vertex_id": _tutorial_target_vertex_id,
+			})
+			return false
+		vertex_id = _tutorial_target_vertex_id
+
+	if vertex_id == -1:
+		DebugTrace.event("tutorial", "try_place_ballista:no_vertex", {})
+		return false
+
+	if not _place_gate(vertex_id, _selected_gate_definition):
+		DebugTrace.event("tutorial", "try_place_ballista:place_failed", {"vertex_id": vertex_id})
+		return false
+
+	var gate := Gate.get_gate(_graph, vertex_id)
+	_set_gate_placement_enabled(false)
+	TutorialEvents.emit_target_ballista_placed(vertex_id, gate)
+	DebugTrace.event("tutorial", "try_place_ballista:done", {
+		"vertex_id": vertex_id,
+		"gate": DebugTrace.gate_state(gate),
+	})
+	return true
+
+
+func _is_global_position_on_tutorial_target(global_position: Vector2) -> bool:
+	if _tutorial_target_vertex_id == -1:
+		return false
+
+	var target_position := Vector2.ZERO
+	var target_vertex := _graph.get_node_by_id(_tutorial_target_vertex_id)
+	if target_vertex != null:
+		target_position = target_vertex.position
+	elif _tutorial_target_tile != null:
+		target_position = to_local(_tutorial_target_tile.global_position)
+	else:
+		return false
+
+	var click_position := to_local(global_position)
+	var target_radius := maxf(_get_gate_placement_radius(), 48.0)
+	return click_position.distance_to(target_position) <= target_radius
+
+
+func _apply_tutorial_button_locks() -> void:
+	if _gate_buttons.is_empty():
+		return
+
+	if _tutorial_step == TutorialStep.SELECT_BALLISTA or _tutorial_step == TutorialStep.PLACE_BALLISTA:
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button == null:
+				continue
+			button.disabled = gate_definition.id != TUTORIAL_BALLISTA_ID
+
+		if _pause_button != null:
+			_pause_button.disabled = true
+	elif _tutorial_step == TutorialStep.MOVE_BALLISTA or _tutorial_step == TutorialStep.REMOVE_BALLISTA:
+		_set_gate_placement_enabled(false)
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button != null:
+				button.disabled = true
+
+		if _pause_button != null:
+			_pause_button.disabled = true
+	else:
+		for gate_definition: Resource in _get_gate_definitions():
+			var button := _gate_buttons.get(gate_definition.id) as Button
+			if button == null:
+				continue
+			button.disabled = not _can_place_gate(gate_definition)
+
+		if _pause_button != null:
+			_pause_button.disabled = false
+
+
+func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String) -> void:
+	if _tutorial_dialog_layout != null and is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	_tutorial_dialog_manual_advance_was_enabled = Dialogic.Inputs.manual_advance.system_enabled
+	Dialogic.Inputs.manual_advance.system_enabled = false
+	Dialogic.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	var timeline: String = dialogue_id
+	if not Dialogic.timeline_exists(timeline):
+		timeline = dialogue_path
+
+	_tutorial_dialog_layout = Dialogic.start(timeline)
+	if _tutorial_dialog_layout == null:
+		Dialogic.Inputs.manual_advance.system_enabled = _tutorial_dialog_manual_advance_was_enabled
+		push_error("Tutorial dialogue failed to start: %s" % timeline)
+		return
+
+	_tutorial_dialog_layout.process_mode = Node.PROCESS_MODE_ALWAYS
+	call_deferred("_position_tutorial_dialogue")
+
+
+func _end_tutorial_dialogue() -> void:
+	Dialogic.Inputs.manual_advance.system_enabled = _tutorial_dialog_manual_advance_was_enabled
+	if Dialogic.current_timeline != null:
+		Dialogic.end_timeline(true)
+	elif _tutorial_dialog_layout != null and is_instance_valid(_tutorial_dialog_layout):
+		_tutorial_dialog_layout.queue_free()
+	_tutorial_dialog_layout = null
+
+
+func _position_tutorial_dialogue() -> void:
+	if _tutorial_dialog_layout == null or not is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	if not _tutorial_dialog_layout.is_node_ready():
+		await _tutorial_dialog_layout.ready
+
+	_disable_tutorial_dialogue_input_catcher()
+
+	var textbox_layer := _tutorial_dialog_layout.get_node_or_null("VN_TextboxLayer") as Control
+	if textbox_layer == null:
+		return
+
+	textbox_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	if "box_size" in textbox_layer:
+		textbox_layer.set("box_size", TUTORIAL_DIALOGUE_BOX_SIZE)
+	if "box_margin_bottom" in textbox_layer:
+		textbox_layer.set("box_margin_bottom", int(TUTORIAL_DIALOGUE_MARGIN.y))
+
+	var anchor := textbox_layer.get_node_or_null("Anchor") as Control
+	if anchor == null:
+		return
+
+	anchor.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	var anchor_offset := Vector2(-(TUTORIAL_DIALOGUE_MARGIN.x + TUTORIAL_DIALOGUE_BOX_SIZE.x * 0.5), 0.0)
+	anchor.offset_left = anchor_offset.x
+	anchor.offset_right = anchor_offset.x
+	anchor.offset_top = anchor_offset.y
+	anchor.offset_bottom = anchor_offset.y
+
+	if textbox_layer.has_method("_apply_export_overrides"):
+		textbox_layer.call("_apply_export_overrides")
+
+
+func _disable_tutorial_dialogue_input_catcher() -> void:
+	if _tutorial_dialog_layout == null or not is_instance_valid(_tutorial_dialog_layout):
+		return
+
+	var input_layer := _tutorial_dialog_layout.get_node_or_null("FullAdvanceInputLayer") as Control
+	if input_layer != null:
+		input_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		input_layer.process_mode = Node.PROCESS_MODE_DISABLED
+
+	var input_node := _tutorial_dialog_layout.get_node_or_null("FullAdvanceInputLayer/DialogicNode_Input") as Control
+	if input_node != null:
+		input_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		input_node.process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
+	var spawner_vertex := _graph.get_node_by_id(spawner_node_id)
+	if spawner_vertex == null:
+		DebugTrace.event("tutorial", "find_target:missing_spawner", {"spawner_node_id": spawner_node_id})
+		return -1
+
+	var target_position := spawner_vertex.position + Vector2(256.0, 0.0)
+	var best_vertex_id := -1
+	var best_distance := INF
+	for vertex: GraphVertex in _graph.nodes:
+		if not (_tiles_by_node_id.get(vertex.id) is WireTile):
+			continue
+
+		var distance := target_position.distance_to(vertex.position)
+		if distance >= best_distance:
+			continue
+
+		best_vertex_id = vertex.id
+		best_distance = distance
+
+	DebugTrace.event("tutorial", "find_target:done", {
+		"spawner_node_id": spawner_node_id,
+		"target_position": target_position,
+		"best_vertex_id": best_vertex_id,
+		"best_distance": best_distance,
+	})
+	return best_vertex_id
+
+func _find_tutorial_endpoint_beyond_target(spawner_node_id: int, target_vertex_id: int) -> int:
+	if _graph == null or _graph.get_node_by_id(spawner_node_id) == null or _graph.get_node_by_id(target_vertex_id) == null:
+		return -1
+
+	var queue: Array[int] = [spawner_node_id]
+	var visited := {spawner_node_id: 0}
+	var came_from := {}
+
+	while not queue.is_empty():
+		var node_id: int = queue.pop_front()
+		var vertex := _graph.get_node_by_id(node_id)
+		if vertex == null:
+			continue
+
+		for neighbour_id in vertex.neighbour_ids:
+			if visited.has(neighbour_id):
+				continue
+
+			visited[neighbour_id] = int(visited[node_id]) + 1
+			came_from[neighbour_id] = node_id
+			queue.append(neighbour_id)
+
+	var best_node_id := -1
+	var best_distance := -1
+	for node_id_variant in visited.keys():
+		var node_id := int(node_id_variant)
+		if node_id == target_vertex_id:
+			continue
+		if not _path_from_spawner_contains_target(came_from, spawner_node_id, node_id, target_vertex_id):
+			continue
+
+		var distance := int(visited[node_id])
+		if distance > best_distance:
+			best_node_id = node_id
+			best_distance = distance
+
+	DebugTrace.event("tutorial", "endpoint_beyond_target", {
+		"spawner_node_id": spawner_node_id,
+		"target_vertex_id": target_vertex_id,
+		"endpoint_id": best_node_id,
+		"distance": best_distance,
+	})
+	return best_node_id
+
+
+func _path_from_spawner_contains_target(came_from: Dictionary, spawner_node_id: int, candidate_node_id: int, target_vertex_id: int) -> bool:
+	var node_id := candidate_node_id
+	while node_id != spawner_node_id:
+		if node_id == target_vertex_id:
+			return true
+		if not came_from.has(node_id):
+			return false
+
+		node_id = int(came_from[node_id])
+
+	return spawner_node_id == target_vertex_id
+
+
+func _set_spawner_cpu_target(spawner_node_id: int, target_node_id: int) -> void:
+	var spawner := _tiles_by_node_id.get(spawner_node_id) as SpawnerTile
+	if spawner == null:
+		return
+
+	var cpu := CpuVertex.new()
+	cpu.node_id = target_node_id
+	var targets: Array[CpuVertex] = []
+	targets.append(cpu)
+	spawner.cpu_vertices = targets
+
+
+func _set_enemy_cpu_target(enemy: Enemy, target_node_id: int, restart_pathing: bool) -> void:
+	if enemy == null or not is_instance_valid(enemy):
+		return
+
+	var cpu := CpuVertex.new()
+	cpu.node_id = target_node_id
+	var targets: Array[CpuVertex] = []
+	targets.append(cpu)
+	enemy.cpu_vertices = targets
+	if restart_pathing:
+		enemy.start_pathing()
 
 
 func _can_place_gate(definition: Resource) -> bool:
@@ -750,6 +1520,8 @@ func _update_temperature_meter() -> void:
 		button.disabled = not can_place
 		if not can_place and _selected_gate_definition == definition:
 			_set_gate_placement_enabled(false)
+
+	_apply_tutorial_button_locks()
 
 
 func _on_pause_button_pressed() -> void:
@@ -782,52 +1554,94 @@ func _complete_level_with_victory() -> void:
 func _pickup_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
 	if gate == null:
+		DebugTrace.event("demo_gate", "pickup_gate:missing", {"vertex_id": vertex_id})
 		return
+	DebugTrace.event("demo_gate", "pickup_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_moving_gate = gate
 	_moving_gate_origin = vertex_id
 	gate.modulate = Color(1.3, 1.3, 0.5)
+	DebugTrace.event("demo_gate", "pickup_gate:done", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
 	var gate := _moving_gate
+	DebugTrace.event("demo_gate", "drop_moving_gate:start", {
+		"gate": DebugTrace.gate_state(gate),
+		"origin": _moving_gate_origin,
+		"global_pos": global_pos,
+	})
 	_moving_gate = null
 	gate.modulate = Color.WHITE
 
 	var target_vertex_id := _get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
-		gate.vertex_id = _moving_gate_origin
+		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
+		DebugTrace.event("demo_gate", "drop_moving_gate:returned_origin", {
+			"gate": DebugTrace.gate_state(gate),
+			"target_vertex_id": target_vertex_id,
+		})
 		return
 
-	if Gate.get_gate(_graph, target_vertex_id) != null:
-		gate.vertex_id = _moving_gate_origin
+	var existing_gate := Gate.get_gate(_graph, target_vertex_id)
+	if existing_gate != null:
+		_snap_gate_to_vertex(gate, _moving_gate_origin)
 		_moving_gate_origin = -1
+		DebugTrace.event("demo_gate", "drop_moving_gate:occupied_returned_origin", {
+			"gate": DebugTrace.gate_state(gate),
+			"target_vertex_id": target_vertex_id,
+			"existing_gate": DebugTrace.gate_state(existing_gate),
+		})
 		return
 
 	gate.vertex_id = target_vertex_id
 	_moving_gate_origin = -1
+	DebugTrace.event("demo_gate", "drop_moving_gate:moved", {
+		"gate": DebugTrace.gate_state(gate),
+		"target_vertex_id": target_vertex_id,
+	})
 
 
 func _cancel_moving_gate() -> void:
 	if _moving_gate == null:
+		DebugTrace.event("demo_gate", "cancel_moving_gate:none", {})
 		return
+	DebugTrace.event("demo_gate", "cancel_moving_gate:start", {
+		"gate": DebugTrace.gate_state(_moving_gate),
+		"origin": _moving_gate_origin,
+	})
 	_moving_gate.modulate = Color.WHITE
-	_moving_gate.vertex_id = _moving_gate_origin
+	_snap_gate_to_vertex(_moving_gate, _moving_gate_origin)
 	_moving_gate = null
 	_moving_gate_origin = -1
+	DebugTrace.event("demo_gate", "cancel_moving_gate:done", {})
 
+
+func _snap_gate_to_vertex(gate: Gate, vertex_id: int) -> void:
+	if gate == null or vertex_id < 0:
+		return
+
+	gate.vertex_id = vertex_id
+	var vertex := _graph.get_node_by_id(vertex_id) if _graph != null else null
+	if vertex != null:
+		gate.position = vertex.position
 
 func _delete_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
 	if gate == null:
+		DebugTrace.event("demo_gate", "delete_gate:missing", {"vertex_id": vertex_id})
 		return
 	if gate.is_stunned():
+		DebugTrace.event("demo_gate", "delete_gate:stunned_blocked", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 		return
+	DebugTrace.event("demo_gate", "delete_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_change_temperature(-gate.get_power_cost())
 	gate.queue_free()
+	DebugTrace.event("demo_gate", "delete_gate:queued_free", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 
 
 func _on_gate_destroyed(gate: Gate) -> void:
+	DebugTrace.event("demo_gate", "gate_destroyed_signal", {"gate": DebugTrace.gate_state(gate)})
 	_change_temperature(-gate.get_power_cost())
 
 

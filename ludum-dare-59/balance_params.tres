@@ -12,7 +12,7 @@
 [sub_resource type="Resource" id="EnemyParams_crytter"]
 script = ExtResource("2_enemy_params")
 id = "crytter"
-max_hp = 8
+max_hp = 5
 move_duration = 0.7
 modulate = Color(0.4, 1, 0.4, 1)
 
@@ -20,7 +20,7 @@ modulate = Color(0.4, 1, 0.4, 1)
 script = ExtResource("2_enemy_params")
 id = "raider_stunner"
 damage = 2
-max_hp = 15
+max_hp = 8
 move_duration = 1.0
 can_stun_gate = true
 modulate = Color(0.95, 0.85, 0.2, 1)
@@ -29,7 +29,6 @@ modulate = Color(0.95, 0.85, 0.2, 1)
 script = ExtResource("2_enemy_params")
 id = "brute"
 damage = 4
-max_hp = 24
 move_duration = 1.5
 modulate = Color(1, 0.3, 0.3, 1)
 
