@@ -88,6 +88,16 @@ func set_pause_button_state(pressed: bool) -> void:
 		_pause_button.set_pressed_no_signal(pressed)
 
 
+func set_player_controls_disabled(disabled: bool) -> void:
+	if _root == null:
+		return
+	for node: Node in _root.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button == null or button.name == "DebugVictoryButton":
+			continue
+		button.disabled = disabled
+
+
 func update_temperature(current: int, maximum: int) -> void:
 	if _temperature_fill != null:
 		var ratio := float(current) / float(maximum)

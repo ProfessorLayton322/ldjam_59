@@ -49,6 +49,19 @@ func configure_flow() -> void:
 		TutorialEvents.first_crytter_despawned.connect(_on_first_crytter_despawned)
 	ballista_button = demo._gate_buttons.get(TUTORIAL_BALLISTA_ID) as Button
 	apply_button_locks()
+func _should_lock_before_first_dialogue() -> bool:
+	return TutorialEvents.first_level_tutorial_active and step == Step.NONE and not TutorialEvents.first_crytter_moved_two_tiles_emitted
+
+
+func _set_pre_dialogue_input_locked(locked: bool) -> void:
+	if demo._sidebar != null and demo._sidebar.has_method("set_player_controls_disabled"):
+		demo._sidebar.set_player_controls_disabled(locked)
+	if demo._camera != null:
+		demo._camera.set_process_input(not locked)
+	if locked:
+		demo._set_gate_placement_enabled(false)
+
+
 func handle_gate_button_pressed(definition: Resource, button: Button) -> bool:
 	if step == Step.SELECT_BALLISTA:
 		if definition == null or definition.id != TUTORIAL_BALLISTA_ID:
@@ -65,6 +78,9 @@ func handle_gate_button_pressed(definition: Resource, button: Button) -> bool:
 			return true
 	return false
 func handle_input(event: InputEvent) -> bool:
+	if _should_lock_before_first_dialogue():
+		demo.get_viewport().set_input_as_handled()
+		return true
 	if step == Step.SELECT_BALLISTA:
 		if _try_select_ballista_from_key(event):
 			demo.get_viewport().set_input_as_handled()
@@ -186,6 +202,9 @@ func _complete_ballista_remove() -> void:
 	demo._set_pause_mode_enabled(false)
 	apply_button_locks()
 func handle_unhandled_input(event: InputEvent) -> bool:
+	if _should_lock_before_first_dialogue():
+		demo.get_viewport().set_input_as_handled()
+		return true
 	if step == Step.SELECT_BALLISTA:
 		if event is InputEventKey and event.pressed and not event.echo:
 			_try_select_ballista_from_key(event)
@@ -372,6 +391,10 @@ func _is_global_position_on_target(global_position: Vector2) -> bool:
 	var target_radius := maxf(demo._get_gate_placement_radius(), 48.0)
 	return click_position.distance_to(target_position) <= target_radius
 func apply_button_locks() -> void:
+	if _should_lock_before_first_dialogue():
+		_set_pre_dialogue_input_locked(true)
+		return
+	_set_pre_dialogue_input_locked(false)
 	if demo._gate_buttons.is_empty():
 		return
 	if step == Step.SELECT_BALLISTA or step == Step.PLACE_BALLISTA:
