@@ -81,10 +81,12 @@ func _build_victory_panel() -> void:
 
 
 func _on_retry_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
 
 
 func _on_menu_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")

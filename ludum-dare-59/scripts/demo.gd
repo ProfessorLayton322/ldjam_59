@@ -128,6 +128,7 @@ func _create_gate_buttons() -> void:
 
 
 func _on_gate_button_pressed(definition: Resource, button: Button) -> void:
+	AudioManager.play_ui_interaction()
 	if _tutorial_manager != null and _tutorial_manager.handle_gate_button_pressed(definition, button):
 		return
 
@@ -178,6 +179,10 @@ func _on_pause_button_pressed() -> void:
 
 func _set_pause_mode_enabled(enabled: bool) -> void:
 	get_tree().paused = enabled
+	if enabled:
+		AudioManager.play_pause_activated()
+	else:
+		AudioManager.play_pause_deactivated()
 	if _sidebar != null:
 		_sidebar.set_pause_button_state(enabled)
 
@@ -193,6 +198,7 @@ func _complete_level_with_victory() -> void:
 	if _level_timer != null:
 		_level_timer.stop()
 
+	AudioManager.play_level_victory()
 	if LevelState.advance_to_next_level():
 		get_tree().call_deferred("change_scene_to_file", "res://scenes/ld_gameplay.tscn")
 	else:
@@ -201,7 +207,7 @@ func _complete_level_with_victory() -> void:
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	if not _level_finished:
-		AudioManager.play_sfx(AudioManager.SFX_CPU_HIT)
+		AudioManager.play_cpu_damage()
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
@@ -212,7 +218,7 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	_spawn_damage_label(damage, region["world_pos"])
 	if region["hp"] <= 0:
 		if not _level_finished:
-			AudioManager.play_sfx(AudioManager.SFX_CPU_DEATH)
+			AudioManager.play_cpu_death()
 		_level_finished = true
 		_hud.show_game_over()
 
@@ -313,9 +319,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var vertex_id := _get_track_vertex_id_at_global_position(get_global_mouse_position())
 	if vertex_id == -1:
+		if _selected_gate_definition != null:
+			AudioManager.play_invalid_gate_tile()
 		return
 
 	if Gate.get_gate(_graph, vertex_id) != null:
+		if _selected_gate_definition != null:
+			AudioManager.play_invalid_gate_tile()
+			return
 		_pickup_gate_at(vertex_id)
 		return
 
@@ -395,6 +406,7 @@ func _ready() -> void:
 	_start_trigger_timer()
 	_create_gate_buttons()
 	_tutorial_manager.configure_flow()
+	AudioManager.play_level_beginning()
 	_start_enemy_spawning()
 	_start_level_timer()
 	AudioManager.play_music()

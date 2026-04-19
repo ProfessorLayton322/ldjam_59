@@ -103,6 +103,7 @@ func _on_pause_toggled() -> void:
 
 
 func _on_victory_debug_pressed() -> void:
+	AudioManager.play_ui_interaction()
 	victory_debug_requested.emit()
 
 
