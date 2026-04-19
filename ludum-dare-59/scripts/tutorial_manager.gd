@@ -7,9 +7,12 @@ const TUTORIAL_DIALOGUE_2_ID := "tutorial_dialogue_1_2"
 const TUTORIAL_DIALOGUE_2_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl"
 const TUTORIAL_DIALOGUE_3_ID := "tutorial_dialogue_1_3"
 const TUTORIAL_DIALOGUE_3_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl"
+const TUTORIAL_DIALOGUE_4_ID := "tutorial_dialogue_1_4"
+const TUTORIAL_DIALOGUE_4_PATH := "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl"
 const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
 const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
 const TUTORIAL_BALLISTA_ID := "ballista"
+const UI_OVERVIEW_HIGHLIGHT_IDS := ["health", "temperature", "barricade", "tar", "divider", "pause"]
 enum Step {
 	NONE,
 	SELECT_BALLISTA,
@@ -17,6 +20,7 @@ enum Step {
 	WAIT_FIRST_CRYTTER_DEATH,
 	MOVE_BALLISTA,
 	REMOVE_BALLISTA,
+	UI_OVERVIEW,
 	DONE,
 }
 var demo
@@ -29,6 +33,7 @@ var ballista_gate: Gate
 var ballista_button: Button
 var dialog_manual_advance_was_enabled := true
 var dialog_layout: Node
+var ui_overview_highlight_target: Node
 func _init(p_demo: Node) -> void:
 	demo = p_demo
 func setup_state() -> void:
@@ -79,6 +84,11 @@ func handle_gate_button_pressed(definition: Resource, button: Button) -> bool:
 	return false
 func handle_input(event: InputEvent) -> bool:
 	if _should_lock_before_first_dialogue():
+		demo.get_viewport().set_input_as_handled()
+		return true
+	if step == Step.UI_OVERVIEW:
+		if _is_left_mouse_pressed(event):
+			_advance_ui_overview_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.SELECT_BALLISTA:
@@ -196,13 +206,18 @@ func _complete_ballista_move() -> void:
 func _complete_ballista_remove() -> void:
 	if ballista_gate != null and is_instance_valid(ballista_gate):
 		TutorialEvents.stop_highlighter(ballista_gate)
-	_end_tutorial_dialogue()
-	step = Step.DONE
 	TutorialEvents.stop_all_highlighters()
-	demo._set_pause_mode_enabled(false)
+	step = Step.UI_OVERVIEW
+	demo._set_pause_mode_enabled(true)
 	apply_button_locks()
+	_replace_tutorial_dialogue(TUTORIAL_DIALOGUE_4_ID, TUTORIAL_DIALOGUE_4_PATH, Step.UI_OVERVIEW)
 func handle_unhandled_input(event: InputEvent) -> bool:
 	if _should_lock_before_first_dialogue():
+		demo.get_viewport().set_input_as_handled()
+		return true
+	if step == Step.UI_OVERVIEW:
+		if _is_left_mouse_pressed(event):
+			_advance_ui_overview_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.SELECT_BALLISTA:
@@ -267,6 +282,11 @@ func _handle_ballista_remove_input(event: InputEvent) -> void:
 		return
 	demo._delete_gate_at(vertex_id)
 	_complete_ballista_remove()
+func _is_left_mouse_pressed(event: InputEvent) -> bool:
+	if not event is InputEventMouseButton:
+		return false
+	var mouse_event := event as InputEventMouseButton
+	return mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed
 func _try_pickup_ballista(global_position: Vector2) -> void:
 	ballista_gate = _get_current_ballista_gate()
 	if ballista_gate == null:
@@ -394,6 +414,9 @@ func apply_button_locks() -> void:
 	if _should_lock_before_first_dialogue():
 		_set_pre_dialogue_input_locked(true)
 		return
+	if step == Step.UI_OVERVIEW:
+		_set_pre_dialogue_input_locked(true)
+		return
 	_set_pre_dialogue_input_locked(false)
 	if demo._gate_buttons.is_empty():
 		return
@@ -421,23 +444,31 @@ func apply_button_locks() -> void:
 			button.disabled = not demo._can_place_gate(gate_definition)
 		if demo._pause_button != null:
 			demo._pause_button.disabled = false
-func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String) -> void:
+func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String, manual_advance_enabled: bool = false) -> void:
 	if dialog_layout != null and is_instance_valid(dialog_layout):
 		return
 	dialog_manual_advance_was_enabled = Dialogic.Inputs.manual_advance.system_enabled
-	Dialogic.Inputs.manual_advance.system_enabled = false
+	Dialogic.Inputs.manual_advance.system_enabled = manual_advance_enabled
 	Dialogic.process_mode = Node.PROCESS_MODE_ALWAYS
+	if not Dialogic.timeline_ended.is_connected(_on_tutorial_dialogue_ended):
+		Dialogic.timeline_ended.connect(_on_tutorial_dialogue_ended)
+	if dialogue_id == TUTORIAL_DIALOGUE_4_ID:
+		_connect_ui_overview_dialogue_signals()
 	var timeline: String = dialogue_id
 	if not Dialogic.timeline_exists(timeline):
 		timeline = dialogue_path
 	dialog_layout = Dialogic.start(timeline)
 	if dialog_layout == null:
 		Dialogic.Inputs.manual_advance.system_enabled = dialog_manual_advance_was_enabled
+		_disconnect_ui_overview_dialogue_signals()
 		push_error("Tutorial dialogue failed to start: %s" % timeline)
 		return
 	dialog_layout.process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("_position_tutorial_dialogue")
+	if dialogue_id == TUTORIAL_DIALOGUE_4_ID:
+		_set_ui_overview_highlight(0)
 func _end_tutorial_dialogue() -> void:
+	_disconnect_ui_overview_dialogue_signals()
 	Dialogic.Inputs.manual_advance.system_enabled = dialog_manual_advance_was_enabled
 	if Dialogic.current_timeline != null:
 		Dialogic.end_timeline(true)
@@ -453,7 +484,71 @@ func _replace_tutorial_dialogue(dialogue_id: String, dialogue_path: String, expe
 	await demo.get_tree().process_frame
 	if expected_step != Step.NONE and step != expected_step:
 		return
-	_start_tutorial_dialogue(dialogue_id, dialogue_path)
+	_start_tutorial_dialogue(dialogue_id, dialogue_path, dialogue_id == TUTORIAL_DIALOGUE_4_ID)
+func _connect_ui_overview_dialogue_signals() -> void:
+	if not Dialogic.Text.text_started.is_connected(_on_ui_overview_text_started):
+		Dialogic.Text.text_started.connect(_on_ui_overview_text_started)
+func _disconnect_ui_overview_dialogue_signals() -> void:
+	if Dialogic.Text.text_started.is_connected(_on_ui_overview_text_started):
+		Dialogic.Text.text_started.disconnect(_on_ui_overview_text_started)
+	if Dialogic.timeline_ended.is_connected(_on_tutorial_dialogue_ended):
+		Dialogic.timeline_ended.disconnect(_on_tutorial_dialogue_ended)
+func _is_tutorial_dialogue_active() -> bool:
+	return dialog_layout != null and is_instance_valid(dialog_layout) and Dialogic.current_timeline != null
+func _advance_tutorial_dialogue() -> void:
+	if not _is_tutorial_dialogue_active():
+		return
+	Dialogic.Inputs.input_was_mouse_input = true
+	Dialogic.Inputs.handle_input()
+func _advance_ui_overview_dialogue() -> void:
+	_advance_tutorial_dialogue()
+func _on_ui_overview_text_started(info: Dictionary) -> void:
+	if step != Step.UI_OVERVIEW:
+		return
+	var text := str(info.get("text", ""))
+	for index in UI_OVERVIEW_HIGHLIGHT_IDS.size():
+		if text.find("#%d" % (index + 1)) != -1:
+			_set_ui_overview_highlight(index)
+			return
+func _on_tutorial_dialogue_ended() -> void:
+	_disconnect_ui_overview_dialogue_signals()
+	dialog_layout = null
+	Dialogic.Inputs.manual_advance.system_enabled = dialog_manual_advance_was_enabled
+	if step != Step.UI_OVERVIEW:
+		return
+	if ui_overview_highlight_target != null:
+		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
+		ui_overview_highlight_target = null
+	step = Step.DONE
+	TutorialEvents.stop_all_highlighters()
+	demo._set_pause_mode_enabled(false)
+	apply_button_locks()
+func _set_ui_overview_highlight(index: int) -> void:
+	if ui_overview_highlight_target != null:
+		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
+		ui_overview_highlight_target = null
+	var target := _get_ui_overview_highlight_target(index)
+	if target == null:
+		return
+	ui_overview_highlight_target = target
+	TutorialEvents.start_highlighter(target)
+func _get_ui_overview_highlight_target(index: int) -> Node:
+	match index:
+		0:
+			if not demo._cpu_regions.is_empty():
+				return demo._cpu_regions[0].get("bar") as Node
+		1:
+			if demo._sidebar != null and demo._sidebar.has_method("get_temperature_meter"):
+				return demo._sidebar.get_temperature_meter() as Node
+		2:
+			return demo._gate_buttons.get("barricade") as Node
+		3:
+			return demo._gate_buttons.get("tar") as Node
+		4:
+			return demo._gate_buttons.get("divider") as Node
+		5:
+			return demo._pause_button as Node
+	return null
 func _position_tutorial_dialogue() -> void:
 	if dialog_layout == null or not is_instance_valid(dialog_layout):
 		return
