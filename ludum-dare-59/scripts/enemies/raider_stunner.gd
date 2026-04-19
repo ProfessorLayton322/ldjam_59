@@ -11,4 +11,6 @@ func _on_gate_stun_consumed(_gate: Gate) -> void:
 		"enemy": DebugTrace.enemy_state(self),
 		"gate": DebugTrace.gate_state(_gate),
 	})
-	modulate = Color(0.65, 0.62, 0.35)
+	var icon := get_node_or_null("Icon") as Sprite2D
+	if icon:
+		icon.texture = preload("res://assets/textures/enemies/enemy_raider_stun.svg")

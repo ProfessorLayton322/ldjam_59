@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://pu83ri6cy2bm"]
+[gd_scene load_steps=34 format=3 uid="uid://pu83ri6cy2bm"]
 
 [ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="1_none"]
 [ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="2_w"]
@@ -24,6 +24,11 @@
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_13.tscn" id="22_core_13"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_14.tscn" id="23_core_14"]
 [ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="24_cpu"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_2.tscn" id="25_core_2"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_3.tscn" id="26_core_3"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_4.tscn" id="27_core_4"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_7.tscn" id="28_core_7"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_12.tscn" id="29_core_12"]
 
 [sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_tracks"]
 resource_name = "tracks"
@@ -53,14 +58,24 @@ scenes/3/scene = ExtResource("20_core_8")
 scenes/4/scene = ExtResource("21_core_9")
 scenes/5/scene = ExtResource("22_core_13")
 scenes/6/scene = ExtResource("23_core_14")
+scenes/7/scene = ExtResource("25_core_2")
+scenes/8/scene = ExtResource("26_core_3")
+scenes/9/scene = ExtResource("27_core_4")
+scenes/10/scene = ExtResource("28_core_7")
+scenes/11/scene = ExtResource("29_core_12")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cpu"]
 texture = ExtResource("24_cpu")
 texture_region_size = Vector2i(64, 64)
 0:0/0 = 0
 1:0/0 = 0
+2:0/0 = 0
 0:1/0 = 0
 1:1/0 = 0
+2:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_level_01"]
 tile_size = Vector2i(64, 64)
@@ -74,6 +89,5 @@ sources/2 = SubResource("TileSetAtlasSource_cpu")
 position = Vector2(448, 352)
 tile_set = SubResource("TileSet_level_01")
 format = 2
-layer_0/tile_data = PackedInt32Array(0, 0, 131072, 1, 0, 196608, 2, 0, 196608, 3, 0, 196608, 5, 0, 196608, 6, 0, 196608, 4, 0, 196608, 7, 0, 196608, 8, 0, 196608, 9, 0, 196608, 10, 0, 196608, 11, 0, 196608, 12, 0, 196608, 13, 1, 196608, 14, 1, 262144, 65549, 1, 327680, 65550, 1, 393216)
+layer_0/tile_data = PackedInt32Array(0, 1, 131072, 1, 0, 196608, 2, 0, 196608, 3, 0, 196608, 5, 0, 196608, 6, 0, 196608, 4, 0, 196608, 7, 0, 196608, 8, 0, 196608, 9, 0, 196608, 10, 0, 196608, 11, 0, 196608, 12, 0, 196608, 14, 1, 196608, 15, 1, 262144, 65550, 1, 327680, 65551, 1, 393216, -65523, 1, 458752, -65522, 1, 524288, -65521, 1, 589824, 13, 1, 655360, 65549, 1, 720896)
 layer_1/name = "Gameplay"
-layer_1/tile_data = PackedInt32Array(0, 1, 131072)
