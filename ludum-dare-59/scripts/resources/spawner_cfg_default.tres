@@ -7,4 +7,5 @@
 
 [resource]
 script = ExtResource("1_spawner_cfg")
+tick = 5.0
 enemy_scenes = Array[PackedScene]([ExtResource("2_crytter"), ExtResource("5_raider_stunner"), ExtResource("4_brute")])
