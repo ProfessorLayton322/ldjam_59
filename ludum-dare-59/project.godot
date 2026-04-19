@@ -61,6 +61,10 @@ custom_bind_ip="0.0.0.0"
 port_override_enabled=false
 port_override=6550
 
+[gui]
+
+theme/custom="res://theme.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
