@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BalanceParams" load_steps=12 format=3 uid="uid://3qxn6kw7v1p"]
 
-[ext_resource type="Script" uid="uid://c6csnsosm7dfa" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
-[ext_resource type="Script" uid="uid://cya641xsabq38" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
+[ext_resource type="Script" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
+[ext_resource type="Script" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_barricade.tres" id="3_barricade"]
 [ext_resource type="Script" uid="uid://dc2ke2b6entve" path="res://scripts/resources/gate_definition.gd" id="3_vh0te"]
 [ext_resource type="Resource" path="res://scripts/resources/gate_def_ballista.tres" id="4_ballista"]

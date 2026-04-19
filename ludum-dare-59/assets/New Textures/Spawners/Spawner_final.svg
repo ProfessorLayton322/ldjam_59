@@ -1,13 +1,14 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="44" y="26" width="19" height="3" fill="#D9D9D9"/>
-<rect x="44" y="36" width="19" height="3" fill="#D9D9D9"/>
-<rect x="44" y="31" width="19" height="3" fill="#D9D9D9"/>
-<rect x="38" width="19" height="3" transform="rotate(90 38 0)" fill="#D9D9D9"/>
-<rect x="28" width="19" height="3" transform="rotate(90 28 0)" fill="#D9D9D9"/>
-<rect x="33" width="19" height="3" transform="rotate(90 33 0)" fill="#D9D9D9"/>
-<rect x="1" y="26" width="19" height="3" fill="#D9D9D9"/>
-<rect x="1" y="36" width="19" height="3" fill="#D9D9D9"/>
-<rect x="1" y="31" width="19" height="3" fill="#D9D9D9"/>
-<path d="M31.8452 64L24 55L40 55L31.8452 64Z" fill="#F5F5F5"/>
-<path d="M56 32.5C56 46.031 45.2548 57 32 57C18.7452 57 8 46.031 8 32.5C8 18.969 18.7452 8 32 8C45.2548 8 56 18.969 56 32.5Z" fill="#312AFF" stroke="white" stroke-width="3"/>
+<path d="M31.7291 64L18 47L46 47L31.7291 64Z" fill="#F5F5F5"/>
+<rect x="42.875" y="23.5625" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<rect x="42.875" y="32.625" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<rect x="42.875" y="28.0938" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<rect x="37.4375" width="17.2188" height="2.71875" transform="rotate(90 37.4375 0)" fill="#D9D9D9"/>
+<rect x="28.375" width="17.2188" height="2.71875" transform="rotate(90 28.375 0)" fill="#D9D9D9"/>
+<rect x="32.9062" width="17.2188" height="2.71875" transform="rotate(90 32.9062 0)" fill="#D9D9D9"/>
+<rect x="3.90625" y="23.5625" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<rect x="3.90625" y="32.625" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<rect x="3.90625" y="28.0938" width="17.2188" height="2.71875" fill="#D9D9D9"/>
+<path d="M31.8597 58L24.75 49.8438L39.25 49.8438L31.8597 58Z" fill="#F5F5F5"/>
+<path d="M53.75 29.4531C53.75 41.7156 44.0122 51.6562 32 51.6562C19.9878 51.6562 10.25 41.7156 10.25 29.4531C10.25 17.1907 19.9878 7.25 32 7.25C44.0122 7.25 53.75 17.1907 53.75 29.4531Z" fill="#312AFF" stroke="white" stroke-width="3"/>
 </svg>
