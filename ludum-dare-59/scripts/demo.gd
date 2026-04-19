@@ -406,6 +406,9 @@ func _cancel_moving_gate() -> void:
 
 
 func _delete_gate_at(vertex_id: int) -> bool:
+	if _tutorial_manager != null and _tutorial_manager.should_block_manual_gate_delete(vertex_id):
+		AudioManager.play_invalid_gate_move()
+		return false
 	return _gate_interaction.delete_gate_at(vertex_id)
 
 

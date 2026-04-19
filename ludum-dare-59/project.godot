@@ -23,16 +23,15 @@ manager/sound/pool_1D_size=64
 [autoload]
 
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
-ResolutionManager="*res://scripts/resolution_manager.gd"
-LevelState="*res://scripts/level_state.gd"
 BalanceManager="*res://scripts/balance_manager.gd"
+LevelState="*res://scripts/level_state.gd"
+ResolutionManager="*res://scripts/resolution_manager.gd"
+TutorialEvents="*res://scripts/tutorial_events.gd"
+Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 SoundManager="*res://addons/resonate/sound_manager/sound_manager.gd"
 MusicManager="*res://addons/resonate/music_manager/music_manager.gd"
 AudioManager="*res://scripts/audio_manager.gd"
-
 EnemiesSpawnConfig="*res://scripts/enemies_spawn_config.gd"
-TutorialEvents="*res://scripts/tutorial_events.gd"
-Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 
 [dialogic]
 
@@ -41,7 +40,8 @@ directories/dtl_directory={
 "tutorial_dialogue_1_1": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_1.dtl",
 "tutorial_dialogue_1_2": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl",
 "tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl",
-"tutorial_dialogue_1_4": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl"
+"tutorial_dialogue_1_4": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl",
+"tutorial_dialogue_1_5": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_5.dtl"
 }
 layout/style_directory={}
 

@@ -79,6 +79,24 @@ func take_next_enemy_types() -> Array[int]:
 	return batch
 
 
+func ensure_next_enemy_type(enemy_type: int) -> bool:
+	if _prepared_level_index != _get_current_level_index():
+		prepare_for_current_level()
+	if _enemy_order.is_empty():
+		return false
+	if _enemy_order[0] == enemy_type:
+		return true
+
+	var enemy_index := _enemy_order.find(enemy_type)
+	if enemy_index == -1:
+		return false
+
+	var previous_first := _enemy_order[0]
+	_enemy_order[0] = _enemy_order[enemy_index]
+	_enemy_order[enemy_index] = previous_first
+	return true
+
+
 func get_enemy_scene(enemy_type: int) -> PackedScene:
 	match enemy_type:
 		CRYTTER:
