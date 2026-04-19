@@ -6,8 +6,6 @@ const POSITION_MATCH_EPSILON := 1.0
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
-@onready var death_sfx_player = $DeathSFXPlayer
-@onready var damage_sfx_player = $DamageSFXPlayer
 
 
 var _graph: Graph
@@ -63,6 +61,7 @@ func _get_gate_placement_radius() -> float:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().paused = false
+		AudioManager.stop_music()
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		return
 
@@ -174,6 +173,7 @@ func _ready() -> void:
 	_start_trigger_timer()
 	_create_gate_buttons()
 	_start_level_timer()
+	AudioManager.play_music()
 
 
 func _instantiate_level_board() -> bool:
@@ -799,7 +799,7 @@ func _on_gate_destroyed(gate: Gate) -> void:
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 	if not _level_finished:
-		damage_sfx_player.play()
+		AudioManager.play_sfx(AudioManager.SFX_CPU_HIT)
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
@@ -810,7 +810,7 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 		_spawn_damage_label(damage, bar.position)
 	if region["hp"] <= 0:
 		if not _level_finished:
-			death_sfx_player.play()
+			AudioManager.play_sfx(AudioManager.SFX_CPU_DEATH)
 		_level_finished = true
 		_hud.show_game_over()
 		

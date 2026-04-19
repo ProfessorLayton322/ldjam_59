@@ -63,6 +63,7 @@ func _ready() -> void:
 	_update_position_from_vertex()
 	_current_hp = _get_max_hp()
 	_update_icon()
+	AudioManager.play_sfx(AudioManager.SFX_GATE_PLACE)
 
 
 func _enter_tree() -> void:
