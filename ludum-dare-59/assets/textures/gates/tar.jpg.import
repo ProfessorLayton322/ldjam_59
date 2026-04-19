@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bokh3uqiy7gle"
-path="res://.godot/imported/ballista_gate.svg-aa059664cf60111e30eae6c8a5807e0d.ctex"
+uid="uid://cuop57jvcf8yo"
+path="res://.godot/imported/tar.jpg-a9f645e6abbc9c78467e6deec68f310d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/gates/ballista_gate.svg"
-dest_files=["res://.godot/imported/ballista_gate.svg-aa059664cf60111e30eae6c8a5807e0d.ctex"]
+source_file="res://assets/textures/gates/tar.jpg"
+dest_files=["res://.godot/imported/tar.jpg-a9f645e6abbc9c78467e6deec68f310d.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

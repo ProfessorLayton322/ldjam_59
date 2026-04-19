@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://5db4twqo2063"
-path="res://.godot/imported/divider_gate.svg-df2d7548bebfdf5b73e411593a2ed509.ctex"
+uid="uid://c33k8h1a8a4jo"
+path="res://.godot/imported/ballista.png-d9a90da8738f9ed8c5d28eef13dadd3b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/gates/divider_gate.svg"
-dest_files=["res://.godot/imported/divider_gate.svg-df2d7548bebfdf5b73e411593a2ed509.ctex"]
+source_file="res://assets/textures/gates/ballista.png"
+dest_files=["res://.godot/imported/ballista.png-d9a90da8738f9ed8c5d28eef13dadd3b.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
