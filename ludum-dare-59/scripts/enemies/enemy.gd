@@ -11,6 +11,7 @@ extends Node2D
 @export var hp: int = 10
 @export var can_stun_gate := false
 @export var gate_stun_duration := 3.0
+@export var damage_sound: AudioStream
 
 var path: Array[int] = []
 
@@ -178,8 +179,17 @@ func _has_valid_node_index(node_index: int) -> bool:
 
 func apply_damage(amount: int) -> void:
 	hp -= amount
+	play_damage_sound()
 	if hp <= 0:
 		queue_free()
+
+
+func play_damage_sound():
+	var audio_player = AudioStreamPlayer2D.new()
+	audio_player.stream = damage_sound
+	get_parent().add_child(audio_player)
+	audio_player.finished.connect(audio_player.queue_free)
+	audio_player.play()
 
 
 func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:

@@ -6,6 +6,8 @@ const POSITION_MATCH_EPSILON := 1.0
 @export var level: LevelDefinition
 @export var trigger_timer_path: NodePath = ^"TriggerTimer"
 @export var spawn_enemy_manager_path: NodePath = ^"SpawnEnemyManager"
+@onready var death_sfx_player = $DeathSFXPlayer
+@onready var damage_sfx_player = $DamageSFXPlayer
 
 
 var _graph: Graph
@@ -796,6 +798,8 @@ func _on_gate_destroyed(gate: Gate) -> void:
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
+	if not _level_finished:
+		damage_sfx_player.play()
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
@@ -805,8 +809,11 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 		bar.set_hp(region["hp"], _get_cpu_hp())
 		_spawn_damage_label(damage, bar.position)
 	if region["hp"] <= 0:
+		if not _level_finished:
+			death_sfx_player.play()
 		_level_finished = true
 		_hud.show_game_over()
+		
 
 
 func _spawn_damage_label(damage: int, world_pos: Vector2) -> void:

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://enemy0scene01x"]
+[gd_scene load_steps=3 format=3 uid="uid://ci4wlnes6pq8v"]
 
 [ext_resource type="Script" uid="uid://ccsh7yylhkmc1" path="res://scripts/enemies/enemy.gd" id="1_enemy"]
+[ext_resource type="AudioStream" uid="uid://rj11gdapujnq" path="res://assets/audio/sfx/hurting_the_robot.wav" id="2_8e3ao"]
 
 [node name="Enemy" type="Node2D"]
 script = ExtResource("1_enemy")
+damage_sound = ExtResource("2_8e3ao")
