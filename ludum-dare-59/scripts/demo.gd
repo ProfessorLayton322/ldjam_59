@@ -1,6 +1,7 @@
 class_name DemoScene
 extends Node2D
 
+const DebugTrace := preload("res://scripts/debug_trace.gd")
 const GATE_SCENE := preload("res://scenes/gates/gate.tscn")
 const POSITION_MATCH_EPSILON := 1.0
 const TUTORIAL_DIALOGUE_ID := "tutorial_dialogue_1_1"
@@ -773,15 +774,35 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 
 func _place_gate(vertex_id: int, definition: Resource) -> bool:
+	DebugTrace.event("demo_gate", "place_gate:start", {
+		"vertex_id": vertex_id,
+		"definition_id": definition.id if definition != null else "",
+		"temperature": _temperature,
+		"max_temperature": _get_max_temperature(),
+	})
 	if not _can_place_gate(definition):
+		DebugTrace.event("demo_gate", "place_gate:cannot_place", {
+			"vertex_id": vertex_id,
+			"definition_id": definition.id if definition != null else "",
+			"temperature": _temperature,
+		})
 		_set_gate_placement_enabled(false)
 		return false
 
-	if Gate.get_gate(_graph, vertex_id) != null:
+	var existing_gate := Gate.get_gate(_graph, vertex_id)
+	if existing_gate != null:
+		DebugTrace.event("demo_gate", "place_gate:occupied", {
+			"vertex_id": vertex_id,
+			"existing_gate": DebugTrace.gate_state(existing_gate),
+		})
 		return false
 
 	var tile := _tiles_by_node_id.get(vertex_id) as BaseTile
 	if not (tile is WireTile):
+		DebugTrace.event("demo_gate", "place_gate:not_wire_tile", {
+			"vertex_id": vertex_id,
+			"tile": DebugTrace.node_state(tile),
+		})
 		return false
 
 	var gate := GATE_SCENE.instantiate() as Gate
@@ -791,6 +812,11 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 	gate.destroyed.connect(_on_gate_destroyed)
 	add_child(gate)
 	_change_temperature(definition.power_cost)
+	DebugTrace.event("demo_gate", "place_gate:done", {
+		"vertex_id": vertex_id,
+		"gate": DebugTrace.gate_state(gate),
+		"temperature": _temperature,
+	})
 	return true
 
 
@@ -822,9 +848,19 @@ func _on_tutorial_first_crytter_spawned(_enemy: Enemy, spawner_node_id: int) -> 
 	_tutorial_target_vertex_id = _find_tutorial_target_vertex_id(spawner_node_id)
 	TutorialEvents.target_ballista_vertex_id = _tutorial_target_vertex_id
 	_tutorial_target_tile = _tiles_by_node_id.get(_tutorial_target_vertex_id) as BaseTile
+	DebugTrace.event("tutorial", "first_crytter_spawned", {
+		"enemy": DebugTrace.enemy_state(_enemy),
+		"spawner_node_id": spawner_node_id,
+		"target_vertex_id": _tutorial_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_target_tile),
+	})
 
 
 func _on_tutorial_first_crytter_moved_two_tiles(_enemy: Enemy) -> void:
+	DebugTrace.event("tutorial", "first_crytter_moved_two_tiles", {
+		"enemy": DebugTrace.enemy_state(_enemy),
+		"current_step": _tutorial_step,
+	})
 	if _tutorial_step != TutorialStep.NONE:
 		return
 
@@ -837,6 +873,10 @@ func _on_tutorial_first_crytter_moved_two_tiles(_enemy: Enemy) -> void:
 
 
 func _begin_tutorial_ballista_placement() -> void:
+	DebugTrace.event("tutorial", "begin_ballista_placement", {
+		"target_vertex_id": _tutorial_target_vertex_id,
+		"target_tile": DebugTrace.node_state(_tutorial_target_tile),
+	})
 	_tutorial_step = TutorialStep.PLACE_BALLISTA
 	_apply_tutorial_button_locks()
 	if _tutorial_target_tile != null:
@@ -844,6 +884,10 @@ func _begin_tutorial_ballista_placement() -> void:
 
 
 func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
+	DebugTrace.event("tutorial", "target_ballista_placed", {
+		"vertex_id": _vertex_id,
+		"gate": DebugTrace.gate_state(_gate),
+	})
 	if _tutorial_target_tile != null:
 		TutorialEvents.stop_highlighter(_tutorial_target_tile)
 
@@ -854,6 +898,7 @@ func _on_tutorial_target_ballista_placed(_vertex_id: int, _gate: Gate) -> void:
 
 
 func _on_tutorial_first_crytter_despawned(_enemy: Enemy) -> void:
+	DebugTrace.event("tutorial", "first_crytter_despawned", {"enemy": DebugTrace.enemy_state(_enemy)})
 	_tutorial_step = TutorialStep.DONE
 	TutorialEvents.stop_all_highlighters()
 	_apply_tutorial_button_locks()
@@ -899,24 +944,40 @@ func _handle_tutorial_unhandled_input(event: InputEvent) -> bool:
 
 
 func _try_place_tutorial_ballista(global_position: Vector2) -> bool:
+	DebugTrace.event("tutorial", "try_place_ballista:start", {
+		"global_position": global_position,
+		"selected_definition_id": _selected_gate_definition.id if _selected_gate_definition != null else "",
+		"target_vertex_id": _tutorial_target_vertex_id,
+	})
 	if _selected_gate_definition == null or _selected_gate_definition.id != TUTORIAL_BALLISTA_ID:
+		DebugTrace.event("tutorial", "try_place_ballista:no_selected_ballista", {})
 		return false
 
 	var vertex_id := _get_track_vertex_id_at_global_position(global_position)
 	if vertex_id != _tutorial_target_vertex_id:
 		if not _is_global_position_on_tutorial_target(global_position):
+			DebugTrace.event("tutorial", "try_place_ballista:not_target", {
+				"computed_vertex_id": vertex_id,
+				"target_vertex_id": _tutorial_target_vertex_id,
+			})
 			return false
 		vertex_id = _tutorial_target_vertex_id
 
 	if vertex_id == -1:
+		DebugTrace.event("tutorial", "try_place_ballista:no_vertex", {})
 		return false
 
 	if not _place_gate(vertex_id, _selected_gate_definition):
+		DebugTrace.event("tutorial", "try_place_ballista:place_failed", {"vertex_id": vertex_id})
 		return false
 
 	var gate := Gate.get_gate(_graph, vertex_id)
 	_set_gate_placement_enabled(false)
 	TutorialEvents.emit_target_ballista_placed(vertex_id, gate)
+	DebugTrace.event("tutorial", "try_place_ballista:done", {
+		"vertex_id": vertex_id,
+		"gate": DebugTrace.gate_state(gate),
+	})
 	return true
 
 
@@ -1045,6 +1106,7 @@ func _disable_tutorial_dialogue_input_catcher() -> void:
 func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
 	var spawner_vertex := _graph.get_node_by_id(spawner_node_id)
 	if spawner_vertex == null:
+		DebugTrace.event("tutorial", "find_target:missing_spawner", {"spawner_node_id": spawner_node_id})
 		return -1
 
 	var target_position := spawner_vertex.position + Vector2(256.0, 0.0)
@@ -1061,6 +1123,12 @@ func _find_tutorial_target_vertex_id(spawner_node_id: int) -> int:
 		best_vertex_id = vertex.id
 		best_distance = distance
 
+	DebugTrace.event("tutorial", "find_target:done", {
+		"spawner_node_id": spawner_node_id,
+		"target_position": target_position,
+		"best_vertex_id": best_vertex_id,
+		"best_distance": best_distance,
+	})
 	return best_vertex_id
 
 func _can_place_gate(definition: Resource) -> bool:
@@ -1123,14 +1191,22 @@ func _complete_level_with_victory() -> void:
 func _pickup_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
 	if gate == null:
+		DebugTrace.event("demo_gate", "pickup_gate:missing", {"vertex_id": vertex_id})
 		return
+	DebugTrace.event("demo_gate", "pickup_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_moving_gate = gate
 	_moving_gate_origin = vertex_id
 	gate.modulate = Color(1.3, 1.3, 0.5)
+	DebugTrace.event("demo_gate", "pickup_gate:done", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
 	var gate := _moving_gate
+	DebugTrace.event("demo_gate", "drop_moving_gate:start", {
+		"gate": DebugTrace.gate_state(gate),
+		"origin": _moving_gate_origin,
+		"global_pos": global_pos,
+	})
 	_moving_gate = null
 	gate.modulate = Color.WHITE
 
@@ -1138,37 +1214,62 @@ func _drop_moving_gate(global_pos: Vector2) -> void:
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
 		gate.vertex_id = _moving_gate_origin
 		_moving_gate_origin = -1
+		DebugTrace.event("demo_gate", "drop_moving_gate:returned_origin", {
+			"gate": DebugTrace.gate_state(gate),
+			"target_vertex_id": target_vertex_id,
+		})
 		return
 
-	if Gate.get_gate(_graph, target_vertex_id) != null:
+	var existing_gate := Gate.get_gate(_graph, target_vertex_id)
+	if existing_gate != null:
 		gate.vertex_id = _moving_gate_origin
 		_moving_gate_origin = -1
+		DebugTrace.event("demo_gate", "drop_moving_gate:occupied_returned_origin", {
+			"gate": DebugTrace.gate_state(gate),
+			"target_vertex_id": target_vertex_id,
+			"existing_gate": DebugTrace.gate_state(existing_gate),
+		})
 		return
 
 	gate.vertex_id = target_vertex_id
 	_moving_gate_origin = -1
+	DebugTrace.event("demo_gate", "drop_moving_gate:moved", {
+		"gate": DebugTrace.gate_state(gate),
+		"target_vertex_id": target_vertex_id,
+	})
 
 
 func _cancel_moving_gate() -> void:
 	if _moving_gate == null:
+		DebugTrace.event("demo_gate", "cancel_moving_gate:none", {})
 		return
+	DebugTrace.event("demo_gate", "cancel_moving_gate:start", {
+		"gate": DebugTrace.gate_state(_moving_gate),
+		"origin": _moving_gate_origin,
+	})
 	_moving_gate.modulate = Color.WHITE
 	_moving_gate.vertex_id = _moving_gate_origin
 	_moving_gate = null
 	_moving_gate_origin = -1
+	DebugTrace.event("demo_gate", "cancel_moving_gate:done", {})
 
 
 func _delete_gate_at(vertex_id: int) -> void:
 	var gate := Gate.get_gate(_graph, vertex_id)
 	if gate == null:
+		DebugTrace.event("demo_gate", "delete_gate:missing", {"vertex_id": vertex_id})
 		return
 	if gate.is_stunned():
+		DebugTrace.event("demo_gate", "delete_gate:stunned_blocked", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 		return
+	DebugTrace.event("demo_gate", "delete_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_change_temperature(-gate.get_power_cost())
 	gate.queue_free()
+	DebugTrace.event("demo_gate", "delete_gate:queued_free", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 
 
 func _on_gate_destroyed(gate: Gate) -> void:
+	DebugTrace.event("demo_gate", "gate_destroyed_signal", {"gate": DebugTrace.gate_state(gate)})
 	_change_temperature(-gate.get_power_cost())
 
 
