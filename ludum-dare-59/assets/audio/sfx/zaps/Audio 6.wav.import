@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://ycor01ghgx2f"
+path="res://.godot/imported/Audio 6.wav-a6de22c5e389e7fc7b35deaa157da278.sample"
+
+[deps]
+
+source_file="res://assets/audio/sfx/zaps/Audio 6.wav"
+dest_files=["res://.godot/imported/Audio 6.wav-a6de22c5e389e7fc7b35deaa157da278.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
