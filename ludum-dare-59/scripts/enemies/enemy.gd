@@ -238,7 +238,7 @@ func apply_damage(amount: int) -> void:
 		"amount": amount,
 	})
 	hp -= amount
-	play_damage_sound()
+	AudioManager.play_enemy_damage(_get_balance_id())
 	if hp <= 0:
 		DebugTrace.event("enemy_damage", "apply_damage:queue_free", {
 			"enemy": DebugTrace.enemy_state(self),
@@ -251,10 +251,6 @@ func apply_damage(amount: int) -> void:
 		"enemy": DebugTrace.enemy_state(self),
 		"amount": amount,
 	})
-
-
-func play_damage_sound() -> void:
-	AudioManager.play_enemy_damage(_get_balance_id())
 
 
 func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:

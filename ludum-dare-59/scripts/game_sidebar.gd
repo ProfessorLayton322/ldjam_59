@@ -3,6 +3,8 @@ extends CanvasLayer
 signal gate_button_pressed(definition: Resource, button: Button)
 signal pause_toggled
 signal victory_debug_requested
+signal menu_pressed
+signal settings_pressed
 
 const CpuHpBarScene := preload("res://scripts/cpu_hp_bar.gd")
 
@@ -70,6 +72,7 @@ func build(gate_definitions: Array, cpu_regions: Array, cpu_hp: int) -> void:
 	_build_temperature_meter(gate_definitions.size())
 	_build_debug_victory_button(gate_definitions.size())
 	_build_cpu_hp_bars(cpu_regions, cpu_hp)
+	_build_top_left_buttons()
 
 
 func get_gate_button(id: String) -> Button:
@@ -215,6 +218,48 @@ func _build_temperature_meter(gate_count: int) -> void:
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	meter.add_child(label)
 	_temperature_label = label
+
+
+func _build_top_left_buttons() -> void:
+	var menu_btn := Button.new()
+	menu_btn.name = "MenuButton"
+	menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	menu_btn.text = "Menu"
+	menu_btn.focus_mode = Control.FOCUS_NONE
+	menu_btn.tooltip_text = "Return to main menu (Esc)"
+	menu_btn.custom_minimum_size = Vector2(80.0, 36.0)
+	menu_btn.anchor_left = 0.0
+	menu_btn.anchor_right = 0.0
+	menu_btn.offset_left = 16.0
+	menu_btn.offset_top = 16.0
+	menu_btn.offset_right = 96.0
+	menu_btn.offset_bottom = 52.0
+	menu_btn.pressed.connect(Callable(self, "_on_menu_pressed"))
+	_root.add_child(menu_btn)
+
+	var settings_btn := Button.new()
+	settings_btn.name = "SettingsButton"
+	settings_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	settings_btn.text = "Settings"
+	settings_btn.focus_mode = Control.FOCUS_NONE
+	settings_btn.tooltip_text = "Open settings"
+	settings_btn.custom_minimum_size = Vector2(80.0, 36.0)
+	settings_btn.anchor_left = 0.0
+	settings_btn.anchor_right = 0.0
+	settings_btn.offset_left = 16.0
+	settings_btn.offset_top = 60.0
+	settings_btn.offset_right = 96.0
+	settings_btn.offset_bottom = 96.0
+	settings_btn.pressed.connect(Callable(self, "_on_settings_pressed"))
+	_root.add_child(settings_btn)
+
+
+func _on_menu_pressed() -> void:
+	menu_pressed.emit()
+
+
+func _on_settings_pressed() -> void:
+	settings_pressed.emit()
 
 
 func _build_debug_victory_button(gate_count: int) -> void:
