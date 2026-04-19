@@ -2,9 +2,11 @@ extends Control
 
 const CONFIG_PATH := "user://settings.cfg"
 const VOLUME_SECTION := "volume"
+const WebFullscreen := preload("res://scripts/web_fullscreen.gd")
 
 var _focusables: Array[Control] = []
 var _focus_idx: int = 0
+var _fullscreen_button: Button
 
 
 func _ready() -> void:
@@ -19,6 +21,7 @@ func _ready() -> void:
 	$VBoxContainer/MusicRow/MusicSlider.value_changed.connect(_on_music_changed)
 	$VBoxContainer/SFXRow/SFXSlider.value_changed.connect(_on_sfx_changed)
 
+	_add_web_fullscreen_button()
 	_focusables = [
 		$VBoxContainer/FullHDButton,
 		$VBoxContainer/FourKButton,
@@ -27,6 +30,8 @@ func _ready() -> void:
 		$VBoxContainer/SFXRow/SFXSlider,
 		$VBoxContainer/BackButton,
 	]
+	if _fullscreen_button != null:
+		_focusables.insert(_focusables.size() - 1, _fullscreen_button)
 	_focus_idx = 0
 	_focusables[0].grab_focus()
 
@@ -44,6 +49,36 @@ func _on_4k_pressed() -> void:
 func _on_back_pressed() -> void:
 	AudioManager.play_ui_interaction()
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _add_web_fullscreen_button() -> void:
+	if not WebFullscreen.is_available():
+		return
+	_fullscreen_button = Button.new()
+	_fullscreen_button.name = "FullscreenButton"
+	_fullscreen_button.layout_mode = 2
+	_fullscreen_button.pressed.connect(_on_fullscreen_pressed)
+	$VBoxContainer.add_child(_fullscreen_button)
+	$VBoxContainer.move_child(_fullscreen_button, $VBoxContainer/BackButton.get_index())
+	_update_fullscreen_button()
+
+
+func _on_fullscreen_pressed() -> void:
+	AudioManager.play_ui_interaction()
+	WebFullscreen.toggle()
+	_update_fullscreen_button_deferred()
+
+
+func _update_fullscreen_button_deferred() -> void:
+	_update_fullscreen_button()
+	await get_tree().create_timer(0.25).timeout
+	_update_fullscreen_button()
+
+
+func _update_fullscreen_button() -> void:
+	if _fullscreen_button == null:
+		return
+	_fullscreen_button.text = "Exit Fullscreen" if WebFullscreen.is_fullscreen() else "Fullscreen"
 
 
 func _unhandled_input(event: InputEvent) -> void:

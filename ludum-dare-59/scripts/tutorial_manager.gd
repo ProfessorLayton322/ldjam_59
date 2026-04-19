@@ -12,7 +12,7 @@ const TUTORIAL_DIALOGUE_4_PATH := "res://assets/dialogues/tutorials/1/tutorial_d
 const TUTORIAL_DIALOGUE_BOX_SIZE := Vector2(520.0, 150.0)
 const TUTORIAL_DIALOGUE_MARGIN := Vector2(24.0, 24.0)
 const TUTORIAL_BALLISTA_ID := "ballista"
-const UI_OVERVIEW_HIGHLIGHT_IDS := ["health", "temperature", "barricade", "tar", "divider", "pause"]
+const UI_OVERVIEW_HIGHLIGHT_IDS := ["health", "temperature", "barricade", "tar", "divider"]
 enum Step {
 	NONE,
 	SELECT_BALLISTA,
@@ -34,6 +34,7 @@ var ballista_button: Button
 var dialog_manual_advance_was_enabled := true
 var dialog_layout: Node
 var ui_overview_highlight_target: Node
+var ui_overview_next_highlight_index := 0
 func _init(p_demo: Node) -> void:
 	demo = p_demo
 func setup_state() -> void:
@@ -56,6 +57,10 @@ func configure_flow() -> void:
 	apply_button_locks()
 func _should_lock_before_first_dialogue() -> bool:
 	return TutorialEvents.first_level_tutorial_active and step == Step.NONE and not TutorialEvents.first_crytter_moved_two_tiles_emitted
+
+
+func is_menu_settings_locked() -> bool:
+	return _should_lock_before_first_dialogue() or (step != Step.NONE and step != Step.DONE)
 
 
 func _set_pre_dialogue_input_locked(locked: bool) -> void:
@@ -418,6 +423,8 @@ func apply_button_locks() -> void:
 		_set_pre_dialogue_input_locked(true)
 		return
 	_set_pre_dialogue_input_locked(false)
+	if demo._sidebar != null and demo._sidebar.has_method("set_menu_settings_buttons_disabled"):
+		demo._sidebar.set_menu_settings_buttons_disabled(is_menu_settings_locked())
 	if demo._gate_buttons.is_empty():
 		return
 	if step == Step.SELECT_BALLISTA or step == Step.PLACE_BALLISTA:
@@ -453,6 +460,7 @@ func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String, manual
 	if not Dialogic.timeline_ended.is_connected(_on_tutorial_dialogue_ended):
 		Dialogic.timeline_ended.connect(_on_tutorial_dialogue_ended)
 	if dialogue_id == TUTORIAL_DIALOGUE_4_ID:
+		ui_overview_next_highlight_index = 0
 		_connect_ui_overview_dialogue_signals()
 	var timeline: String = dialogue_id
 	if not Dialogic.timeline_exists(timeline):
@@ -465,7 +473,7 @@ func _start_tutorial_dialogue(dialogue_id: String, dialogue_path: String, manual
 		return
 	dialog_layout.process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("_position_tutorial_dialogue")
-	if dialogue_id == TUTORIAL_DIALOGUE_4_ID:
+	if dialogue_id == TUTORIAL_DIALOGUE_4_ID and ui_overview_next_highlight_index == 0:
 		_set_ui_overview_highlight(0)
 func _end_tutorial_dialogue() -> void:
 	_disconnect_ui_overview_dialogue_signals()
@@ -505,11 +513,14 @@ func _advance_ui_overview_dialogue() -> void:
 func _on_ui_overview_text_started(info: Dictionary) -> void:
 	if step != Step.UI_OVERVIEW:
 		return
+	var highlight_index := ui_overview_next_highlight_index
 	var text := str(info.get("text", ""))
 	for index in UI_OVERVIEW_HIGHLIGHT_IDS.size():
 		if text.find("#%d" % (index + 1)) != -1:
-			_set_ui_overview_highlight(index)
-			return
+			highlight_index = index
+			break
+	_set_ui_overview_highlight(highlight_index)
+	ui_overview_next_highlight_index = highlight_index + 1
 func _on_tutorial_dialogue_ended() -> void:
 	_disconnect_ui_overview_dialogue_signals()
 	dialog_layout = null
@@ -546,8 +557,6 @@ func _get_ui_overview_highlight_target(index: int) -> Node:
 			return demo._gate_buttons.get("tar") as Node
 		4:
 			return demo._gate_buttons.get("divider") as Node
-		5:
-			return demo._pause_button as Node
 	return null
 func _position_tutorial_dialogue() -> void:
 	if dialog_layout == null or not is_instance_valid(dialog_layout):

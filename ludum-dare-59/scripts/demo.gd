@@ -182,6 +182,8 @@ func _on_pause_button_pressed() -> void:
 
 
 func _on_menu_button_pressed() -> void:
+	if _tutorial_manager != null and _tutorial_manager.is_menu_settings_locked():
+		return
 	if _hud != null:
 		get_tree().paused = true
 		_hud.set_paused(true)
@@ -189,6 +191,8 @@ func _on_menu_button_pressed() -> void:
 
 
 func _on_settings_button_pressed() -> void:
+	if _tutorial_manager != null and _tutorial_manager.is_menu_settings_locked():
+		return
 	if _hud != null:
 		_set_pause_mode_enabled(true)
 		_hud.show_settings()
