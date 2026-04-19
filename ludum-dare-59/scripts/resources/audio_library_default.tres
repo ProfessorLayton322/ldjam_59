@@ -5,7 +5,7 @@
 [ext_resource type="AudioStream" uid="uid://dnvfyowebhdss" path="res://assets/audio/sfx/lasergun_shot.wav" id="laser"]
 [ext_resource type="AudioStream" uid="uid://m4f0vsngydhg" path="res://assets/audio/music/slow-moonlight-synthwave.wav" id="music0"]
 [ext_resource type="AudioStream" uid="uid://rj11gdapujnq" path="res://assets/audio/sfx/hurting_the_robot.wav" id="robot_hit"]
-[ext_resource type="Script" uid="uid://cdkwejgngwgyo" path="res://scripts/resources/audio_library.gd" id="script"]
+[ext_resource type="Script" path="res://scripts/resources/audio_library.gd" id="script"]
 [ext_resource type="AudioStream" uid="uid://wdrltu5qttj6" path="res://assets/audio/sfx/zaps/Audio0.wav" id="zap0"]
 [ext_resource type="AudioStream" uid="uid://b2d0vax0x2xdw" path="res://assets/audio/sfx/zaps/Audio 1.wav" id="zap1"]
 [ext_resource type="AudioStream" uid="uid://cjrcg0dhteac6" path="res://assets/audio/sfx/zaps/Audio 2.wav" id="zap2"]
