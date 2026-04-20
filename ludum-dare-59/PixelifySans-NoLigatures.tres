@@ -1,6 +1,6 @@
-[gd_resource type="FontVariation" load_steps=2 format=3]
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://c1lakdpmfsvuq"]
 
-[ext_resource type="FontFile" path="res://PixelifySans-Regular.otf" id="1_dhoto"]
+[ext_resource type="FontFile" uid="uid://dsatx8uc6h6nv" path="res://PixelifySans-Regular.otf" id="1_dhoto"]
 
 [resource]
 base_font = ExtResource("1_dhoto")

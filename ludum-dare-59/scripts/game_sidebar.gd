@@ -36,7 +36,7 @@ func build(gate_definitions: Array, cpu_regions: Array, cpu_hp: int) -> void:
 		var button := Button.new()
 		button.name = "%sButton" % definition.id.capitalize().replace(" ", "")
 		button.process_mode = Node.PROCESS_MODE_ALWAYS
-		button.icon = definition.texture
+		button.icon = definition.icon_texture if definition.icon_texture != null else definition.texture
 		button.expand_icon = true
 		button.toggle_mode = true
 		button.focus_mode = Control.FOCUS_NONE
