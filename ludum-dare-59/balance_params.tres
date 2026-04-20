@@ -31,12 +31,11 @@ script = ExtResource("2_enemy_params")
 id = "brute"
 damage = 4
 max_hp = 20
-move_duration = 1.7
 texture = ExtResource("10_brute_tex")
 
 [resource]
 script = ExtResource("1_balance_params")
-cpu_hp = 100
+cpu_hp = 30
 gate_definitions = Array[ExtResource("3_vh0te")]([ExtResource("3_barricade"), ExtResource("4_ballista"), ExtResource("5_tar"), ExtResource("7_divider")])
 enemy_params = Array[ExtResource("2_enemy_params")]([SubResource("EnemyParams_crytter"), SubResource("EnemyParams_raider_stunner"), SubResource("EnemyParams_brute")])
 default_spawner_cfg = ExtResource("6_spawner_cfg")
