@@ -10,6 +10,6 @@ id = "barricade"
 display_name = "Condensator"
 texture = ExtResource("2_texture")
 icon_texture = ExtResource("3_icon")
-power_cost = 3
+power_cost = 5
 max_hp = 16
 blocks_movement = true
