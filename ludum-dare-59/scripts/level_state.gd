@@ -4,6 +4,7 @@ const LEVELS: Array[LevelDefinition] = [
 	preload("res://scripts/resources/levels/level_01.tres"),
 	preload("res://scripts/resources/levels/level_02.tres"),
 	preload("res://scripts/resources/levels/level_03.tres"),
+	preload("res://scripts/resources/levels/level_04.tres"),
 ]
 
 var current_level_index := 0

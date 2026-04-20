@@ -341,8 +341,8 @@ func _complete_level_with_victory() -> void:
 	AudioManager.stop_level_audio()
 	if LevelState.advance_to_next_level():
 		get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
-	elif _hud != null:
-		_hud.hide_victory()
+	else:
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
