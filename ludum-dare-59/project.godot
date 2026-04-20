@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="LudumDare59"
-run/main_scene="res://scenes/menu.tscn"
+run/main_scene="res://scenes/fullscreen_prompt.tscn"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -41,7 +41,8 @@ directories/dtl_directory={
 "tutorial_dialogue_1_2": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl",
 "tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl",
 "tutorial_dialogue_1_4": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl",
-"tutorial_dialogue_1_5": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_5.dtl"
+"tutorial_dialogue_1_5": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_5.dtl",
+"tutorial_dialogue_1_6": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_6.dtl"
 }
 layout/style_directory={}
 

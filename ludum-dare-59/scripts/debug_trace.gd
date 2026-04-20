@@ -31,7 +31,7 @@ static func gate_state(gate: Gate) -> Dictionary:
 		"registry_key": gate.get_debug_registry_key(),
 		"current_hp": gate.get_debug_current_hp(),
 		"stalled_count": gate.get_debug_stalled_enemy_count(),
-		"stalled_power": gate.get_debug_stalled_enemy_power(),
+		"stalled_hp_total": gate.get_debug_stalled_enemy_hp_total(),
 		"stunned": gate.is_stunned(),
 		"stunned_until_msec": gate.get_debug_stunned_until_msec(),
 		"is_destroying": gate.get_debug_is_destroying(),

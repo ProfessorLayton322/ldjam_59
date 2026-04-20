@@ -35,6 +35,8 @@ var _sidebar: Node
 var _gate_interaction: Node
 
 var _gate_preview: Sprite2D
+var _gate_cursor_layer: CanvasLayer
+var _gate_cursor_icon: Sprite2D
 
 var _moving_gate: Gate:
 	get: return _gate_interaction.get_moving_gate() if _gate_interaction != null else null
@@ -170,6 +172,11 @@ func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
 
+func _can_apply_moving_penalty() -> bool:
+	var amount := _get_moving_penalty()
+	return amount <= 0.0 or _temperature + amount <= float(_get_max_temperature())
+
+
 func _change_temperature(amount: float) -> void:
 	if amount < 0.0:
 		_start_temperature_cooldown(-amount, _get_despawn_cooldown_timing())
@@ -300,7 +307,7 @@ func _is_win_button_input_event(event: InputEvent) -> bool:
 func _despawn_level_objects() -> void:
 	_cancel_moving_gate()
 	for child in get_children():
-		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _spawn_enemy_manager or child == _level_timer:
+		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _gate_cursor_layer or child == _spawn_enemy_manager or child == _level_timer:
 			continue
 		if child == get_node_or_null(trigger_timer_path):
 			continue
@@ -408,10 +415,17 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 
 
 func _pickup_gate_at(vertex_id: int) -> bool:
+	if not _can_apply_moving_penalty():
+		AudioManager.play_not_enough_temperature()
+		return false
 	return _gate_interaction.pickup_gate_at(vertex_id)
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
+	if not _can_apply_moving_penalty():
+		AudioManager.play_not_enough_temperature()
+		_cancel_moving_gate()
+		return
 	if _gate_interaction.drop_moving_gate(global_pos):
 		_apply_moving_penalty()
 
@@ -504,8 +518,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if Gate.get_gate(_graph, vertex_id) != null:
 		if _selected_gate_definition != null:
-			AudioManager.play_invalid_gate_tile()
-			return
+			_set_gate_placement_enabled(false)
 		_pickup_gate_at(vertex_id)
 		return
 
@@ -532,18 +545,52 @@ func _process(_delta: float) -> void:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
 
 	if _gate_preview == null:
+		_update_gate_cursor_icon()
 		return
 	if _selected_gate_definition == null or _moving_gate != null:
 		_gate_preview.visible = false
+		_update_gate_cursor_icon()
 		return
 	var hover_vertex := _get_track_vertex_id_at_global_position(get_global_mouse_position())
 	if hover_vertex == -1:
 		_gate_preview.visible = false
+		_update_gate_cursor_icon()
 		return
 	_gate_preview.texture = _selected_gate_definition.texture
 	var vertex := _graph.get_node_by_id(hover_vertex)
 	_gate_preview.position = vertex.position
 	_gate_preview.visible = true
+	_update_gate_cursor_icon()
+
+
+func _update_gate_cursor_icon() -> void:
+	if _gate_cursor_icon == null:
+		return
+
+	var cursor_definition: Resource = null
+	var moving_gate := _moving_gate
+	if moving_gate != null and is_instance_valid(moving_gate):
+		cursor_definition = moving_gate.definition
+	elif _selected_gate_definition != null:
+		cursor_definition = _selected_gate_definition
+
+	if cursor_definition == null:
+		_gate_cursor_icon.visible = false
+		return
+
+	var texture := cursor_definition.icon_texture as Texture2D
+	if texture == null:
+		texture = cursor_definition.texture
+	if texture == null:
+		_gate_cursor_icon.visible = false
+		return
+
+	_gate_cursor_icon.texture = texture
+	_gate_cursor_icon.position = get_viewport().get_mouse_position()
+	var texture_size := texture.get_size()
+	var max_texture_dimension := maxf(texture_size.x, texture_size.y)
+	_gate_cursor_icon.scale = Vector2.ONE * (42.0 / max_texture_dimension) if max_texture_dimension > 0.0 else Vector2.ONE
+	_gate_cursor_icon.visible = true
 
 
 func _ready() -> void:
@@ -611,6 +658,18 @@ func _ready() -> void:
 	_gate_preview.z_index = 5
 	_gate_preview.visible = false
 	add_child(_gate_preview)
+
+	_gate_cursor_layer = CanvasLayer.new()
+	_gate_cursor_layer.name = "GateCursorPreview"
+	_gate_cursor_layer.layer = 30
+	_gate_cursor_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_gate_cursor_layer)
+
+	_gate_cursor_icon = Sprite2D.new()
+	_gate_cursor_icon.name = "Icon"
+	_gate_cursor_icon.modulate = Color(1.0, 1.0, 1.0, 0.85)
+	_gate_cursor_icon.visible = false
+	_gate_cursor_layer.add_child(_gate_cursor_icon)
 
 	_start_trigger_timer()
 	_create_gate_buttons()

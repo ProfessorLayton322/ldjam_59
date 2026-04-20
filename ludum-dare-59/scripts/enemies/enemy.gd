@@ -451,6 +451,7 @@ func consume_gate_stun(gate: Gate) -> float:
 	})
 	can_stun_gate = false
 	_on_gate_stun_consumed(gate)
+	TutorialEvents.emit_gate_stun_consumed(self, gate)
 	DebugTrace.event("enemy_stun", "consume_gate_stun:after", {
 		"enemy": DebugTrace.enemy_state(self),
 		"gate": DebugTrace.gate_state(gate),

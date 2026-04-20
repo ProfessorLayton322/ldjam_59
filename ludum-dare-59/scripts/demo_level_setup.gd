@@ -320,16 +320,25 @@ func _get_trailing_number(text: String) -> int:
 
 
 func _is_letter_spawner_tile(tile: BaseTile) -> bool:
+	var scene_path := tile.scene_file_path.get_file().get_basename().to_lower()
+	if scene_path.begins_with("demo_spawner_"):
+		var scene_suffix := scene_path.substr("demo_spawner_".length())
+		if _is_spawner_direction_suffix(scene_suffix):
+			return true
+
 	var tile_name := String(tile.name).to_lower()
 	if not tile_name.begins_with("spawner"):
 		return false
 
 	var suffix := tile_name.substr("spawner".length())
+	return _is_spawner_direction_suffix(suffix)
+
+
+func _is_spawner_direction_suffix(suffix: String) -> bool:
 	if suffix == "":
 		return false
 
 	for i in suffix.length():
 		if not (suffix.substr(i, 1) in ["n", "s", "e", "w"]):
 			return false
-
 	return true

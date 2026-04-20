@@ -42,6 +42,11 @@ func prepare_for_current_level() -> void:
 	prepare_for_level(_get_current_level_index())
 
 
+func ensure_prepared_for_current_level() -> void:
+	if _prepared_level_index != _get_current_level_index():
+		prepare_for_current_level()
+
+
 func get_current_level_config() -> LevelEnemiesConfig:
 	return get_level_config(_get_current_level_index())
 
@@ -69,8 +74,7 @@ func get_spawn_batch() -> int:
 
 
 func take_next_enemy_types() -> Array[int]:
-	if _prepared_level_index != _get_current_level_index():
-		prepare_for_current_level()
+	ensure_prepared_for_current_level()
 
 	var batch: Array[int] = []
 	var amount := mini(get_spawn_batch(), _enemy_order.size())
@@ -79,9 +83,15 @@ func take_next_enemy_types() -> Array[int]:
 	return batch
 
 
+func take_next_enemy_type() -> int:
+	ensure_prepared_for_current_level()
+	if _enemy_order.is_empty():
+		return -1
+	return _enemy_order.pop_front()
+
+
 func ensure_next_enemy_type(enemy_type: int) -> bool:
-	if _prepared_level_index != _get_current_level_index():
-		prepare_for_current_level()
+	ensure_prepared_for_current_level()
 	if _enemy_order.is_empty():
 		return false
 	if _enemy_order[0] == enemy_type:

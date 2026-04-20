@@ -18,6 +18,7 @@ var _pause_focusables: Array[Control] = []
 var _game_over_focusables: Array[Control] = []
 var _victory_focusables: Array[Control] = []
 var _focus_idx: int = 0
+var _last_fullscreen_state := false
 
 
 func _ready() -> void:
@@ -27,6 +28,12 @@ func _ready() -> void:
 	_build_victory_panel()
 	_build_settings_panel()
 	_build_pause_menu_panel()
+
+
+func _process(_delta: float) -> void:
+	if _fullscreen_button == null or not is_settings_open():
+		return
+	_update_fullscreen_button_if_changed()
 
 
 func set_paused(paused: bool) -> void:
@@ -309,7 +316,15 @@ func _update_fullscreen_button_deferred() -> void:
 func _update_fullscreen_button() -> void:
 	if _fullscreen_button == null:
 		return
-	_fullscreen_button.text = "Exit Fullscreen" if WebFullscreen.is_fullscreen() else "Fullscreen"
+	_last_fullscreen_state = WebFullscreen.is_fullscreen()
+	_fullscreen_button.text = "Exit Fullscreen" if _last_fullscreen_state else "Fullscreen"
+
+
+func _update_fullscreen_button_if_changed() -> void:
+	var is_fullscreen := WebFullscreen.is_fullscreen()
+	if is_fullscreen == _last_fullscreen_state:
+		return
+	_update_fullscreen_button()
 
 
 func _build_pause_menu_panel() -> void:
