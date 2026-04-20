@@ -4,6 +4,7 @@ extends Node2D
 signal defeated(enemy: Enemy)
 
 const DebugTrace := preload("res://scripts/debug_trace.gd")
+const LEVEL_3_BFS_DUMPED_META := &"enemy_level_3_bfs_dumped"
 
 @export var graph: Graph
 @export var cpu_vertices: Array[CpuVertex] = []
@@ -26,10 +27,12 @@ var _stalled_gate: Gate
 var _movement_interrupted := false
 var _is_first_tutorial_crytter := false
 var _tutorial_tiles_moved := 0
+var _path_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	_path_rng.randomize()
 	DebugTrace.event("enemy", "ready:start", {"enemy": DebugTrace.enemy_state(self)})
 	_apply_balance_params()
 	AudioManager.play_enemy_spawn(_get_balance_id())
@@ -111,36 +114,13 @@ func _calculate_path() -> Array[int]:
 		DebugTrace.event("enemy_path", "calculate_path:no_cpu_targets", {"enemy": DebugTrace.enemy_state(self)})
 		return []
 
-	var queue: Array[int] = [current_node_index]
-	var visited := {
-		current_node_index: true,
-	}
-	var came_from := {}
+	var distance_to_cpu := _calculate_distance_to_cpu(cpu_index_set)
+	_dump_level_3_graph_bfs_once(distance_to_cpu, cpu_index_set)
+	if not distance_to_cpu.has(current_node_index):
+		DebugTrace.event("enemy_path", "calculate_path:no_route", {"enemy": DebugTrace.enemy_state(self)})
+		return []
 
-	while not queue.is_empty():
-		var node_index: int = queue.pop_front()
-		if cpu_index_set.has(node_index):
-			DebugTrace.event("enemy_path", "calculate_path:target_found", {
-				"enemy": DebugTrace.enemy_state(self),
-				"target_index": node_index,
-			})
-			return _reconstruct_path(came_from, node_index)
-
-		var node := graph.nodes[node_index]
-		for neighbour_id in node.neighbour_ids:
-			if not _node_id_to_index.has(neighbour_id):
-				continue
-
-			var neighbour_index: int = _node_id_to_index[neighbour_id]
-			if visited.has(neighbour_index):
-				continue
-
-			visited[neighbour_index] = true
-			came_from[neighbour_index] = node_index
-			queue.append(neighbour_index)
-
-	DebugTrace.event("enemy_path", "calculate_path:no_route", {"enemy": DebugTrace.enemy_state(self)})
-	return []
+	return _build_random_shortest_path(distance_to_cpu)
 
 
 func _build_cpu_index_set() -> Dictionary:
@@ -164,19 +144,164 @@ func _build_node_id_to_index() -> Dictionary:
 	return result
 
 
-func _reconstruct_path(came_from: Dictionary, target_index: int) -> Array[int]:
-	var reversed_path: Array[int] = [target_index]
-	var node_index := target_index
+func _calculate_distance_to_cpu(cpu_index_set: Dictionary) -> Dictionary:
+	var reverse_neighbours := _build_reverse_neighbours()
+	var queue: Array[int] = []
+	var distances := {}
 
-	while node_index != current_node_index:
-		if not came_from.has(node_index):
+	for cpu_index in cpu_index_set:
+		distances[cpu_index] = 0
+		queue.append(cpu_index)
+
+	while not queue.is_empty():
+		var node_index: int = queue.pop_front()
+		var next_distance: int = distances[node_index] + 1
+		var inbound_neighbours: Array = reverse_neighbours[node_index]
+
+		for neighbour_index in inbound_neighbours:
+			if distances.has(neighbour_index):
+				continue
+
+			distances[neighbour_index] = next_distance
+			queue.append(neighbour_index)
+
+	return distances
+
+
+func _build_reverse_neighbours() -> Array[Array]:
+	var reverse_neighbours: Array[Array] = []
+	reverse_neighbours.resize(graph.nodes.size())
+
+	for index in reverse_neighbours.size():
+		reverse_neighbours[index] = []
+
+	for node_index in graph.nodes.size():
+		var node := graph.nodes[node_index]
+		for neighbour_id in node.neighbour_ids:
+			if not _node_id_to_index.has(neighbour_id):
+				continue
+
+			var neighbour_index: int = _node_id_to_index[neighbour_id]
+			reverse_neighbours[neighbour_index].append(node_index)
+
+	return reverse_neighbours
+
+
+func _dump_level_3_graph_bfs_once(distance_to_cpu: Dictionary, cpu_index_set: Dictionary) -> void:
+	if not _should_dump_level_3_graph_bfs():
+		return
+	if graph.get_meta(LEVEL_3_BFS_DUMPED_META, false):
+		return
+
+	graph.set_meta(LEVEL_3_BFS_DUMPED_META, true)
+
+	var cpu_indices: Array[int] = []
+	var cpu_ids: Array[int] = []
+	for cpu_index in cpu_index_set:
+		cpu_indices.append(cpu_index)
+		if cpu_index >= 0 and cpu_index < graph.nodes.size():
+			cpu_ids.append(graph.nodes[cpu_index].id)
+	cpu_indices.sort()
+	cpu_ids.sort()
+
+	var lines: Array[String] = []
+	lines.append("=== ENEMY LEVEL 3 BFS DUMP START ===")
+	lines.append("enemy_instance_id=%d current_node_index=%d current_node_id=%d graph_instance_id=%d node_count=%d" % [
+		get_instance_id(),
+		current_node_index,
+		graph.nodes[current_node_index].id if _has_valid_node_index(current_node_index) else -1,
+		graph.get_instance_id(),
+		graph.nodes.size(),
+	])
+	lines.append("cpu_indices=%s cpu_ids=%s" % [cpu_indices, cpu_ids])
+
+	for node_index in graph.nodes.size():
+		var vertex: GraphVertex = graph.nodes[node_index]
+		var neighbour_indices: Array[int] = []
+		var shortest_next_indices: Array[int] = []
+		var shortest_next_ids: Array[int] = []
+		var distance_text := "unreachable"
+
+		if distance_to_cpu.has(node_index):
+			var current_distance: int = distance_to_cpu[node_index]
+			distance_text = str(current_distance)
+			for neighbour_id in vertex.neighbour_ids:
+				var neighbour_index := -1
+				if _node_id_to_index.has(neighbour_id):
+					neighbour_index = _node_id_to_index[neighbour_id]
+				neighbour_indices.append(neighbour_index)
+				if neighbour_index >= 0 and distance_to_cpu.get(neighbour_index, -1) == current_distance - 1:
+					shortest_next_indices.append(neighbour_index)
+					shortest_next_ids.append(neighbour_id)
+		else:
+			for neighbour_id in vertex.neighbour_ids:
+				neighbour_indices.append(_node_id_to_index.get(neighbour_id, -1))
+
+		lines.append("node index=%d id=%d pos=%s distance=%s neighbour_ids=%s neighbour_indices=%s shortest_next_indices=%s shortest_next_ids=%s" % [
+			node_index,
+			vertex.id,
+			vertex.position,
+			distance_text,
+			vertex.neighbour_ids,
+			neighbour_indices,
+			shortest_next_indices,
+			shortest_next_ids,
+		])
+
+	lines.append("=== ENEMY LEVEL 3 BFS DUMP END ===")
+	print("\n".join(lines))
+
+
+func _should_dump_level_3_graph_bfs() -> bool:
+	if graph == null:
+		return false
+
+	var level_state := get_node_or_null("/root/LevelState")
+	if level_state == null:
+		return false
+
+	var current_level_index: int = level_state.get("current_level_index")
+	if current_level_index == 2:
+		return true
+
+	var selected_level := level_state.get("selected_level") as LevelDefinition
+	return selected_level != null and selected_level.title == "Level 3"
+
+
+func _build_random_shortest_path(distance_to_cpu: Dictionary) -> Array[int]:
+	var result: Array[int] = [current_node_index]
+	var node_index := current_node_index
+
+	while distance_to_cpu[node_index] > 0:
+		var next_step_candidates: Array[int] = []
+		var current_distance: int = distance_to_cpu[node_index]
+		var node := graph.nodes[node_index]
+
+		for neighbour_id in node.neighbour_ids:
+			if not _node_id_to_index.has(neighbour_id):
+				continue
+
+			var neighbour_index: int = _node_id_to_index[neighbour_id]
+			if distance_to_cpu.get(neighbour_index, -1) == current_distance - 1:
+				next_step_candidates.append(neighbour_index)
+
+		if next_step_candidates.is_empty():
 			return []
 
-		node_index = came_from[node_index]
-		reversed_path.append(node_index)
+		var selected_index := _path_rng.randi_range(0, next_step_candidates.size() - 1)
+		node_index = next_step_candidates[selected_index]
+		DebugTrace.event("enemy_path", "calculate_path:next_step_selected", {
+			"enemy": DebugTrace.enemy_state(self),
+			"candidates": next_step_candidates,
+			"selected_index": node_index,
+		})
+		result.append(node_index)
 
-	reversed_path.reverse()
-	return reversed_path
+	DebugTrace.event("enemy_path", "calculate_path:target_found", {
+		"enemy": DebugTrace.enemy_state(self),
+		"target_index": node_index,
+	})
+	return result
 
 
 func _move_to_next_node() -> void:
