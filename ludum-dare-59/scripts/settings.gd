@@ -7,6 +7,7 @@ const WebFullscreen := preload("res://scripts/web_fullscreen.gd")
 var _focusables: Array[Control] = []
 var _focus_idx: int = 0
 var _fullscreen_button: Button
+var _last_fullscreen_state := false
 
 
 func _ready() -> void:
@@ -34,6 +35,12 @@ func _ready() -> void:
 		_focusables.insert(_focusables.size() - 1, _fullscreen_button)
 	_focus_idx = 0
 	_focusables[0].grab_focus()
+
+
+func _process(_delta: float) -> void:
+	if _fullscreen_button == null:
+		return
+	_update_fullscreen_button_if_changed()
 
 
 func _on_fullhd_pressed() -> void:
@@ -78,7 +85,15 @@ func _update_fullscreen_button_deferred() -> void:
 func _update_fullscreen_button() -> void:
 	if _fullscreen_button == null:
 		return
-	_fullscreen_button.text = "Exit Fullscreen" if WebFullscreen.is_fullscreen() else "Fullscreen"
+	_last_fullscreen_state = WebFullscreen.is_fullscreen()
+	_fullscreen_button.text = "Exit Fullscreen" if _last_fullscreen_state else "Fullscreen"
+
+
+func _update_fullscreen_button_if_changed() -> void:
+	var is_fullscreen := WebFullscreen.is_fullscreen()
+	if is_fullscreen == _last_fullscreen_state:
+		return
+	_update_fullscreen_button()
 
 
 func _unhandled_input(event: InputEvent) -> void:
