@@ -90,6 +90,16 @@ func get_temperature_meter() -> TextureProgressBar:
 	return _temperature_meter
 
 
+func get_temperature_label() -> Label:
+	return _temperature_label
+
+
+func get_temperature_label_highlight_pivot_offset() -> Vector2:
+	if _temperature_meter == null or _temperature_label == null:
+		return Vector2.ZERO
+	return _temperature_meter.position + _temperature_meter.pivot_offset - _temperature_label.position
+
+
 func get_debug_victory_button() -> Button:
 	return _debug_victory_button
 
