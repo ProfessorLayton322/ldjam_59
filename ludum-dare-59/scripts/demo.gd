@@ -366,6 +366,8 @@ func _complete_level_with_game_over() -> void:
 	_despawn_level_objects()
 	AudioManager.stop_level_audio()
 	AudioManager.play_cpu_death()
+	if _sidebar != null:
+		_sidebar.hide_ui()
 	if _hud != null:
 		_hud.show_game_over()
 

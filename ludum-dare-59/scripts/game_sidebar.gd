@@ -79,6 +79,10 @@ func build(gate_definitions: Array, cpu_regions: Array, cpu_hp: int) -> void:
 	_build_top_left_buttons()
 
 
+func hide_ui() -> void:
+	visible = false
+
+
 func get_gate_button(id: String) -> Button:
 	return _gate_buttons.get(id) as Button
 

@@ -73,6 +73,10 @@ func hide_settings() -> void:
 
 
 func show_game_over() -> void:
+	_pause_overlay.visible = false
+	_pause_menu_panel.visible = false
+	_settings_panel.visible = false
+	_victory_panel.visible = false
 	_game_over_panel.visible = true
 	_focus_idx = 0
 	if not _game_over_focusables.is_empty():
@@ -138,16 +142,30 @@ func _build_game_over_panel() -> void:
 	_game_over_panel.visible = false
 	add_child(_game_over_panel)
 
+	var bg := TextureRect.new()
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.texture = load("res://assets/textures/backgrounds/lose.png")
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_game_over_panel.add_child(bg)
+
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_game_over_panel.add_child(center)
 
+	var bg_panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.75)
+	style.set_content_margin_all(24.0)
+	bg_panel.add_theme_stylebox_override("panel", style)
+	center.add_child(bg_panel)
+
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_child(vbox)
+	bg_panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "GAME OVER"
+	title.text = "NO SIGNAL"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
 	vbox.add_child(title)
