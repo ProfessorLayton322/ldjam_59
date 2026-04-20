@@ -172,6 +172,11 @@ func _can_place_gate(definition: Resource) -> bool:
 	return definition != null and _temperature + definition.power_cost <= _get_max_temperature()
 
 
+func _can_apply_moving_penalty() -> bool:
+	var amount := _get_moving_penalty()
+	return amount <= 0.0 or _temperature + amount <= float(_get_max_temperature())
+
+
 func _change_temperature(amount: float) -> void:
 	if amount < 0.0:
 		_start_temperature_cooldown(-amount, _get_despawn_cooldown_timing())
@@ -410,10 +415,17 @@ func _place_gate(vertex_id: int, definition: Resource) -> bool:
 
 
 func _pickup_gate_at(vertex_id: int) -> bool:
+	if not _can_apply_moving_penalty():
+		AudioManager.play_not_enough_temperature()
+		return false
 	return _gate_interaction.pickup_gate_at(vertex_id)
 
 
 func _drop_moving_gate(global_pos: Vector2) -> void:
+	if not _can_apply_moving_penalty():
+		AudioManager.play_not_enough_temperature()
+		_cancel_moving_gate()
+		return
 	if _gate_interaction.drop_moving_gate(global_pos):
 		_apply_moving_penalty()
 
