@@ -1,6 +1,6 @@
 [gd_resource type="Theme" load_steps=2 format=3 uid="uid://b3pixelify001"]
 
-[ext_resource type="FontFile" uid="uid://dsatx8uc6h6nv" path="res://PixelifySans-Regular.otf" id="1_pixelify"]
+[ext_resource type="FontVariation" path="res://PixelifySans-NoLigatures.tres" id="1_pixelify"]
 
 [resource]
 default_font = ExtResource("1_pixelify")
