@@ -74,6 +74,7 @@ func collect_tiles() -> void:
 			level.expected_spawner_count,
 			spawner_count,
 		])
+	_apply_level_spawner_texture_orientation()
 
 
 func build_cpu_vertices() -> Array[CpuVertex]:
@@ -266,3 +267,11 @@ func _assign_tile_node_id_from_graph(tile: BaseTile) -> void:
 		return
 
 	tile.node_id = best_vertex.id
+	if suffix == "":
+		return false
+
+	for i in suffix.length():
+		if not (suffix.substr(i, 1) in ["n", "s", "e", "w"]):
+			return false
+
+	return true
