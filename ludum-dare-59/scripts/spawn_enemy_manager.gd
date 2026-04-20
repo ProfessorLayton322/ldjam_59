@@ -50,6 +50,7 @@ func clear_spawners() -> void:
 
 func start() -> void:
 	_reset_completion_tracking()
+	EnemiesSpawnConfig.prepare_for_current_level()
 	_ensure_timer()
 	DebugTrace.event("spawn_manager", "start", {
 		"tutorial": TutorialEvents.should_run_first_level_tutorial(),
@@ -144,7 +145,6 @@ func _spawn_enemy_type(enemy_type: int, available_spawners: Array) -> void:
 	})
 	spawner.OnTrigger(self)
 	_track_spawned_enemy(spawner.last_spawned_enemy)
-	TutorialEvents.emit_tutorial_enemy_spawned(spawner.last_spawned_enemy, enemy_type, spawner.node_id)
 
 
 func _start_first_level_tutorial_spawn() -> void:

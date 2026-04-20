@@ -24,7 +24,6 @@ extends Resource
 @export var raider_stunner_spawn_sounds: Array[AudioStream] = []
 @export var raider_stunner_damage_sounds: Array[AudioStream] = []
 @export var raider_stunner_death_sounds: Array[AudioStream] = []
-@export var raider_stunner_gate_stun_sounds: Array[AudioStream] = []
 @export var brute_spawn_sounds: Array[AudioStream] = []
 @export var brute_damage_sounds: Array[AudioStream] = []
 @export var brute_death_sounds: Array[AudioStream] = []

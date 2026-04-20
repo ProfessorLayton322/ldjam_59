@@ -24,7 +24,6 @@ script = ExtResource("2_enemy_params")
 id = "raider_stunner"
 damage = 2
 move_duration = 1.3
-can_stun_gate = true
 texture = ExtResource("9_raider_tex")
 
 [sub_resource type="Resource" id="EnemyParams_brute"]
