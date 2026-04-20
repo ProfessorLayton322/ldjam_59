@@ -775,14 +775,6 @@ func _set_ui_overview_highlight(index: int) -> void:
 		return
 	ui_overview_highlight_target = target
 	TutorialEvents.start_highlighter(target)
-	if index == 1 and demo._sidebar != null and demo._sidebar.has_method("get_temperature_label"):
-		var label := demo._sidebar.get_temperature_label() as Node
-		if label != null:
-			var pivot_offset := Vector2.ZERO
-			if demo._sidebar.has_method("get_temperature_label_highlight_pivot_offset"):
-				pivot_offset = demo._sidebar.get_temperature_label_highlight_pivot_offset()
-			ui_overview_highlight_extra_targets.append(label)
-			TutorialEvents.start_highlighter(label, pivot_offset)
 func _get_ui_overview_highlight_target(index: int) -> Node:
 	match index:
 		0:
