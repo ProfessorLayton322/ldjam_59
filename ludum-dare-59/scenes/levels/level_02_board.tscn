@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://dnks4x2juduj8"]
+[gd_scene load_steps=50 format=3 uid="uid://dnks4x2juduj8"]
 
 [ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="1_none"]
 [ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="2_w"]
@@ -19,6 +19,21 @@
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_top.tscn" id="17_spawner_top"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_bottom.tscn" id="18_spawner_bottom"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_middle.tscn" id="19_spawner_middle"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_w.tscn" id="30_spawner_w"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_e.tscn" id="31_spawner_e"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_ew.tscn" id="32_spawner_ew"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_s.tscn" id="33_spawner_s"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_sw.tscn" id="34_spawner_sw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_se.tscn" id="35_spawner_se"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_sew.tscn" id="36_spawner_sew"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_n.tscn" id="37_spawner_n"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nw.tscn" id="38_spawner_nw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_ne.tscn" id="39_spawner_ne"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_new.tscn" id="40_spawner_new"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_ns.tscn" id="41_spawner_ns"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nsw.tscn" id="42_spawner_nsw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nse.tscn" id="43_spawner_nse"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nsew.tscn" id="44_spawner_nsew"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_8.tscn" id="20_core_8"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_9.tscn" id="21_core_9"]
 [ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_13.tscn" id="22_core_13"]
@@ -64,6 +79,24 @@ scenes/9/scene = ExtResource("27_core_4")
 scenes/10/scene = ExtResource("28_core_7")
 scenes/11/scene = ExtResource("29_core_12")
 
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_spawners"]
+resource_name = "spawners"
+scenes/1/scene = ExtResource("30_spawner_w")
+scenes/2/scene = ExtResource("31_spawner_e")
+scenes/3/scene = ExtResource("32_spawner_ew")
+scenes/4/scene = ExtResource("33_spawner_s")
+scenes/5/scene = ExtResource("34_spawner_sw")
+scenes/6/scene = ExtResource("35_spawner_se")
+scenes/7/scene = ExtResource("36_spawner_sew")
+scenes/8/scene = ExtResource("37_spawner_n")
+scenes/9/scene = ExtResource("38_spawner_nw")
+scenes/10/scene = ExtResource("39_spawner_ne")
+scenes/11/scene = ExtResource("40_spawner_new")
+scenes/12/scene = ExtResource("41_spawner_ns")
+scenes/13/scene = ExtResource("42_spawner_nsw")
+scenes/14/scene = ExtResource("43_spawner_nse")
+scenes/15/scene = ExtResource("44_spawner_nsew")
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cpu"]
 texture = ExtResource("24_cpu")
 texture_region_size = Vector2i(64, 64)
@@ -82,6 +115,7 @@ tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetScenesCollectionSource_tracks")
 sources/1 = SubResource("TileSetScenesCollectionSource_gameplay")
 sources/2 = SubResource("TileSetAtlasSource_cpu")
+sources/3 = SubResource("TileSetScenesCollectionSource_spawners")
 
 [node name="Level02Board" type="Node2D"]
 

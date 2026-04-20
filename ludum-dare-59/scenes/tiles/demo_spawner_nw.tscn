@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://ccbow8m5e5hpw"]
+
+[ext_resource type="Script" uid="uid://4kx68n2hm04" path="res://scripts/tiles/spawner_tile.gd" id="1_spawner"]
+[ext_resource type="Texture2D" uid="uid://dssgg2ggicvre" path="res://assets/textures/start/Spawner_two_neibhour_sided_final.svg" id="2_start"]
+[ext_resource type="PackedScene" uid="uid://ci4wlnes6pq8v" path="res://scenes/enemies/enemy.tscn" id="3_enemy"]
+
+[node name="SpawnerNw" type="Node2D"]
+script = ExtResource("1_spawner")
+enemy_scene = ExtResource("3_enemy")
+
+[node name="StartSprite" type="Sprite2D" parent="."]
+rotation = -1.5707964
+texture = ExtResource("2_start")

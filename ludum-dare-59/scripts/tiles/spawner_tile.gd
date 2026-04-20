@@ -12,6 +12,7 @@ const DebugTrace := preload("res://scripts/debug_trace.gd")
 
 var spawn_parent: Node
 var last_spawned_enemy: Enemy
+var keep_authored_texture_rotation := false
 
 
 func OnTrigger(source: Node = null) -> void:
@@ -59,7 +60,11 @@ func _update_sprite_rotation() -> void:
 	if not is_inside_tree():
 		return
 	var sprite := get_node_or_null("StartSprite") as Sprite2D
-	if sprite == null or graph == null:
+	if sprite == null:
+		return
+	if keep_authored_texture_rotation:
+		return
+	if graph == null:
 		return
 
 	if spawn_parent is Node2D:
