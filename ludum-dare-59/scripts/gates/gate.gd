@@ -500,6 +500,13 @@ func _update_capacity_label() -> void:
 		label.size = Vector2(64, 20)
 		add_child(label)
 
+	var icon_sprite := get_node_or_null("IconSprite2D") as Sprite2D
+	if icon_sprite != null:
+		label.z_index = icon_sprite.z_index + 1
+	else:
+		var sprite := get_node_or_null("Sprite2D") as Sprite2D
+		label.z_index = sprite.z_index + 1 if sprite != null else 1
+
 	var remaining := _current_hp - _stalled_enemy_power
 	label.text = "%d / %d" % [remaining, _current_hp]
 
