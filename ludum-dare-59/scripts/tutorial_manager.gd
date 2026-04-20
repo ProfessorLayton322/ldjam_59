@@ -122,7 +122,7 @@ func handle_input(event: InputEvent) -> bool:
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.UI_OVERVIEW:
-		if _is_left_mouse_pressed(event):
+		if _is_left_mouse_pressed(event) or _is_space_pressed(event):
 			_advance_ui_overview_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
@@ -299,7 +299,7 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 		demo.get_viewport().set_input_as_handled()
 		return true
 	if step == Step.UI_OVERVIEW:
-		if _is_left_mouse_pressed(event):
+		if _is_left_mouse_pressed(event) or _is_space_pressed(event):
 			_advance_ui_overview_dialogue()
 		demo.get_viewport().set_input_as_handled()
 		return true
@@ -377,6 +377,11 @@ func _is_left_mouse_pressed(event: InputEvent) -> bool:
 		return false
 	var mouse_event := event as InputEventMouseButton
 	return mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed
+func _is_space_pressed(event: InputEvent) -> bool:
+	if not event is InputEventKey:
+		return false
+	var key := event as InputEventKey
+	return key.keycode == KEY_SPACE and key.pressed and not key.echo
 func _try_pickup_ballista(global_position: Vector2) -> void:
 	ballista_gate = _get_current_ballista_gate()
 	if ballista_gate == null:
