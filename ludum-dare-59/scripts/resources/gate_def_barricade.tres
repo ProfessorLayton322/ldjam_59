@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_gate_definition")
 id = "barricade"
-display_name = "Barricade"
+display_name = "Condensator"
 texture = ExtResource("2_texture")
 icon_texture = ExtResource("3_icon")
 power_cost = 3
