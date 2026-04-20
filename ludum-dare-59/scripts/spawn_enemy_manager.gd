@@ -145,7 +145,6 @@ func _spawn_enemy_type(enemy_type: int, available_spawners: Array) -> void:
 	})
 	spawner.OnTrigger(self)
 	_track_spawned_enemy(spawner.last_spawned_enemy)
-	TutorialEvents.emit_tutorial_enemy_spawned(spawner.last_spawned_enemy, enemy_type, spawner.node_id)
 
 
 func _start_first_level_tutorial_spawn() -> void:

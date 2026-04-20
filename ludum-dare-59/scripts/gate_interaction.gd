@@ -102,13 +102,6 @@ func pickup_gate_at(vertex_id: int) -> bool:
 	if gate == null:
 		DebugTrace.event("demo_gate", "pickup_gate:missing", {"vertex_id": vertex_id})
 		return false
-	if gate.is_stunned():
-		DebugTrace.event("demo_gate", "pickup_gate:stunned_blocked", {
-			"vertex_id": vertex_id,
-			"gate": DebugTrace.gate_state(gate),
-		})
-		AudioManager.play_invalid_gate_move()
-		return false
 	DebugTrace.event("demo_gate", "pickup_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	_moving_gate = gate
 	_moving_gate_origin = vertex_id
@@ -129,14 +122,6 @@ func drop_moving_gate(global_pos: Vector2) -> bool:
 	gate.modulate = Color.WHITE
 	_set_gate_icon_visible(gate, true)
 
-	if gate.is_stunned():
-		AudioManager.play_invalid_gate_move()
-		_snap_gate_to_vertex(gate, _moving_gate_origin)
-		_moving_gate_origin = -1
-		DebugTrace.event("demo_gate", "drop_moving_gate:stunned_returned_origin", {
-			"gate": DebugTrace.gate_state(gate),
-		})
-		return false
 
 	var target_vertex_id := get_track_vertex_id_at_global_position(global_pos)
 	if target_vertex_id == -1 or target_vertex_id == _moving_gate_origin:
@@ -190,13 +175,6 @@ func delete_gate_at(vertex_id: int) -> bool:
 	var gate := Gate.get_gate(graph, vertex_id)
 	if gate == null:
 		DebugTrace.event("demo_gate", "delete_gate:missing", {"vertex_id": vertex_id})
-		return false
-	if gate.is_stunned():
-		DebugTrace.event("demo_gate", "delete_gate:stunned_blocked", {
-			"vertex_id": vertex_id,
-			"gate": DebugTrace.gate_state(gate),
-		})
-		AudioManager.play_invalid_gate_move()
 		return false
 	DebugTrace.event("demo_gate", "delete_gate:start", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	temperature_changed.emit(-gate.get_power_cost())

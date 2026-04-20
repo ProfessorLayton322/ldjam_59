@@ -14,8 +14,6 @@ const LEVEL_3_BFS_DUMPED_META := &"enemy_level_3_bfs_dumped"
 @export var damage: int = 1
 @export var max_hp: int = 10
 @export var hp: int = 10
-@export var can_stun_gate := false
-@export var gate_stun_duration := 3.0
 
 var path: Array[int] = []
 
@@ -436,30 +434,6 @@ func apply_slow(extra_seconds_per_tile: float, duration: float) -> void:
 	DebugTrace.event("enemy", "apply_slow:after", {"enemy": DebugTrace.enemy_state(self)})
 
 
-func consume_gate_stun(gate: Gate) -> float:
-	if not can_stun_gate:
-		DebugTrace.event("enemy_stun", "consume_gate_stun:none", {
-			"enemy": DebugTrace.enemy_state(self),
-			"gate": DebugTrace.gate_state(gate),
-		})
-		return 0.0
-
-	DebugTrace.event("enemy_stun", "consume_gate_stun:before", {
-		"enemy": DebugTrace.enemy_state(self),
-		"gate": DebugTrace.gate_state(gate),
-		"duration": gate_stun_duration,
-	})
-	can_stun_gate = false
-	_on_gate_stun_consumed(gate)
-	TutorialEvents.emit_gate_stun_consumed(self, gate)
-	DebugTrace.event("enemy_stun", "consume_gate_stun:after", {
-		"enemy": DebugTrace.enemy_state(self),
-		"gate": DebugTrace.gate_state(gate),
-		"duration": gate_stun_duration,
-	})
-	return gate_stun_duration
-
-
 func stall_at_gate(gate: Gate) -> void:
 	DebugTrace.event("enemy_gate", "stall_at_gate:start", {
 		"enemy": DebugTrace.enemy_state(self),
@@ -512,9 +486,6 @@ func _track_tutorial_movement() -> void:
 		TutorialEvents.emit_first_crytter_moved_two_tiles(self)
 
 
-func _on_gate_stun_consumed(_gate: Gate) -> void:
-	pass
-
 
 func _get_balance_id() -> String:
 	return balance_id
@@ -532,8 +503,6 @@ func _apply_balance_params() -> void:
 	max_hp = params.max_hp
 	hp = max_hp
 	move_duration = params.move_duration
-	can_stun_gate = params.can_stun_gate
-	gate_stun_duration = params.gate_stun_duration
 	modulate = params.modulate
 	DebugTrace.event("enemy", "apply_balance_params:after", {"enemy": DebugTrace.enemy_state(self)})
 

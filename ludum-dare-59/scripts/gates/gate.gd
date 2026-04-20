@@ -63,8 +63,6 @@ var _current_hp := 1
 var _stalled_enemies: Array[Enemy] = []
 var _stalled_enemy_hp_total := 0
 var _is_destroying := false
-var _stunned_until_msec := 0
-var _stun_generation := 0
 
 
 static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
@@ -130,22 +128,6 @@ func on_enter(enemy: Enemy) -> void:
 		"gate": DebugTrace.gate_state(self),
 		"enemy": DebugTrace.enemy_state(enemy),
 	})
-	var stun_duration := enemy.consume_gate_stun(self)
-	if stun_duration > 0.0:
-		DebugTrace.event("gate", "on_enter:enemy_stun_consumed", {
-			"gate": DebugTrace.gate_state(self),
-			"enemy": DebugTrace.enemy_state(enemy),
-			"duration": stun_duration,
-		})
-		apply_stun(stun_duration)
-
-	if is_stunned():
-		DebugTrace.event("gate", "on_enter:stunned_skip_effects", {
-			"gate": DebugTrace.gate_state(self),
-			"enemy": DebugTrace.enemy_state(enemy),
-		})
-		return
-
 	AudioManager.play_gate_activation(definition.id)
 
 	if definition.blocks_movement and enemy.hp >= 0:
@@ -227,53 +209,8 @@ func on_enter(enemy: Enemy) -> void:
 	})
 
 
-func apply_stun(duration: float) -> void:
-	if duration <= 0.0:
-		DebugTrace.event("gate", "apply_stun:ignored", {"gate": DebugTrace.gate_state(self), "duration": duration})
-		return
-
-	DebugTrace.event("gate", "apply_stun:start", {"gate": DebugTrace.gate_state(self), "duration": duration})
-	_stunned_until_msec = max(_stunned_until_msec, Time.get_ticks_msec() + int(duration * 1000.0))
-	_stun_generation += 1
-	var generation := _stun_generation
-	_release_stalled_enemies()
-	_update_stun_visual()
-	DebugTrace.event("gate", "apply_stun:armed", {
-		"gate": DebugTrace.gate_state(self),
-		"duration": duration,
-		"generation": generation,
-	})
-
-	await get_tree().create_timer(duration, false).timeout
-	if generation != _stun_generation:
-		DebugTrace.event("gate", "apply_stun:timer_stale", {
-			"gate": DebugTrace.gate_state(self),
-			"timer_generation": generation,
-			"current_generation": _stun_generation,
-		})
-		return
-
-	if Time.get_ticks_msec() >= _stunned_until_msec:
-		_stunned_until_msec = 0
-		_update_stun_visual()
-		DebugTrace.event("gate", "apply_stun:expired", {"gate": DebugTrace.gate_state(self), "generation": generation})
-
-
-func is_stunned() -> bool:
-	if _stunned_until_msec <= 0:
-		return false
-
-	if Time.get_ticks_msec() <= _stunned_until_msec:
-		return true
-
-	_stunned_until_msec = 0
-	_update_stun_visual()
-	DebugTrace.event("gate", "is_stunned:expired_lazy", {"gate": DebugTrace.gate_state(self)})
-	return false
-
-
 func blocks_movement() -> bool:
-	var result := definition != null and definition.blocks_movement and not is_stunned()
+	var result := definition != null and definition.blocks_movement
 	DebugTrace.event("gate", "blocks_movement", {"gate": DebugTrace.gate_state(self), "result": result})
 	return result
 
@@ -473,7 +410,6 @@ func _update_icon() -> void:
 			icon_sprite.scale = Vector2.ONE * (42.0 / max_icon_dimension) if max_icon_dimension > 0.0 else Vector2.ONE
 		elif icon_sprite != null:
 			icon_sprite.queue_free()
-	_update_stun_visual()
 	_update_capacity_label()
 
 
@@ -511,24 +447,6 @@ func _update_capacity_label() -> void:
 	label.text = str(remaining)
 
 
-func _update_stun_visual() -> void:
-	if not is_inside_tree():
-		return
-
-	var sprite := get_node_or_null("Sprite2D") as Sprite2D
-	if sprite == null:
-		return
-
-	if _stunned_until_msec > 0 and Time.get_ticks_msec() <= _stunned_until_msec:
-		sprite.modulate = Color(0.5, 0.5, 0.55, 0.65)
-	else:
-		sprite.modulate = Color.WHITE
-
-	var icon_sprite := get_node_or_null("IconSprite2D") as Sprite2D
-	if icon_sprite != null:
-		icon_sprite.modulate = sprite.modulate
-
-
 func get_debug_registry_key() -> String:
 	return _registry_key
 
@@ -543,10 +461,6 @@ func get_debug_stalled_enemy_count() -> int:
 
 func get_debug_stalled_enemy_hp_total() -> int:
 	return _stalled_enemy_hp_total
-
-
-func get_debug_stunned_until_msec() -> int:
-	return _stunned_until_msec
 
 
 func get_debug_is_destroying() -> bool:

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioLibrary" load_steps=14 format=3 uid="uid://kgoq3optt248"]
+[gd_resource type="Resource" script_class="AudioLibrary" load_steps=13 format=3 uid="uid://kgoq3optt248"]
 
 [ext_resource type="AudioStream" uid="uid://l7jl4wxafo2h" path="res://assets/audio/sfx/pluck.wav" id="2_hempd"]
 [ext_resource type="AudioStream" uid="uid://bxditmfr5tlpl" path="res://assets/audio/sfx/destruction_bitcrushed_big.wav" id="3_k6brt"]
@@ -7,7 +7,6 @@
 [ext_resource type="AudioStream" uid="uid://7m5s4iufvfl2" path="res://assets/audio/sfx/teleportation.wav" id="5_u8mqp"]
 [ext_resource type="AudioStream" uid="uid://dyuln1tnqv3sw" path="res://assets/audio/sfx/cpu_damage.wav" id="6_xr81a"]
 [ext_resource type="AudioStream" uid="uid://dl13x30i0232c" path="res://assets/audio/sfx/ui/pilik.wav" id="7_k6brt"]
-[ext_resource type="AudioStream" uid="uid://i2urmwdp4t48" path="res://assets/audio/sfx/stun.wav" id="11_xr81a"]
 [ext_resource type="AudioStream" uid="uid://wf07tl2blp15" path="res://assets/audio/sfx/ui/deny.wav" id="13_ndg4q"]
 [ext_resource type="AudioStream" uid="uid://du1fkgi2kgxxc" path="res://assets/audio/sfx/ui/confirm.wav" id="15_m1ukr"]
 [ext_resource type="AudioStream" uid="uid://cd1fx5wt0xwub" path="res://assets/audio/sfx/put_down_gate.wav" id="gate_place"]
@@ -28,7 +27,6 @@ crytter_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 crytter_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
 raider_stunner_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 raider_stunner_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
-raider_stunner_gate_stun_sounds = Array[AudioStream]([ExtResource("11_xr81a")])
 brute_spawn_sounds = Array[AudioStream]([ExtResource("5_u8mqp")])
 brute_damage_sounds = Array[AudioStream]([ExtResource("4_oayop")])
 cpu_damage_sounds = Array[AudioStream]([ExtResource("6_xr81a")])

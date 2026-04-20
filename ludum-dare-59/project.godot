@@ -41,7 +41,6 @@ directories/dtl_directory={
 "tutorial_dialogue_1_2": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_2.dtl",
 "tutorial_dialogue_1_3": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_3.dtl",
 "tutorial_dialogue_1_4": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_4.dtl",
-"tutorial_dialogue_1_5": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_5.dtl",
 "tutorial_dialogue_1_6": "res://assets/dialogues/tutorials/1/tutorial_dialogue_1_6.dtl"
 }
 layout/style_directory={}
