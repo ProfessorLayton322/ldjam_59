@@ -50,6 +50,7 @@ func clear_spawners() -> void:
 
 func start() -> void:
 	_reset_completion_tracking()
+	EnemiesSpawnConfig.prepare_for_current_level()
 	_ensure_timer()
 	DebugTrace.event("spawn_manager", "start", {
 		"tutorial": TutorialEvents.should_run_first_level_tutorial(),
