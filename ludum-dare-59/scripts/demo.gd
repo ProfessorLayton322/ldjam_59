@@ -615,6 +615,6 @@ func _ready() -> void:
 	_start_trigger_timer()
 	_create_gate_buttons()
 	_tutorial_manager.configure_flow()
+	LevelState.emit_level_started(level)
 	AudioManager.play_level_beginning()
 	_start_enemy_spawning()
-	AudioManager.play_music()

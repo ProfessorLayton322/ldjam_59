@@ -1,5 +1,7 @@
 extends Node
 
+signal level_started(level: LevelDefinition)
+
 const LEVELS: Array[LevelDefinition] = [
 	preload("res://scripts/resources/levels/level_01.tres"),
 	preload("res://scripts/resources/levels/level_02.tres"),
@@ -23,6 +25,10 @@ func get_current_level() -> LevelDefinition:
 
 	current_level_index = clampi(current_level_index, 0, LEVELS.size() - 1)
 	return LEVELS[current_level_index]
+
+
+func emit_level_started(level: LevelDefinition) -> void:
+	level_started.emit(level)
 
 
 func advance_to_next_level() -> bool:

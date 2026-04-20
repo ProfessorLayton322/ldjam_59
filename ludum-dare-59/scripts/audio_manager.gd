@@ -23,6 +23,8 @@ const SFX_LEVEL_VICTORY := "level_victory"
 var _registered_sfx_events := {}
 var _sfx_polyphonic_players := {}
 var _music_track_names: Array[String] = []
+var _music_streams: Array[AudioStream] = []
+var _music_player: AudioStreamPlayer
 var _rng := RandomNumberGenerator.new()
 
 
@@ -32,6 +34,8 @@ func _ready() -> void:
 		library = AudioLibrary.new()
 	_setup_sfx_bank()
 	_setup_music_bank()
+	_setup_music_player()
+	_connect_level_start_signal()
 	_setup_sfx_polyphony()
 
 
@@ -123,11 +127,18 @@ func play_level_victory() -> void:
 
 
 func play_music() -> void:
+	restart_music()
+
+
+func restart_music() -> void:
 	stop_music(0.0)
 	_start_music()
 
 
 func stop_music(fade_time: float = 1.0) -> void:
+	if _music_player != null:
+		_music_player.stop()
+
 	if not MusicManager.has_loaded:
 		return
 
@@ -142,6 +153,7 @@ func stop_music(fade_time: float = 1.0) -> void:
 
 		player.stop_stems(fade_time)
 		if fade_time <= 0.0:
+			player.stop()
 			music_streams.remove_at(i)
 			if player.get_parent() != null:
 				player.get_parent().remove_child(player)
@@ -207,6 +219,7 @@ func _setup_sfx_polyphony() -> void:
 
 func _setup_music_bank() -> void:
 	_music_track_names.clear()
+	_music_streams.clear()
 	var bank := MusicBank.new()
 	bank.name = "GameMusicBank"
 	bank.label = MUSIC_BANK_LABEL
@@ -222,6 +235,8 @@ func _setup_music_bank() -> void:
 		stem.enabled = true
 		stem.volume = -20.0
 		stem.stream = stream
+
+		_music_streams.append(stream)
 
 		var track_name := "background_music_%d" % i
 		var track := MusicTrackResource.new()
@@ -278,10 +293,38 @@ func _enemy_event_name(enemy_id: String, action: String) -> String:
 	return "enemy_%s_%s" % [enemy_id, action]
 
 
-func _start_music() -> void:
-	if _music_track_names.is_empty():
+func _setup_music_player() -> void:
+	if _music_player != null:
 		return
-	if not MusicManager.has_loaded:
-		await MusicManager.loaded
-	var track_name := _music_track_names[_rng.randi_range(0, _music_track_names.size() - 1)]
-	MusicManager.play(MUSIC_BANK_LABEL, track_name, 0.0, true)
+
+	_music_player = AudioStreamPlayer.new()
+	_music_player.name = "BackgroundMusicPlayer"
+	_music_player.bus = "Music"
+	_music_player.volume_db = -20.0
+	_music_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_music_player)
+	_music_player.finished.connect(_on_music_finished)
+
+
+func _connect_level_start_signal() -> void:
+	if not LevelState.level_started.is_connected(_on_level_started):
+		LevelState.level_started.connect(_on_level_started)
+
+
+func _on_level_started(_level: LevelDefinition) -> void:
+	restart_music()
+
+
+func _on_music_finished() -> void:
+	if _music_player == null or _music_player.stream == null:
+		return
+
+	_music_player.play(0.0)
+
+
+func _start_music() -> void:
+	if _music_streams.is_empty() or _music_player == null:
+		return
+
+	_music_player.stream = _music_streams[_rng.randi_range(0, _music_streams.size() - 1)]
+	_music_player.play(0.0)
