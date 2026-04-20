@@ -267,6 +267,64 @@ func _assign_tile_node_id_from_graph(tile: BaseTile) -> void:
 		return
 
 	tile.node_id = best_vertex.id
+
+
+func _apply_level_spawner_texture_orientation() -> void:
+	if not _should_keep_spawner_textures_unrotated():
+		return
+
+	for tile: BaseTile in tiles:
+		if not (tile is SpawnerTile):
+			continue
+		if not _is_letter_spawner_tile(tile):
+			continue
+
+		var spawner := tile as SpawnerTile
+		spawner.keep_authored_texture_rotation = true
+
+
+func _should_keep_spawner_textures_unrotated() -> bool:
+	var level_index := _get_level_index()
+	return level_index >= 2
+
+
+func _get_level_index() -> int:
+	if level != null:
+		var title_level_number := _get_trailing_number(level.title)
+		if title_level_number > 0:
+			return title_level_number - 1
+
+		if level.resource_path != "":
+			var path_level_number := _get_trailing_number(level.resource_path.get_basename())
+			if path_level_number > 0:
+				return path_level_number - 1
+
+	var level_state := demo.get_node_or_null("/root/LevelState")
+	if level_state != null:
+		var current_level_index: Variant = level_state.get("current_level_index")
+		if current_level_index is int:
+			return current_level_index
+
+	return -1
+
+
+func _get_trailing_number(text: String) -> int:
+	var number_text := ""
+	for i in range(text.length() - 1, -1, -1):
+		var character := text.substr(i, 1)
+		if not character.is_valid_int():
+			break
+		number_text = character + number_text
+
+	return number_text.to_int() if number_text != "" else -1
+
+
+func _is_letter_spawner_tile(tile: BaseTile) -> bool:
+	var tile_name := String(tile.name).to_lower()
+	if not tile_name.begins_with("spawner"):
+		return false
+
+	var suffix := tile_name.substr("spawner".length())
 	if suffix == "":
 		return false
 
