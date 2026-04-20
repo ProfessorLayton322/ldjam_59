@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="LevelEnemiesConfigCollection" load_steps=7 format=3 uid="uid://4fv4ofvdn8rr"]
 
-[ext_resource type="Script" uid="uid://dqse7t3h74bc8" path="res://scripts/resources/level_enemies_config_collection.gd" id="1_collection"]
-[ext_resource type="Script" uid="uid://byckk2c4bdp2l" path="res://scripts/resources/level_enemies_config.gd" id="2_config"]
+[ext_resource type="Script" path="res://scripts/resources/level_enemies_config_collection.gd" id="1_collection"]
+[ext_resource type="Script" path="res://scripts/resources/level_enemies_config.gd" id="2_config"]
 
 [sub_resource type="Resource" id="LevelEnemiesConfig_dummy"]
 script = ExtResource("2_config")
