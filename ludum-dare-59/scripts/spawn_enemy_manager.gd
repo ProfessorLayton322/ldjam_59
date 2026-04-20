@@ -69,6 +69,27 @@ func stop() -> void:
 	DebugTrace.event("spawn_manager", "stop", {"has_timer": _timer != null})
 
 
+func spawn_next_enemy_type(enemy_type: int) -> bool:
+	_ensure_timer()
+	if _timer != null:
+		_timer.stop()
+	_prune_spawners()
+	if _spawners.is_empty():
+		DebugTrace.event("spawn_manager", "forced_spawn:no_spawners", {"enemy_type": enemy_type})
+		return false
+	if not EnemiesSpawnConfig.ensure_next_enemy_type(enemy_type):
+		DebugTrace.event("spawn_manager", "forced_spawn:no_enemy_type", {"enemy_type": enemy_type})
+		return false
+	var next_enemy_type := EnemiesSpawnConfig.take_next_enemy_type()
+	if next_enemy_type == -1:
+		DebugTrace.event("spawn_manager", "forced_spawn:no_enemies_left", {"enemy_type": enemy_type})
+		return false
+	var available_spawners := _spawners.duplicate()
+	_spawn_enemy_type(next_enemy_type, available_spawners)
+	DebugTrace.event("spawn_manager", "forced_spawn:done", {"enemy_type": next_enemy_type})
+	return true
+
+
 func _ensure_timer() -> void:
 	if _timer != null:
 		return
@@ -214,7 +235,7 @@ func _start_regular_spawn_timer(reason: String) -> void:
 	if _timer == null:
 		return
 
-	EnemiesSpawnConfig.prepare_for_current_level()
+	EnemiesSpawnConfig.ensure_prepared_for_current_level()
 	if not EnemiesSpawnConfig.has_enemies_left():
 		_mark_spawning_complete("all_configured_enemies_spawned")
 		DebugTrace.event("spawn_manager", "regular_timer_not_started:no_enemies", {"reason": reason})
