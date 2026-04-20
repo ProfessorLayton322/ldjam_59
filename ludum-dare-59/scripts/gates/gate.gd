@@ -96,6 +96,7 @@ static func get_gate(target_graph: Graph, target_vertex_id: int) -> Gate:
 
 func _ready() -> void:
 	DebugTrace.event("gate", "ready:start", {"gate": DebugTrace.gate_state(self)})
+	z_index = 1
 	_load_definition_from_balance()
 	_update_position_from_vertex()
 	_current_hp = _get_max_hp()
@@ -362,6 +363,7 @@ func _stall_enemy(enemy: Enemy) -> void:
 	_stalled_enemies.append(enemy)
 	_stalled_enemy_power += enemy.damage
 	enemy.stall_at_gate(self)
+	_update_capacity_label()
 	DebugTrace.event("gate", "stall_enemy:done", {"gate": DebugTrace.gate_state(self), "enemy": DebugTrace.enemy_state(enemy)})
 
 
@@ -387,6 +389,7 @@ func _release_stalled_enemies() -> void:
 	})
 	_stalled_enemies.clear()
 	_stalled_enemy_power = 0
+	_update_capacity_label()
 
 	for enemy in enemies:
 		if enemy == null or not is_instance_valid(enemy):
@@ -458,6 +461,34 @@ func _update_icon() -> void:
 	if definition != null:
 		sprite.texture = definition.texture
 	_update_stun_visual()
+	_update_capacity_label()
+
+
+func _update_capacity_label() -> void:
+	if not is_inside_tree():
+		return
+
+	var label := get_node_or_null("CapacityLabel") as Label
+	if definition == null or not definition.blocks_movement:
+		if label != null:
+			label.queue_free()
+		return
+
+	if label == null:
+		label = Label.new()
+		label.name = "CapacityLabel"
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.8))
+		label.add_theme_constant_override("shadow_offset_x", 1)
+		label.add_theme_constant_override("shadow_offset_y", 1)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.position = Vector2(-32, -10)
+		label.size = Vector2(64, 20)
+		add_child(label)
+
+	var remaining := _current_hp - _stalled_enemy_power
+	label.text = "%d / %d" % [remaining, _current_hp]
 
 
 func _update_stun_visual() -> void:
