@@ -554,13 +554,21 @@ func _process(_delta: float) -> void:
 func _update_gate_cursor_icon() -> void:
 	if _gate_cursor_icon == null:
 		return
-	if _selected_gate_definition == null or _moving_gate != null:
+
+	var cursor_definition: Resource = null
+	var moving_gate := _moving_gate
+	if moving_gate != null and is_instance_valid(moving_gate):
+		cursor_definition = moving_gate.definition
+	elif _selected_gate_definition != null:
+		cursor_definition = _selected_gate_definition
+
+	if cursor_definition == null:
 		_gate_cursor_icon.visible = false
 		return
 
-	var texture := _selected_gate_definition.icon_texture as Texture2D
+	var texture := cursor_definition.icon_texture as Texture2D
 	if texture == null:
-		texture = _selected_gate_definition.texture
+		texture = cursor_definition.texture
 	if texture == null:
 		_gate_cursor_icon.visible = false
 		return

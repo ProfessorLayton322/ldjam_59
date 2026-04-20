@@ -113,6 +113,7 @@ func pickup_gate_at(vertex_id: int) -> bool:
 	_moving_gate = gate
 	_moving_gate_origin = vertex_id
 	gate.modulate = Color(1.3, 1.3, 0.5)
+	_set_gate_icon_visible(gate, false)
 	DebugTrace.event("demo_gate", "pickup_gate:done", {"vertex_id": vertex_id, "gate": DebugTrace.gate_state(gate)})
 	return true
 
@@ -126,6 +127,7 @@ func drop_moving_gate(global_pos: Vector2) -> bool:
 	})
 	_moving_gate = null
 	gate.modulate = Color.WHITE
+	_set_gate_icon_visible(gate, true)
 
 	if gate.is_stunned():
 		AudioManager.play_invalid_gate_move()
@@ -177,6 +179,7 @@ func cancel_moving_gate() -> void:
 		"origin": _moving_gate_origin,
 	})
 	_moving_gate.modulate = Color.WHITE
+	_set_gate_icon_visible(_moving_gate, true)
 	_snap_gate_to_vertex(_moving_gate, _moving_gate_origin)
 	_moving_gate = null
 	_moving_gate_origin = -1
@@ -206,6 +209,14 @@ func delete_gate_at(vertex_id: int) -> bool:
 func _on_gate_destroyed(gate: Gate) -> void:
 	DebugTrace.event("demo_gate", "gate_destroyed_signal", {"gate": DebugTrace.gate_state(gate)})
 	temperature_changed.emit(-gate.get_power_cost())
+
+
+func _set_gate_icon_visible(gate: Gate, visible: bool) -> void:
+	if gate == null or not is_instance_valid(gate):
+		return
+	var icon_sprite := gate.get_node_or_null("IconSprite2D") as Sprite2D
+	if icon_sprite != null:
+		icon_sprite.visible = visible
 
 
 func _snap_gate_to_vertex(gate: Gate, vertex_id: int) -> void:
