@@ -123,12 +123,31 @@ func play_level_victory() -> void:
 
 
 func play_music() -> void:
+	stop_music(0.0)
 	_start_music()
 
 
 func stop_music(fade_time: float = 1.0) -> void:
-	if MusicManager.is_playing(MUSIC_BANK_LABEL):
-		MusicManager.stop(fade_time)
+	if not MusicManager.has_loaded:
+		return
+
+	var music_streams: Array = MusicManager.get("_music_streams")
+	for i in range(music_streams.size() - 1, -1, -1):
+		var player = music_streams[i] as StemmedMusicStreamPlayer
+		if player == null or not is_instance_valid(player):
+			music_streams.remove_at(i)
+			continue
+		if player.bank_label != MUSIC_BANK_LABEL:
+			continue
+
+		player.stop_stems(fade_time)
+		if fade_time <= 0.0:
+			music_streams.remove_at(i)
+			if player.get_parent() != null:
+				player.get_parent().remove_child(player)
+			player.queue_free()
+
+	MusicManager.set("_music_streams", music_streams)
 
 
 func stop_sfx() -> void:
