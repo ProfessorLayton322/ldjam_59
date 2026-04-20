@@ -1,6 +1,6 @@
 This is your insanity bar. It fills when enemies reach your CPU. Do not let it fill unless you wanna become cyberpsycho
 This is your temperature bar. Placing a new defense makes it go up. Removing defenses make it go down over time. Moving defences bumps it up slightly. Remember, it takes time to cool down
-This is a condensator. It can hold off the enemy signal for some time before they overwhelm it. You can press 1 to place it
-This is a coolant - it slows enemies down. You can press 3 to place it
-This is a diode - it halves the signal that passes through it. You can place 4 to place it
+This is a condensator. It can hold off the enemy signal for some time before they overwhelm it. You can press 1 to place it. It costs 5 temperature
+This is a coolant - it slows enemies down. You can press 3 to place it. It costs 3 temperature
+This is a diode - it halves the signal that passes through it. You can place 4 to place it. It costs 8 temperature
 You can always pause the game and take a moment to think, just hit space
