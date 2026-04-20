@@ -297,13 +297,12 @@ func _check_level_completed() -> void:
 		return
 	if not _active_enemy_ids.is_empty():
 		return
-	if _defeated_enemy_ids.size() != _spawned_enemy_count:
-		return
 
 	_level_completed_emitted = true
 	DebugTrace.event("spawn_manager", "level_completed", {
 		"spawned_count": _spawned_enemy_count,
 		"defeated_count": _defeated_enemy_ids.size(),
+		"non_defeated_exit_count": _spawned_enemy_count - _defeated_enemy_ids.size(),
 	})
 	level_completed.emit()
 
