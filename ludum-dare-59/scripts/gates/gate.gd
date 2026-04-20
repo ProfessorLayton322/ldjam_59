@@ -458,8 +458,21 @@ func _update_icon() -> void:
 		sprite.name = "Sprite2D"
 		add_child(sprite)
 
+	var icon_sprite := get_node_or_null("IconSprite2D") as Sprite2D
 	if definition != null:
 		sprite.texture = definition.texture
+		if definition.icon_texture != null:
+			if icon_sprite == null:
+				icon_sprite = Sprite2D.new()
+				icon_sprite.name = "IconSprite2D"
+				add_child(icon_sprite)
+			icon_sprite.texture = definition.icon_texture
+			icon_sprite.z_index = sprite.z_index + 1
+			var icon_size := definition.icon_texture.get_size()
+			var max_icon_dimension := maxf(icon_size.x, icon_size.y)
+			icon_sprite.scale = Vector2.ONE * (42.0 / max_icon_dimension) if max_icon_dimension > 0.0 else Vector2.ONE
+		elif icon_sprite != null:
+			icon_sprite.queue_free()
 	_update_stun_visual()
 	_update_capacity_label()
 
@@ -503,6 +516,10 @@ func _update_stun_visual() -> void:
 		sprite.modulate = Color(0.5, 0.5, 0.55, 0.65)
 	else:
 		sprite.modulate = Color.WHITE
+
+	var icon_sprite := get_node_or_null("IconSprite2D") as Sprite2D
+	if icon_sprite != null:
+		icon_sprite.modulate = sprite.modulate
 
 
 func get_debug_registry_key() -> String:

@@ -1,13 +1,15 @@
-[gd_resource type="Resource" script_class="GateDefinition" load_steps=3 format=3 uid="uid://bdglwvy0lhdn6"]
+[gd_resource type="Resource" script_class="GateDefinition" load_steps=4 format=3 uid="uid://bdglwvy0lhdn6"]
 
 [ext_resource type="Script" uid="uid://dc2ke2b6entve" path="res://scripts/resources/gate_definition.gd" id="1_gate_definition"]
 [ext_resource type="Texture2D" uid="uid://bqhy266m3r8g1" path="res://assets/textures/gates/barricade.svg" id="2_texture"]
+[ext_resource type="Texture2D" uid="uid://bkdh4e8nljx24" path="res://assets/New Textures/icons/barricade.png" id="3_icon"]
 
 [resource]
 script = ExtResource("1_gate_definition")
 id = "barricade"
 display_name = "Barricade"
 texture = ExtResource("2_texture")
+icon_texture = ExtResource("3_icon")
 power_cost = 3
 max_hp = 16
 blocks_movement = true

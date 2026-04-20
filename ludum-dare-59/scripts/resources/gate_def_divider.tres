@@ -1,13 +1,15 @@
-[gd_resource type="Resource" script_class="GateDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="GateDefinition" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/gate_definition.gd" id="1_gate_definition"]
 [ext_resource type="Texture2D" path="res://assets/textures/gates/divider_gate.svg" id="2_texture"]
+[ext_resource type="Texture2D" uid="uid://b3vtpqxed8202" path="res://assets/New Textures/icons/divisor.png" id="3_icon"]
 
 [resource]
 script = ExtResource("1_gate_definition")
 id = "divider"
 display_name = "Divider Gate"
 texture = ExtResource("2_texture")
+icon_texture = ExtResource("3_icon")
 power_cost = 8
 max_hp = 999999
 indestructible = true
