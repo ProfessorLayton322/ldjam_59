@@ -16,6 +16,7 @@ var _settings_button: Button
 var _debug_victory_button: Button
 var _temperature_meter: TextureProgressBar
 var _temperature_label: Label
+var _temperature_wrapper: Control
 
 
 func build(gate_definitions: Array, cpu_regions: Array, cpu_hp: int) -> void:
@@ -86,8 +87,8 @@ func get_pause_button() -> Button:
 	return _pause_button
 
 
-func get_temperature_meter() -> TextureProgressBar:
-	return _temperature_meter
+func get_temperature_meter() -> Control:
+	return _temperature_wrapper
 
 
 func get_debug_victory_button() -> Button:
@@ -202,15 +203,29 @@ func _build_cpu_hp_bars(cpu_regions: Array, cpu_hp: int) -> void:
 
 
 func _build_temperature_meter(gate_count: int) -> void:
+	var bar_top := 16.0 + float(gate_count) * 72.0 + 64.0 + 8.0 + 160.0
+
+	var wrapper := Control.new()
+	wrapper.name = "PowerMeterWrapper"
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.anchor_left = 1.0
+	wrapper.anchor_right = 1.0
+	wrapper.offset_left = -83.0
+	wrapper.offset_right = -43.0
+	wrapper.offset_top = bar_top
+	wrapper.offset_bottom = bar_top + 296.0
+	_root.add_child(wrapper)
+	_temperature_wrapper = wrapper
+
 	var bar := TextureProgressBar.new()
 	bar.name = "PowerMeter"
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.anchor_left = 1.0
+	bar.anchor_left = 0.0
 	bar.anchor_right = 1.0
-	bar.offset_left = -83.0
-	bar.offset_right = -43.0
-	bar.offset_top = 16.0 + float(gate_count) * 72.0 + 64.0 + 8.0 + 160.0
-	bar.offset_bottom = bar.offset_top + 160.0
+	bar.offset_left = 0.0
+	bar.offset_right = 0.0
+	bar.offset_top = 0.0
+	bar.offset_bottom = 160.0
 	bar.texture_under = preload("res://assets/textures/interface/temperature_bar_background.png")
 	bar.texture_progress = preload("res://assets/textures/interface/temperature_bar_value.png")
 	bar.fill_mode = TextureProgressBar.FILL_BOTTOM_TO_TOP
@@ -220,8 +235,10 @@ func _build_temperature_meter(gate_count: int) -> void:
 	bar.min_value = 0.0
 	bar.max_value = 1.0
 	bar.value = 0.0
-	_root.add_child(bar)
+	wrapper.add_child(bar)
 	_temperature_meter = bar
+
+	var bar_visual_bottom_local := bar.pivot_offset.y * (1.0 - bar.scale.y) + 160.0 * bar.scale.y
 
 	var label := Label.new()
 	label.name = "PowerLabel"
@@ -232,15 +249,14 @@ func _build_temperature_meter(gate_count: int) -> void:
 	label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
-	label.anchor_left = 1.0
+	label.anchor_left = 0.0
 	label.anchor_right = 1.0
-	label.offset_left = -83.0
-	label.offset_right = -43.0
-	var bar_visual_bottom := bar.offset_top + bar.pivot_offset.y * (1.0 - bar.scale.y) + 160.0 * bar.scale.y
-	label.offset_top = bar_visual_bottom - 34.0
-	label.offset_bottom = bar_visual_bottom - 24.0
+	label.offset_left = 0.0
+	label.offset_right = 0.0
+	label.offset_top = bar_visual_bottom_local - 34.0
+	label.offset_bottom = bar_visual_bottom_local - 24.0
 	label.scale = Vector2(0.75, 0.75)
-	_root.add_child(label)
+	wrapper.add_child(label)
 	_temperature_label = label
 
 
