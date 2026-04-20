@@ -504,8 +504,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if Gate.get_gate(_graph, vertex_id) != null:
 		if _selected_gate_definition != null:
-			AudioManager.play_invalid_gate_tile()
-			return
+			_set_gate_placement_enabled(false)
 		_pickup_gate_at(vertex_id)
 		return
 
