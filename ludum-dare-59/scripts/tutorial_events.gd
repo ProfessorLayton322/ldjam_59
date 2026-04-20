@@ -20,6 +20,8 @@ var first_level_tutorial_finished_emitted := false
 
 var _highlight_tweens: Dictionary = {}
 var _highlight_original_scales: Dictionary = {}
+var _highlight_original_pivot_offsets: Dictionary = {}
+var _highlight_original_positions: Dictionary = {}
 var _highlight_targets: Dictionary = {}
 
 
@@ -96,7 +98,7 @@ func emit_gate_stun_consumed(enemy: Enemy, gate: Gate) -> void:
 	gate_stun_consumed.emit(enemy, gate)
 
 
-func start_highlighter(target: Node) -> void:
+func start_highlighter(target: Node, pivot_offset: Variant = null) -> void:
 	if target == null or not is_instance_valid(target):
 		return
 
@@ -106,7 +108,14 @@ func start_highlighter(target: Node) -> void:
 
 	if target is Control:
 		var control := target as Control
-		control.pivot_offset = control.size * 0.5
+		var original_pivot_offset := control.pivot_offset
+		var new_pivot_offset := control.size * 0.5
+		if pivot_offset is Vector2:
+			new_pivot_offset = pivot_offset
+		_highlight_original_pivot_offsets[instance_id] = original_pivot_offset
+		_highlight_original_positions[instance_id] = control.position
+		control.position += (original_pivot_offset - new_pivot_offset) * (Vector2.ONE - control.scale)
+		control.pivot_offset = new_pivot_offset
 
 	var original_scale: Vector2 = target.get("scale")
 	_highlight_original_scales[instance_id] = original_scale
@@ -133,8 +142,16 @@ func stop_highlighter(target: Node) -> void:
 
 	if _highlight_original_scales.has(instance_id) and is_instance_valid(target):
 		target.set("scale", _highlight_original_scales[instance_id])
+	if is_instance_valid(target) and target is Control:
+		var control := target as Control
+		if _highlight_original_positions.has(instance_id):
+			control.position = _highlight_original_positions[instance_id]
+		if _highlight_original_pivot_offsets.has(instance_id):
+			control.pivot_offset = _highlight_original_pivot_offsets[instance_id]
 
 	_highlight_original_scales.erase(instance_id)
+	_highlight_original_pivot_offsets.erase(instance_id)
+	_highlight_original_positions.erase(instance_id)
 	_highlight_targets.erase(instance_id)
 
 
@@ -147,7 +164,15 @@ func stop_all_highlighters() -> void:
 		var raw_target = _highlight_targets.get(instance_id)
 		if raw_target != null and is_instance_valid(raw_target) and _highlight_original_scales.has(instance_id):
 			(raw_target as Node).set("scale", _highlight_original_scales[instance_id])
+		if raw_target != null and is_instance_valid(raw_target) and raw_target is Control:
+			var control := raw_target as Control
+			if _highlight_original_positions.has(instance_id):
+				control.position = _highlight_original_positions[instance_id]
+			if _highlight_original_pivot_offsets.has(instance_id):
+				control.pivot_offset = _highlight_original_pivot_offsets[instance_id]
 
 	_highlight_tweens.clear()
 	_highlight_original_scales.clear()
+	_highlight_original_pivot_offsets.clear()
+	_highlight_original_positions.clear()
 	_highlight_targets.clear()

@@ -45,6 +45,7 @@ var dialog_manual_advance_was_enabled := true
 var dialog_layout: Node
 var remove_ballista_dialogue_started := false
 var ui_overview_highlight_target: Node
+var ui_overview_highlight_extra_targets: Array[Node] = []
 var raider_highlight_target: Enemy
 var raider_barricade_target_vertex_id := -1
 var raider_barricade_target_tile: BaseTile
@@ -765,11 +766,23 @@ func _set_ui_overview_highlight(index: int) -> void:
 	if ui_overview_highlight_target != null:
 		TutorialEvents.stop_highlighter(ui_overview_highlight_target)
 		ui_overview_highlight_target = null
+	for extra_target in ui_overview_highlight_extra_targets:
+		TutorialEvents.stop_highlighter(extra_target)
+	ui_overview_highlight_extra_targets.clear()
+
 	var target := _get_ui_overview_highlight_target(index)
 	if target == null:
 		return
 	ui_overview_highlight_target = target
 	TutorialEvents.start_highlighter(target)
+	if index == 1 and demo._sidebar != null and demo._sidebar.has_method("get_temperature_label"):
+		var label := demo._sidebar.get_temperature_label() as Node
+		if label != null:
+			var pivot_offset := Vector2.ZERO
+			if demo._sidebar.has_method("get_temperature_label_highlight_pivot_offset"):
+				pivot_offset = demo._sidebar.get_temperature_label_highlight_pivot_offset()
+			ui_overview_highlight_extra_targets.append(label)
+			TutorialEvents.start_highlighter(label, pivot_offset)
 func _get_ui_overview_highlight_target(index: int) -> Node:
 	match index:
 		0:
