@@ -40,7 +40,10 @@ func build(gate_definitions: Array, cpu_regions: Array, cpu_hp: int) -> void:
 		button.expand_icon = true
 		button.toggle_mode = true
 		button.focus_mode = Control.FOCUS_NONE
-		button.tooltip_text = "%s: %d power" % [definition.display_name, definition.power_cost]
+		var tip := "%s: %d power" % [definition.display_name, definition.power_cost]
+		if definition.hint != "":
+			tip += "\n" + definition.hint
+		button.tooltip_text = tip
 		button.custom_minimum_size = Vector2(64.0, 64.0)
 		button.anchor_left = 1.0
 		button.anchor_right = 1.0

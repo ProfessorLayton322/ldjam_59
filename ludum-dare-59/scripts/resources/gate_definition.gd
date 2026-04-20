@@ -13,3 +13,4 @@ extends Resource
 @export var halve_hp_round_up := false
 @export var slow_extra_seconds_per_tile := 0.0
 @export var slow_duration := 0.0
+@export_multiline var hint := ""

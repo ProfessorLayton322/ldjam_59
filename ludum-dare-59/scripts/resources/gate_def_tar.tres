@@ -15,3 +15,4 @@ max_hp = 999999
 indestructible = true
 slow_extra_seconds_per_tile = 0.4
 slow_duration = 10.0
+hint = "Slows enemies for 10 seconds after passing through. Indestructible."

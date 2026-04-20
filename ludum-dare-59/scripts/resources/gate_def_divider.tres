@@ -14,3 +14,4 @@ power_cost = 8
 max_hp = 999999
 indestructible = true
 halve_hp_round_up = true
+hint = "Halves enemy HP on entry. Indestructible."

@@ -14,3 +14,4 @@ power_cost = 8
 max_hp = 999999
 indestructible = true
 damage_power = 5
+hint = "Deals damage to enemies passing through. Indestructible."
