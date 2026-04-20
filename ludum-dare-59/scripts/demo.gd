@@ -35,6 +35,8 @@ var _sidebar: Node
 var _gate_interaction: Node
 
 var _gate_preview: Sprite2D
+var _gate_cursor_layer: CanvasLayer
+var _gate_cursor_icon: Sprite2D
 
 var _moving_gate: Gate:
 	get: return _gate_interaction.get_moving_gate() if _gate_interaction != null else null
@@ -300,7 +302,7 @@ func _is_win_button_input_event(event: InputEvent) -> bool:
 func _despawn_level_objects() -> void:
 	_cancel_moving_gate()
 	for child in get_children():
-		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _spawn_enemy_manager or child == _level_timer:
+		if child == _hud or child == _sidebar or child == _camera or child == _gate_interaction or child == _gate_cursor_layer or child == _spawn_enemy_manager or child == _level_timer:
 			continue
 		if child == get_node_or_null(trigger_timer_path):
 			continue
@@ -531,18 +533,44 @@ func _process(_delta: float) -> void:
 		_moving_gate.position = _gate_interaction.get_nearest_wire_vertex_position(get_global_mouse_position())
 
 	if _gate_preview == null:
+		_update_gate_cursor_icon()
 		return
 	if _selected_gate_definition == null or _moving_gate != null:
 		_gate_preview.visible = false
+		_update_gate_cursor_icon()
 		return
 	var hover_vertex := _get_track_vertex_id_at_global_position(get_global_mouse_position())
 	if hover_vertex == -1:
 		_gate_preview.visible = false
+		_update_gate_cursor_icon()
 		return
 	_gate_preview.texture = _selected_gate_definition.texture
 	var vertex := _graph.get_node_by_id(hover_vertex)
 	_gate_preview.position = vertex.position
 	_gate_preview.visible = true
+	_update_gate_cursor_icon()
+
+
+func _update_gate_cursor_icon() -> void:
+	if _gate_cursor_icon == null:
+		return
+	if _selected_gate_definition == null or _moving_gate != null:
+		_gate_cursor_icon.visible = false
+		return
+
+	var texture := _selected_gate_definition.icon_texture as Texture2D
+	if texture == null:
+		texture = _selected_gate_definition.texture
+	if texture == null:
+		_gate_cursor_icon.visible = false
+		return
+
+	_gate_cursor_icon.texture = texture
+	_gate_cursor_icon.position = get_viewport().get_mouse_position()
+	var texture_size := texture.get_size()
+	var max_texture_dimension := maxf(texture_size.x, texture_size.y)
+	_gate_cursor_icon.scale = Vector2.ONE * (42.0 / max_texture_dimension) if max_texture_dimension > 0.0 else Vector2.ONE
+	_gate_cursor_icon.visible = true
 
 
 func _ready() -> void:
@@ -610,6 +638,18 @@ func _ready() -> void:
 	_gate_preview.z_index = 5
 	_gate_preview.visible = false
 	add_child(_gate_preview)
+
+	_gate_cursor_layer = CanvasLayer.new()
+	_gate_cursor_layer.name = "GateCursorPreview"
+	_gate_cursor_layer.layer = 30
+	_gate_cursor_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_gate_cursor_layer)
+
+	_gate_cursor_icon = Sprite2D.new()
+	_gate_cursor_icon.name = "Icon"
+	_gate_cursor_icon.modulate = Color(1.0, 1.0, 1.0, 0.85)
+	_gate_cursor_icon.visible = false
+	_gate_cursor_layer.add_child(_gate_cursor_icon)
 
 	_start_trigger_timer()
 	_create_gate_buttons()
