@@ -23,7 +23,7 @@ texture = ExtResource("8_crytter_tex")
 script = ExtResource("2_enemy_params")
 id = "raider_stunner"
 damage = 2
-move_duration = 1.0
+move_duration = 1.3
 can_stun_gate = true
 texture = ExtResource("9_raider_tex")
 
@@ -31,8 +31,8 @@ texture = ExtResource("9_raider_tex")
 script = ExtResource("2_enemy_params")
 id = "brute"
 damage = 4
-max_hp = 30
-move_duration = 1.5
+max_hp = 20
+move_duration = 1.7
 texture = ExtResource("10_brute_tex")
 
 [resource]

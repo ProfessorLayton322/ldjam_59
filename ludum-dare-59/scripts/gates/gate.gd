@@ -61,7 +61,7 @@ static var _gates_by_graph_vertex: Dictionary = {}
 var _registry_key := ""
 var _current_hp := 1
 var _stalled_enemies: Array[Enemy] = []
-var _stalled_enemy_power := 0
+var _stalled_enemy_hp_total := 0
 var _is_destroying := false
 var _stunned_until_msec := 0
 var _stun_generation := 0
@@ -154,10 +154,10 @@ func on_enter(enemy: Enemy) -> void:
 			"enemy": DebugTrace.enemy_state(enemy),
 		})
 		_stall_enemy(enemy)
-		if not definition.indestructible and _stalled_enemy_power > _current_hp:
+		if not definition.indestructible and _stalled_enemy_hp_total >= _current_hp:
 			if definition.id == "barricade":
 				AudioManager.play_barricade_overpowered_despawn()
-			DebugTrace.event("gate", "on_enter:stalled_power_destroy", {
+			DebugTrace.event("gate", "on_enter:stalled_hp_destroy", {
 				"gate": DebugTrace.gate_state(self),
 				"enemy": DebugTrace.enemy_state(enemy),
 			})
@@ -361,7 +361,7 @@ func _stall_enemy(enemy: Enemy) -> void:
 
 	DebugTrace.event("gate", "stall_enemy:start", {"gate": DebugTrace.gate_state(self), "enemy": DebugTrace.enemy_state(enemy)})
 	_stalled_enemies.append(enemy)
-	_stalled_enemy_power += enemy.damage
+	_stalled_enemy_hp_total += maxi(enemy.hp, 0)
 	enemy.stall_at_gate(self)
 	_update_capacity_label()
 	DebugTrace.event("gate", "stall_enemy:done", {"gate": DebugTrace.gate_state(self), "enemy": DebugTrace.enemy_state(enemy)})
@@ -388,7 +388,7 @@ func _release_stalled_enemies() -> void:
 		"count": enemies.size(),
 	})
 	_stalled_enemies.clear()
-	_stalled_enemy_power = 0
+	_stalled_enemy_hp_total = 0
 	_update_capacity_label()
 
 	for enemy in enemies:
@@ -507,8 +507,8 @@ func _update_capacity_label() -> void:
 		var sprite := get_node_or_null("Sprite2D") as Sprite2D
 		label.z_index = sprite.z_index + 1 if sprite != null else 1
 
-	var remaining := _current_hp - _stalled_enemy_power
-	label.text = "%d / %d" % [remaining, _current_hp]
+	var remaining := maxi(_current_hp - _stalled_enemy_hp_total, 0)
+	label.text = str(remaining)
 
 
 func _update_stun_visual() -> void:
@@ -541,8 +541,8 @@ func get_debug_stalled_enemy_count() -> int:
 	return _stalled_enemies.size()
 
 
-func get_debug_stalled_enemy_power() -> int:
-	return _stalled_enemy_power
+func get_debug_stalled_enemy_hp_total() -> int:
+	return _stalled_enemy_hp_total
 
 
 func get_debug_stunned_until_msec() -> int:
