@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelEnemiesConfigCollection" load_steps=6 format=3 uid="uid://4fv4ofvdn8rr"]
+[gd_resource type="Resource" script_class="LevelEnemiesConfigCollection" load_steps=7 format=3 uid="uid://4fv4ofvdn8rr"]
 
 [ext_resource type="Script" uid="uid://dqse7t3h74bc8" path="res://scripts/resources/level_enemies_config_collection.gd" id="1_collection"]
 [ext_resource type="Script" uid="uid://byckk2c4bdp2l" path="res://scripts/resources/level_enemies_config.gd" id="2_config"]
@@ -17,6 +17,13 @@ brute_amount = 3
 spawn_interval = 3.0
 metadata/_custom_type_script = "uid://byckk2c4bdp2l"
 
+[sub_resource type="Resource" id="Resource_level03"]
+script = ExtResource("2_config")
+crytter_amount = 5
+stunner_amount = 4
+brute_amount = 3
+spawn_interval = 2.5
+
 [sub_resource type="Resource" id="Resource_level04"]
 script = ExtResource("2_config")
 crytter_amount = 5
@@ -26,4 +33,4 @@ spawn_interval = 2.5
 
 [resource]
 script = ExtResource("1_collection")
-levels = Array[ExtResource("2_config")]([SubResource("LevelEnemiesConfig_dummy"), SubResource("Resource_oairb"), SubResource("Resource_level04")])
+levels = Array[ExtResource("2_config")]([SubResource("LevelEnemiesConfig_dummy"), SubResource("Resource_oairb"), SubResource("Resource_level03"), SubResource("Resource_level04")])

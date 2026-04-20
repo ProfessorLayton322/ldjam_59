@@ -313,12 +313,9 @@ func _despawn_level_objects() -> void:
 	_gate_preview = null
 
 
-func _complete_level_with_victory() -> void:
-	if _level_finished:
-		return
-
-	_level_finished = true
+func _stop_level_activity() -> void:
 	get_tree().paused = false
+	_set_gate_placement_enabled(false)
 	if _spawn_enemy_manager != null:
 		_spawn_enemy_manager.stop()
 	if _level_timer != null:
@@ -328,6 +325,14 @@ func _complete_level_with_victory() -> void:
 		trigger_timer.stop()
 	if _tutorial_manager != null and _tutorial_manager.has_method("abort_for_victory"):
 		_tutorial_manager.abort_for_victory()
+
+
+func _complete_level_with_victory() -> void:
+	if _level_finished:
+		return
+
+	_level_finished = true
+	_stop_level_activity()
 	_despawn_level_objects()
 
 	AudioManager.play_level_victory()
@@ -341,13 +346,24 @@ func _complete_level_with_victory() -> void:
 	AudioManager.stop_level_audio()
 	if LevelState.advance_to_next_level():
 		get_tree().change_scene_to_file("res://scenes/ld_gameplay.tscn")
-	elif _hud != null:
-		_hud.hide_victory()
+	else:
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _complete_level_with_game_over() -> void:
+	if _level_finished:
+		return
+
+	_level_finished = true
+	_stop_level_activity()
+	_despawn_level_objects()
+	AudioManager.stop_level_audio()
+	AudioManager.play_cpu_death()
+	if _hud != null:
+		_hud.show_game_over()
 
 
 func _on_region_enemy_reached(damage: int, region_index: int) -> void:
-	if not _level_finished:
-		AudioManager.play_cpu_damage()
 	if region_index >= _cpu_regions.size():
 		return
 	var region: Dictionary = _cpu_regions[region_index]
@@ -357,10 +373,9 @@ func _on_region_enemy_reached(damage: int, region_index: int) -> void:
 		bar.set_hp(region["hp"], _get_cpu_hp())
 	_spawn_damage_label(damage, region["world_pos"])
 	if region["hp"] <= 0:
-		if not _level_finished:
-			AudioManager.play_cpu_death()
-		_level_finished = true
-		_hud.show_game_over()
+		_complete_level_with_game_over()
+	elif not _level_finished:
+		AudioManager.play_cpu_damage()
 
 
 func _spawn_damage_label(damage: int, world_pos: Vector2) -> void:
@@ -418,6 +433,8 @@ func _get_track_vertex_id_at_global_position(global_position: Vector2) -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _is_win_button_input_event(event):
+		return
+	if _level_finished:
 		return
 	if _tutorial_manager != null and _tutorial_manager.handle_unhandled_input(event):
 		return
@@ -500,6 +517,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _input(event: InputEvent) -> void:
 	if _is_win_button_input_event(event):
+		return
+	if _level_finished:
 		return
 	if _tutorial_manager != null and _tutorial_manager.handle_input(event):
 		return

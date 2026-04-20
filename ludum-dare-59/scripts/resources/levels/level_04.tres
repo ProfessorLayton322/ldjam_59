@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=4 format=3 uid="uid://b6xwou5lp454w"]
+
+[ext_resource type="Script" uid="uid://8vlmcpkh4pct" path="res://scripts/resources/level_definition.gd" id="1_level_definition"]
+[ext_resource type="PackedScene" uid="uid://cqbowgo8u3iwo" path="res://scenes/levels/level_04_board.tscn" id="2_board"]
+[ext_resource type="Resource" uid="uid://cgofesxqmo0hl" path="res://scripts/resources/spawner_cfg_level_04.tres" id="3_spawn_cfg"]
+
+[resource]
+script = ExtResource("1_level_definition")
+title = "Level 4"
+board_scene = ExtResource("2_board")
+require_mutual_connections = false
+duration_seconds = 90.0
+spawn_cfg = ExtResource("3_spawn_cfg")
