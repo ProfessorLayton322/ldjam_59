@@ -14,8 +14,7 @@ var _pause_button: Button
 var _menu_button: Button
 var _settings_button: Button
 var _debug_victory_button: Button
-var _temperature_meter: Panel
-var _temperature_fill: ColorRect
+var _temperature_meter: TextureProgressBar
 var _temperature_label: Label
 
 
@@ -87,7 +86,7 @@ func get_pause_button() -> Button:
 	return _pause_button
 
 
-func get_temperature_meter() -> Panel:
+func get_temperature_meter() -> TextureProgressBar:
 	return _temperature_meter
 
 
@@ -126,10 +125,9 @@ func set_menu_settings_buttons_disabled(disabled: bool) -> void:
 
 
 func update_temperature(current: float, maximum: int) -> void:
-	if _temperature_fill != null:
-		var ratio := 0.0 if maximum <= 0 else clampf(current / float(maximum), 0.0, 1.0)
-		_temperature_fill.anchor_top = 1.0 - ratio
-		_temperature_fill.offset_top = 0.0
+	if _temperature_meter != null:
+		_temperature_meter.max_value = float(maximum)
+		_temperature_meter.value = current
 	if _temperature_label != null:
 		_temperature_label.text = "%.1f/%d" % [current, maximum]
 
@@ -204,45 +202,26 @@ func _build_cpu_hp_bars(cpu_regions: Array, cpu_hp: int) -> void:
 
 
 func _build_temperature_meter(gate_count: int) -> void:
-	var meter := Panel.new()
-	meter.name = "PowerMeter"
-	meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	meter.anchor_left = 1.0
-	meter.anchor_right = 1.0
-	meter.offset_left = -68.0
-	meter.offset_right = -28.0
-	meter.offset_top = 16.0 + float(gate_count) * 72.0 + 64.0 + 8.0
-	meter.offset_bottom = meter.offset_top + 160.0
-
-	var meter_style := StyleBoxFlat.new()
-	meter_style.bg_color = Color(0.08, 0.08, 0.08, 0.82)
-	meter_style.border_color = Color(0.32, 0.05, 0.04, 1.0)
-	meter_style.border_width_left = 2
-	meter_style.border_width_top = 2
-	meter_style.border_width_right = 2
-	meter_style.border_width_bottom = 2
-	meter_style.corner_radius_top_left = 4
-	meter_style.corner_radius_top_right = 4
-	meter_style.corner_radius_bottom_right = 4
-	meter_style.corner_radius_bottom_left = 4
-	meter.add_theme_stylebox_override("panel", meter_style)
-	_root.add_child(meter)
-	_temperature_meter = meter
-
-	var fill := ColorRect.new()
-	fill.name = "Fill"
-	fill.color = Color(0.92, 0.05, 0.02, 1.0)
-	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fill.anchor_left = 0.0
-	fill.anchor_top = 1.0
-	fill.anchor_right = 1.0
-	fill.anchor_bottom = 1.0
-	fill.offset_left = 4.0
-	fill.offset_top = 0.0
-	fill.offset_right = -4.0
-	fill.offset_bottom = -4.0
-	meter.add_child(fill)
-	_temperature_fill = fill
+	var bar := TextureProgressBar.new()
+	bar.name = "PowerMeter"
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.anchor_left = 1.0
+	bar.anchor_right = 1.0
+	bar.offset_left = -83.0
+	bar.offset_right = -43.0
+	bar.offset_top = 16.0 + float(gate_count) * 72.0 + 64.0 + 8.0 + 160.0
+	bar.offset_bottom = bar.offset_top + 160.0
+	bar.texture_under = preload("res://assets/textures/interface/temperature_bar_background.png")
+	bar.texture_progress = preload("res://assets/textures/interface/temperature_bar_value.png")
+	bar.fill_mode = TextureProgressBar.FILL_BOTTOM_TO_TOP
+	bar.nine_patch_stretch = true
+	bar.pivot_offset = Vector2(20.0, 80.0)
+	bar.scale = Vector2(1.5, 3.0)
+	bar.min_value = 0.0
+	bar.max_value = 1.0
+	bar.value = 0.0
+	_root.add_child(bar)
+	_temperature_meter = bar
 
 	var label := Label.new()
 	label.name = "PowerLabel"
@@ -253,8 +232,15 @@ func _build_temperature_meter(gate_count: int) -> void:
 	label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	meter.add_child(label)
+	label.anchor_left = 1.0
+	label.anchor_right = 1.0
+	label.offset_left = -83.0
+	label.offset_right = -43.0
+	var bar_visual_bottom := bar.offset_top + bar.pivot_offset.y * (1.0 - bar.scale.y) + 160.0 * bar.scale.y
+	label.offset_top = bar_visual_bottom - 34.0
+	label.offset_bottom = bar_visual_bottom - 24.0
+	label.scale = Vector2(0.75, 0.75)
+	_root.add_child(label)
 	_temperature_label = label
 
 
