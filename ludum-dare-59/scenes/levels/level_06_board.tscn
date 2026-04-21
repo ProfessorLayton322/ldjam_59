@@ -1,0 +1,128 @@
+[gd_scene load_steps=50 format=3 uid="uid://befe40mcfeqq"]
+
+[ext_resource type="PackedScene" uid="uid://trkvariant00" path="res://scenes/tiles/track_none.tscn" id="1_none"]
+[ext_resource type="PackedScene" uid="uid://trkvariant01" path="res://scenes/tiles/track_w.tscn" id="2_w"]
+[ext_resource type="PackedScene" uid="uid://trkvariant02" path="res://scenes/tiles/track_e.tscn" id="3_e"]
+[ext_resource type="PackedScene" uid="uid://trkvariant03" path="res://scenes/tiles/track_ew.tscn" id="4_ew"]
+[ext_resource type="PackedScene" uid="uid://trkvariant04" path="res://scenes/tiles/track_s.tscn" id="5_s"]
+[ext_resource type="PackedScene" uid="uid://trkvariant05" path="res://scenes/tiles/track_sw.tscn" id="6_sw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant06" path="res://scenes/tiles/track_se.tscn" id="7_se"]
+[ext_resource type="PackedScene" uid="uid://trkvariant07" path="res://scenes/tiles/track_sew.tscn" id="8_sew"]
+[ext_resource type="PackedScene" uid="uid://trkvariant08" path="res://scenes/tiles/track_n.tscn" id="9_n"]
+[ext_resource type="PackedScene" uid="uid://trkvariant1a" path="res://scenes/tiles/track_nw.tscn" id="10_nw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0a" path="res://scenes/tiles/track_ne.tscn" id="11_ne"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0b" path="res://scenes/tiles/track_new.tscn" id="12_new"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0c" path="res://scenes/tiles/track_ns.tscn" id="13_ns"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0d" path="res://scenes/tiles/track_nsw.tscn" id="14_nsw"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0e" path="res://scenes/tiles/track_nse.tscn" id="15_nse"]
+[ext_resource type="PackedScene" uid="uid://trkvariant0f" path="res://scenes/tiles/track_nsew.tscn" id="16_nsew"]
+[ext_resource type="PackedScene" uid="uid://s3uk5w476jvc" path="res://scenes/tiles/demo_spawner_top.tscn" id="17_spawner_top"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_bottom.tscn" id="18_spawner_bottom"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_middle.tscn" id="19_spawner_middle"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_8.tscn" id="20_core_8"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_9.tscn" id="21_core_9"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_13.tscn" id="22_core_13"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_14.tscn" id="23_core_14"]
+[ext_resource type="Texture2D" uid="uid://iyuh5rb657np" path="res://assets/textures/base/cpu.svg" id="24_cpu"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_2.tscn" id="25_core_2"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_3.tscn" id="26_core_3"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_4.tscn" id="27_core_4"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_7.tscn" id="28_core_7"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_core_12.tscn" id="29_core_12"]
+[ext_resource type="PackedScene" uid="uid://bmb1berorqd3g" path="res://scenes/tiles/demo_spawner_w.tscn" id="30_spawner_w"]
+[ext_resource type="PackedScene" uid="uid://c7ysvnfcc6dbk" path="res://scenes/tiles/demo_spawner_e.tscn" id="31_spawner_e"]
+[ext_resource type="PackedScene" uid="uid://3lxs6e2ioisr" path="res://scenes/tiles/demo_spawner_ew.tscn" id="32_spawner_ew"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_s.tscn" id="33_spawner_s"]
+[ext_resource type="PackedScene" uid="uid://dyjkkvtn81w8i" path="res://scenes/tiles/demo_spawner_sw.tscn" id="34_spawner_sw"]
+[ext_resource type="PackedScene" uid="uid://cmmyrida6yy15" path="res://scenes/tiles/demo_spawner_se.tscn" id="35_spawner_se"]
+[ext_resource type="PackedScene" uid="uid://d4io2votgfrkv" path="res://scenes/tiles/demo_spawner_sew.tscn" id="36_spawner_sew"]
+[ext_resource type="PackedScene" uid="uid://d1dqpyhhtf575" path="res://scenes/tiles/demo_spawner_n.tscn" id="37_spawner_n"]
+[ext_resource type="PackedScene" uid="uid://ccbow8m5e5hpw" path="res://scenes/tiles/demo_spawner_nw.tscn" id="38_spawner_nw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_ne.tscn" id="39_spawner_ne"]
+[ext_resource type="PackedScene" uid="uid://cjbmapydpuys2" path="res://scenes/tiles/demo_spawner_new.tscn" id="40_spawner_new"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_ns.tscn" id="41_spawner_ns"]
+[ext_resource type="PackedScene" uid="uid://d01640n12yr56" path="res://scenes/tiles/demo_spawner_nsw.tscn" id="42_spawner_nsw"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nse.tscn" id="43_spawner_nse"]
+[ext_resource type="PackedScene" path="res://scenes/tiles/demo_spawner_nsew.tscn" id="44_spawner_nsew"]
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_tracks"]
+resource_name = "tracks"
+scenes/0/scene = ExtResource("1_none")
+scenes/1/scene = ExtResource("2_w")
+scenes/2/scene = ExtResource("3_e")
+scenes/3/scene = ExtResource("4_ew")
+scenes/4/scene = ExtResource("5_s")
+scenes/5/scene = ExtResource("6_sw")
+scenes/6/scene = ExtResource("7_se")
+scenes/7/scene = ExtResource("8_sew")
+scenes/8/scene = ExtResource("9_n")
+scenes/9/scene = ExtResource("10_nw")
+scenes/10/scene = ExtResource("11_ne")
+scenes/11/scene = ExtResource("12_new")
+scenes/12/scene = ExtResource("13_ns")
+scenes/13/scene = ExtResource("14_nsw")
+scenes/14/scene = ExtResource("15_nse")
+scenes/15/scene = ExtResource("16_nsew")
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_gameplay"]
+resource_name = "gameplay"
+scenes/0/scene = ExtResource("17_spawner_top")
+scenes/1/scene = ExtResource("18_spawner_bottom")
+scenes/2/scene = ExtResource("19_spawner_middle")
+scenes/3/scene = ExtResource("20_core_8")
+scenes/4/scene = ExtResource("21_core_9")
+scenes/5/scene = ExtResource("22_core_13")
+scenes/6/scene = ExtResource("23_core_14")
+scenes/7/scene = ExtResource("25_core_2")
+scenes/8/scene = ExtResource("26_core_3")
+scenes/9/scene = ExtResource("27_core_4")
+scenes/10/scene = ExtResource("28_core_7")
+scenes/11/scene = ExtResource("29_core_12")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cpu"]
+texture = ExtResource("24_cpu")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_spawners"]
+resource_name = "spawners"
+scenes/1/scene = ExtResource("30_spawner_w")
+scenes/2/scene = ExtResource("31_spawner_e")
+scenes/3/scene = ExtResource("32_spawner_ew")
+scenes/4/scene = ExtResource("33_spawner_s")
+scenes/5/scene = ExtResource("34_spawner_sw")
+scenes/6/scene = ExtResource("35_spawner_se")
+scenes/7/scene = ExtResource("36_spawner_sew")
+scenes/8/scene = ExtResource("37_spawner_n")
+scenes/9/scene = ExtResource("38_spawner_nw")
+scenes/10/scene = ExtResource("39_spawner_ne")
+scenes/11/scene = ExtResource("40_spawner_new")
+scenes/12/scene = ExtResource("41_spawner_ns")
+scenes/13/scene = ExtResource("42_spawner_nsw")
+scenes/14/scene = ExtResource("43_spawner_nse")
+scenes/15/scene = ExtResource("44_spawner_nsew")
+
+[sub_resource type="TileSet" id="TileSet_level_06"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetScenesCollectionSource_tracks")
+sources/1 = SubResource("TileSetScenesCollectionSource_gameplay")
+sources/2 = SubResource("TileSetAtlasSource_cpu")
+sources/3 = SubResource("TileSetScenesCollectionSource_spawners")
+
+[node name="Level06Board" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+position = Vector2(704, 352)
+tile_set = SubResource("TileSet_level_06")
+format = 2
+layer_0/tile_data = PackedInt32Array(5, 0, 917504, 65541, 0, 786432, 131077, 0, 786432, 196612, 0, 983040, 196613, 0, 983040, 196614, 0, 983040, 262148, 0, 983040, 262149, 0, 983040, 262150, 0, 983040, 327684, 0, 983040, 327685, 0, 983040, 327686, 0, 983040, -65531, 0, 524288, -196603, 0, 524288, -327675, 0, 524288, -131067, 0, 917504, -262139, 0, 917504, 6, 0, 196608, -131066, 0, 196608, -262138, 0, 196608, -262137, 0, 196608, -131065, 0, 196608, -262136, 0, 196608, 7, 0, 196608, -131064, 0, 196608, -262135, 0, 196608, -131063, 0, 196608, -262134, 0, 196608, -262133, 0, 196608, 8, 0, 458752, -131062, 0, 458752, -262132, 0, 458752, -393211, 1, 0, -262131, 1, 0, -131059, 1, 0, 13, 1, 0, 262157, 1, 0, -196596, 0, 524288, -65524, 0, 524288, -65526, 0, 524288, 65546, 0, 524288, 131082, 0, 524288, 196618, 0, 524288, 65544, 0, 524288, 131080, 0, 524288, 196616, 0, 524288, 65548, 0, 524288, 131084, 0, 524288, 196620, 0, 524288, 10, 0, 983040, 12, 0, 983040, -131060, 0, 983040, 262153, 0, 196608, 262155, 0, 196608, 11, 0, 196608, -131061, 0, 196608, 9, 0, 196608, 262152, 0, 655360, 262154, 0, 720896, 262156, 0, 720896)
+layer_1/name = "Gameplay"
+layer_1/tile_data = PackedInt32Array(196612, 1, 458752, 196613, 1, 524288, 196614, 1, 589824, 262148, 1, 655360, 262149, 1, 196608, 262150, 1, 262144, 327684, 1, 720896, 327685, 1, 327680, 327686, 1, 393216)
