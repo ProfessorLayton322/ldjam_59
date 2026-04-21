@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" uid="uid://c6csnsosm7dfa" path="res://scripts/resources/balance_params.gd" id="1_balance_params"]
 [ext_resource type="Script" uid="uid://cya641xsabq38" path="res://scripts/resources/enemy_params.gd" id="2_enemy_params"]
-[ext_resource type="Resource" uid="uid://bdglwvy0lhdn6" path="res://scripts/resources/gate_def_barricade.tres" id="3_barricade"]
+[ext_resource type="Resource" uid="uid://cu7r12oen3d2e" path="res://scripts/resources/gate_def_barricade.tres" id="3_barricade"]
 [ext_resource type="Script" uid="uid://dc2ke2b6entve" path="res://scripts/resources/gate_definition.gd" id="3_vh0te"]
-[ext_resource type="Resource" uid="uid://cxffaivsjlgn6" path="res://scripts/resources/gate_def_ballista.tres" id="4_ballista"]
+[ext_resource type="Resource" uid="uid://rd12owodvey6" path="res://scripts/resources/gate_def_ballista.tres" id="4_ballista"]
 [ext_resource type="Resource" uid="uid://cjimb57eryqfw" path="res://scripts/resources/gate_def_tar.tres" id="5_tar"]
 [ext_resource type="Resource" uid="uid://cqvhan4kpp86q" path="res://scripts/resources/spawner_cfg_default.tres" id="6_spawner_cfg"]
 [ext_resource type="Resource" uid="uid://c5xdn8gukoga" path="res://scripts/resources/gate_def_divider.tres" id="7_divider"]
